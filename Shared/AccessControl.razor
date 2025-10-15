@@ -1,0 +1,403 @@
+﻿@page "/accessControl"
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IDbContextFactory<AppDbContext> DbContextFactory
+@using System.Security.Claims
+@using System.Linq
+@using Microsoft.EntityFrameworkCore
+@using QuizManager.Data
+
+
+<style>
+    .user-role1 {
+        position: absolute;
+        top: 6px;
+        left: 10px;
+        background-color: purple;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        font-size: 14px;
+        color: #fff;
+        z-index: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: fit-content;
+        border: 2px solid white;
+    }
+
+    .user-role {
+        position: absolute;
+        top: 6px;
+        left: 160px; /* increased to push it right */
+        background-color: black;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        font-size: 14px;
+        color: #fff;
+        cursor: default;
+        display: flex;
+        align-items: center;
+        width: fit-content;
+        border: 2px solid white;
+    }
+
+
+
+    .dropdown-menu {
+        border: 1px solid #dee2e6; /* Optional: add a border for visibility */
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Optional: add shadow for depth */
+        opacity: 1; /* Ensure it is fully opaque */
+        overflow: hidden; /* Prevent overflow from shadows */
+    }
+
+    .dropdown-item {
+        padding: 8px 12px; /* Adjust padding for better appearance */
+        transition: background-color 0.3s ease; /* Smooth transition */
+        position: relative; /* Positioning for shadow containment */
+    }
+
+        .dropdown-item:hover {
+            background-color: cornflowerblue; /* Light background color on hover */
+            color: black; /* Text color on hover */
+            opacity: 1; /* Ensure it is fully opaque */
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1); /* Optional: add shadow effect */
+        }
+</style>
+
+<!-- Include Bootstrap CSS -->
+<link href="~/css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+
+<!-- Include your site.css file -->
+<link href="~/css/site.css" rel="stylesheet" />
+
+<!-- Include Bootstrap JavaScript -->
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Keep this version with image and styling -->
+<div class="user-role1" @onclick="returnToMainPage" title="Αρχική Σελίδα">
+    <span style="font-weight: bold;">@AppName</span>
+    <img src="https://static.vecteezy.com/system/resources/thumbnails/011/658/583/small/letter-a-abstract-logo-flat-capital-letter-a-abstract-logo-icon-image-with-transparent-background-png.png"
+         style="width: 24px; height: 20px; border-radius: 50%; margin-left: 8px;" />
+</div>
+
+
+
+<AuthorizeView>
+    <Authorized>
+        <div class="user-role" title="Ρόλος Χρήστη">
+            @if (UserRole == "Student")
+            {
+                <span style="display: flex; align-items: center;">
+                    <i class="fas fa-user-graduate" style="margin-right: 5px; color: white;"></i><strong>Φοιτητής</strong>
+                </span>
+            }
+            else if (UserRole == "Company")
+            {
+                <span style="display: flex; align-items: center;">
+                    <i class="fas fa-industry" style="margin-right: 5px; color: white;"></i><strong>Εταιρεία</strong>
+                </span>
+            }
+            else if (UserRole == "Professor")
+            {
+                <span style="display: flex; align-items: center;">
+                    <i class="fas fa-chalkboard-teacher" style="margin-right: 5px; color: white;"></i><strong>Καθηγητής</strong>
+                </span>
+            }
+            else if (UserRole == "Admin")
+            {
+                <span style="display: flex; align-items: center;">
+                    <i class="fa-solid fa-screwdriver-wrench" style="margin-right: 5px; color: white;"></i><strong>Διαχειριστής</strong>
+                </span>
+            }
+            else if (UserRole == "Research Group")
+            {
+                <span style="display: flex; align-items: center;">
+                    <i class="fas fa-crown" style="margin-right: 5px; color: white;"></i><strong>Ερευνητική Ομάδα</strong>
+                </span>
+            }
+            else
+            {
+                <span><strong>@UserRole</strong></span>
+            }
+        </div>
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" @onclick="ToggleDropdown"
+                    style="border: 2px solid white; padding: 5px 10px;">
+                @if (!string.IsNullOrEmpty(Picture))
+                {
+                    <img src="@Picture" alt="User Picture" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
+                }
+                @if (UserRole == "Company")
+                {
+                    @if (string.IsNullOrEmpty(CompanyName))
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@userEmail</span>
+                    }
+                    else
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@CompanyName</span>
+                    }
+                }
+                else if (UserRole == "Professor")
+                {
+                    @if (string.IsNullOrEmpty(realName))
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@userEmail</span>
+                    }
+                    else
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@realName</span>
+                    }
+                }
+                else if (UserRole == "Student")
+                {
+                    @if (string.IsNullOrEmpty(Username))
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@userEmail</span>
+                    }
+                    else
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@Username</span>
+                    }
+                }
+                else if (UserRole == "Admin")
+                {
+                    @if (string.IsNullOrEmpty(Username))
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@userEmail</span>
+                    }
+                    else
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@Username</span>
+                    }
+                }
+                else if (UserRole == "Research Group")
+                {
+                    @if (string.IsNullOrEmpty(Username))
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@userEmail</span>
+                    }
+                    else
+                    {
+                        <span style="color: #FFF8DC; font-weight: bold;">@Username</span>
+                    }
+                }
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item" @onclick="RedirectToProfile" style="cursor: pointer;">Προφίλ Χρήστη</a>
+                <a class="dropdown-item" href="settings">Ρυθμίσεις</a>
+                <a class="dropdown-item" href="logout">Αποσύνδεση</a>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+
+        <a class="about-link" href="login?redirectUri=/">Σύνδεση</a>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+<body>
+    <div class="useful-links">
+        <ul>
+            <li><a href="https://www.uoa.gr/">University Of Athens</a></li>
+            <li><a href="https://eclass.uoa.gr/">eClass</a></li>
+            <li><a href="https://fogus.gr/">Support</a></li>
+        </ul>
+    </div>
+</body>
+
+
+@inject IJSRuntime JSRuntime
+@code {
+    private string Username = "Anonymous User";
+    private string CompanyName = "Anonymous Company";
+    private string ResearchGroupName = "Anonymous Research Group";
+    private string Picture = "";
+    private string UserRole = "";
+    private string AppName = "AcadeMyHub";
+    private string realName = "";
+    private string realCompanyName = "";
+    private string userEmail = "";
+    private int StudentId = 0;
+    private int CompanyId = 0;
+    private int ProfessorId = 0;
+    private int ResearchGroupId = 0;
+
+    @*
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (!authState.User.Identity.IsAuthenticated)
+            {
+                // Redirect to Auth0 login automatically
+                NavigationManager.NavigateTo($"login?redirectUri={Uri.EscapeDataString(NavigationManager.Uri)}", forceLoad: true);
+            }
+        }
+    }
+    *@
+    private async Task ToggleDropdown()
+    {
+        await JSRuntime.InvokeVoidAsync("bootstrapDropdown.toggleDropdown", "dropdownMenuButton");
+    }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (authenticationState is not null)
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            userEmail = user.FindFirst("name")?.Value;
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+                // Reset picture to default at start
+                Picture = "/Images/noImage.png";
+                realName = userEmail;
+                CompanyName = userEmail;
+                Username = userEmail;
+
+                // Check roles in priority order (Admin is handled separately)
+                var student = await dbContext.Students.FirstOrDefaultAsync(s => s.Email == userEmail);
+                var company = await dbContext.Companies.FirstOrDefaultAsync(c => c.CompanyEmail == userEmail);
+                var professor = await dbContext.Professors.FirstOrDefaultAsync(p => p.ProfEmail == userEmail);
+                var researchGroup = await dbContext.ResearchGroups.FirstOrDefaultAsync(r => r.ResearchGroupEmail == userEmail);
+
+                // Determine which role record exists and set properties accordingly
+                if (student != null)
+                {
+                    StudentId = student.Id;
+                    realName = $"{student.Name} {student.Surname}".Trim();
+                    if (student.Image != null && student.Image.Length > 0)
+                    {
+                        Picture = $"data:image/png;base64,{Convert.ToBase64String(student.Image)}";
+                    }
+                }
+                else if (company != null)
+                {
+                    CompanyId = company.Id;
+                    realCompanyName = company.CompanyName;
+                    if (company.CompanyLogo != null && company.CompanyLogo.Length > 0)
+                    {
+                        Picture = $"data:image/png;base64,{Convert.ToBase64String(company.CompanyLogo)}";
+                    }
+                }
+                else if (professor != null)
+                {
+                    ProfessorId = professor.Id;
+                    realName = $"{professor.ProfName} {professor.ProfSurname}".Trim();
+                    if (professor.ProfImage != null && professor.ProfImage.Length > 0)
+                    {
+                        Picture = $"data:image/png;base64,{Convert.ToBase64String(professor.ProfImage)}";
+                    }
+                }
+                else if (researchGroup != null)
+                {
+                    ResearchGroupId = researchGroup.Id;
+                    ResearchGroupName = researchGroup.ResearchGroupName;
+                    if (researchGroup.ResearchGroupImage != null && researchGroup.ResearchGroupImage.Length > 0)
+                    {
+                        Picture = $"data:image/png;base64,{Convert.ToBase64String(researchGroup.ResearchGroupImage)}";
+                    }
+                }
+            }
+
+            // Set role-specific display properties
+            UserRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "Unknown";
+
+            if (UserRole == "Company")
+            {
+                Username = realCompanyName;
+                CompanyName = realCompanyName;
+            }
+            else if (UserRole == "Professor")
+            {
+                Username = realName;
+            }
+            else if (UserRole == "Research Group")
+            {
+                Username = ResearchGroupName;
+            }
+            else if (UserRole == "Admin")
+            {
+                Username = "Διαχειριστής Πλατφόρμας";
+                Picture = "/Images/admin-avatar.png";
+            }
+            else
+            {
+                Username = realName;
+            }
+
+            // Debug output
+            Console.WriteLine($"Initialization complete - Role: {UserRole}, Name: {Username}, Picture: {(string.IsNullOrEmpty(Picture) ? "Empty" : "Exists")}");
+        }
+        await base.OnInitializedAsync();
+    }
+
+
+
+
+    private async Task RedirectToProfile()
+    {
+        if (UserRole == "Student")
+        {
+            if (StudentId > 0)
+            {
+                NavigationManager.NavigateTo($"/studentRegistration?studentId={StudentId}&isEditing=true");
+            }
+            else
+            {
+                Console.WriteLine("Student ID is not set.");
+            }
+        }
+        else if (UserRole == "Company")
+        {
+            if (CompanyId > 0)
+            {
+                NavigationManager.NavigateTo($"/companyRegistration?companyId={CompanyId}&isEditing=true");
+            }
+            else
+            {
+                Console.WriteLine("Company ID is not set.");
+            }
+        }
+        else if (UserRole == "Professor")
+        {
+            if (ProfessorId > 0)
+            {
+                NavigationManager.NavigateTo($"/professorRegistration?professorId={ProfessorId}&isEditing=true");
+            }
+        }
+        else if (UserRole == "Admin")
+        {
+            NavigationManager.NavigateTo("/Profile");
+        }
+        else if (UserRole == "Research Group")
+        {
+            if (ResearchGroupId > 0)
+            {
+                NavigationManager.NavigateTo($"/researchGroupRegistration?researchGroupId={ResearchGroupId}&isEditing=true");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Role not recognized or not handled.");
+        }
+    }
+
+    private void returnToMainPage()
+    {
+        NavigationManager.NavigateTo("/", forceLoad: true);
+    }
+}

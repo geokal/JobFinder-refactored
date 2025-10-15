@@ -1,0 +1,2526 @@
+﻿@page "/profile"
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@using QuizManager.Data
+@using QuizManager.Models
+@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Net.Mail
+@inject IDbContextFactory<AppDbContext> DbContextFactory
+@inject InternshipEmailService InternshipEmailService
+@inject FileUploadService FileUploadService
+@inject HttpClient HttpClient
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<style>
+    .btn-danger {
+        background-color: red;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+        .btn-danger:hover {
+            background-color: darkred;
+        }
+
+    .btn-edit {
+        background-color: blue;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+        .btn-edit:hover {
+            background-color: seagreen;
+        }
+
+    .btn-cancel {
+        background-color: cadetblue;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+        .btn-cancel:hover {
+            background-color: cadetblue;
+        }
+
+
+
+    h3 {
+        font-size: 24px;
+        color: #FF5733;
+    }
+
+    .success-message {
+        background-color: green;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    .delete-btn {
+        background-color: purple;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-deletecompanydata {
+        background-color: purple;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-updatecompanydata {
+        background-color: coral;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-updateuserdata {
+        background-color: dodgerblue;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-deleteuserdata {
+        background-color: palevioletred;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+
+    .form-control {
+        width: 300px;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: white;
+    }
+
+    .select-with-arrow {
+        position: relative;
+    }
+
+        .select-with-arrow select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 8l3-3 3 3h0" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 20px 20px;
+            padding-right: 40px; /* Increased padding to accommodate arrow */
+        }
+
+            .select-with-arrow select:focus {
+                outline: none; /* Remove outline on focus */
+            }
+
+
+    .outer-table {
+        width: 100%; /* Ensures the table takes full width of its container */
+        border-collapse: collapse; /* Ensures cells have no spacing between them */
+        max-width: 800px; /* Adjust the maximum width as needed */
+        margin: auto; /* Centers the table horizontally */
+    }
+
+        .outer-table th, .outer-table td {
+            padding: 12px; /* Increased padding inside cells */
+            text-align: left; /* Aligns text to the left within cells */
+            border: 1px solid #ddd; /* Adds borders around cells */
+        }
+
+        .outer-table th {
+            background-color: #f2f2f2; /* Light gray background for headers */
+        }
+
+    .table-header {
+        background-color: #f2f2f2; /* Background color for header rows */
+    }
+
+    .table-header-title {
+        font-size: 16px; /* Font size for the header title */
+        font-weight: bold; /* Makes the title bold */
+    }
+
+    .readonly-input {
+        padding: 10px; /* Adjusted padding for readonly fields */
+        font-size: 14px; /* Font size for readonly fields */
+        background-color: #f9f9f9; /* Light background color */
+        border: 1px solid #ddd; /* Border */
+        color: blue; /* Red text color */
+        font-style: italic; /* Italic font style */
+    }
+
+
+
+    .position-description {
+        max-width: 800px; /* Adjust the width as needed */
+        word-wrap: break-word;
+    }
+
+    body {
+        background-color: #f0f0f0;
+        color: #000000;
+    }
+
+
+    .btn-showuploadedjobs {
+        background-color: dodgerblue;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-showjobapplications {
+        background-color: darkcyan;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-showuserapplications {
+        background-color: blue;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-registerdata {
+        background-color: sandybrown;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-registerdataasadmin {
+        background-color: forestgreen;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .last-update-column {
+        width: 200px;
+        white-space: nowrap; /* Prevent wrapping of the date text */
+    }
+
+    .button-containerforcompanyjobs {
+        display: flex;
+        gap: 15px; /* Increased gap for more spacing */
+        margin-bottom: 30px; /* Increased margin for more space below */
+        padding: 10px; /* Add padding inside the container */
+        background-color: #f8f9fa; /* Light background color */
+        border-radius: 10px; /* Rounded corners */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        justify-content: center; /* Center the buttons horizontally */
+        align-items: center; /* Center the buttons vertically */
+        flex-wrap: nowrap; /* Prevent buttons from wrapping to the next line */
+        width: 150%; /* Adjust the width as needed */
+        overflow-x: auto; /* Allow horizontal scrolling if buttons exceed container width */
+    }
+
+
+    .button-containerforuser {
+        display: flex;
+        gap: 15px; /* Increased gap for more spacing */
+        margin-bottom: 30px; /* Increased margin for more space below */
+        padding: 10px; /* Add padding inside the container */
+        background-color: #f8f9fa; /* Light background color */
+        border-radius: 10px; /* Rounded corners */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        justify-content: left; /* Center the buttons horizontally */
+        align-items: center; /* Center the buttons vertically */
+        flex-wrap: nowrap; /* Prevent buttons from wrapping to the next line */
+        width: 100%; /* Adjust the width as needed */
+        overflow-x: auto; /* Allow horizontal scrolling if buttons exceed container width */
+    }
+
+    .chart-container {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-top: 20px;
+    }
+
+    .chart-item {
+        display: flex;
+        flex-direction: column;
+        align-items: safe center;
+        margin: 10px;
+        flex: 1 1 45%; /* Ensures each item takes up to 45% of the container width */
+    }
+
+        .chart-item button {
+            width: 100%; /* Ensure the button takes full width of the container */
+            max-width: 300px; /* Ensure buttons have the same maximum width */
+            height: 60px; /* Ensure buttons have the same height */
+            font-size: 16px; /* Adjust font size */
+            padding: 10px; /* Adjust padding */
+            margin-bottom: 10px; /* Add some space between the button and the chart */
+        }
+
+        .chart-item canvas {
+            max-width: 100%; /* Ensure the canvas fits within its container */
+            max-height: 300px;
+        }
+
+    .admin-registration-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 1.8rem;
+    }
+
+    .registration-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: white;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .subsection-title {
+        color: #3498db;
+        margin-bottom: 15px;
+        font-size: 1.3rem;
+    }
+
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .form-input, .form-select {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+        .form-input:focus, .form-select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+    .btn-registerdataasadmin {
+        background-color: #28a745;
+        color: white;
+    }
+
+        .btn-registerdataasadmin:hover {
+            background-color: #218838;
+        }
+
+    .btn-save-subarea {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+        .btn-save-subarea:hover {
+            background-color: #138496;
+        }
+</style>
+
+@if (ShowStudentRegistrationButton)
+{
+    <h3><strong>Student Profile</strong></h3>
+}
+@if (ShowCompanyRegistrationButton)
+{
+    <h3><strong>Company User Profile</strong></h3>
+}
+@if (ShowProfessorRegistrationButton)
+{
+    <h3><strong>Professor Profile</strong></h3>
+}
+@if (ShowAdminRegistrationButton)
+{
+    <h3><strong>Administration Profile</strong></h3>
+}
+@if (ShowResearchGroupRegistrationButton)
+{
+    <h3><strong>Research Group Profile</strong></h3>
+}
+
+
+
+
+@*---------------------- -------------------- -------------------- --------------------EDW THA MPEI GIA STUDENTS -------------------- -------------------- -------------------- -------------------- -------------------- --------------------*@
+@*
+@if (userData != null)
+{
+    <table class="outer-table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Surname</th>
+                <th>Department</th>
+                <th>Registry Number</th>
+                <th>Image</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="readonly-input">@userData.Email</td>
+                <td><input type="text" @bind="userData.Name" class="form-control" /></td>
+                <td><input type="text" @bind="userData.Surname" class="form-control" /></td>
+                <td>
+                    <select @bind="userData.Department" class="form-control">
+                        @foreach (var department in departments)
+                        {
+                            <option value="@department">@department</option>
+                        }
+                    </select>
+                </td>
+                <td><input type="text" @bind="userData.RegNumber" class="form-control" /></td>
+                <td>
+                    <InputFile OnChange="HandleFileChange" accept="image/*" class="form-control" />
+                    @if (userData.Image != null)
+                    {
+                        <img src="@($"data:image/png;base64,{Convert.ToBase64String(userData.Image)}")" alt="User Image" style="max-width: 100px; max-height: 100px;" />
+                    }
+                </td>
+            </tr>
+            <tr class="table-header">
+                <td colspan="6">
+                    <!-- CV input header -->
+                    <h4 class="table-header-title">Upload/Update CV</h4>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6">
+                    <!-- CV input row -->
+                    <InputFile OnChange="HandleCVFileChange" accept=".pdf,.doc,.docx" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6">
+                    <!-- Empty row for spacing -->
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6">
+                    <table class="inner-table">
+                        <thead>
+                            <tr>
+                                <th>Sign Up Date</th>
+                                <th>Last Login Date</th>
+                                <th>Profile Last Update</th>
+                                <th>CV Last Update</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="readonly-input">@userSignUpD</td>
+                                <td class="readonly-input">@userLogInD</td>
+                                <td class="readonly-input">@userLastProfileUpdate</td>
+                                <td class="readonly-input">@userLastCVUpdate</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6">
+                    <h4 class="table-header-title">Student's Registered Skills</h4>
+                    <ul>
+                        @foreach (var keyword in userKeywords)
+                        {
+                            <li>@keyword</li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6">
+                    <h4 class="table-header-title">Student's Target Areas</h4>
+                    <ul>
+                        @foreach (var area in userAreas)
+                        {
+                            <li>@area</li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    *@
+@if (ShowStudentRegistrationButton)
+{
+    
+    <div class="button-containerforuser">
+        <button class="btn btn-updateuserdata" @onclick="() => EditStudentRegistration(userData.Id)">Update Student Data</button>
+        <button class="btn btn-deleteuserdata" @onclick="DeleteUser">Delete Student Data</button> @*THA MEINEI EDW WS EXEI*@
+        @*
+        <button class="btn btn-showuserapplications" @onclick="LoadUserApplications">Show My Applications</button> @*THA PAEI STO MAIN LAYOUT*@
+    </div>
+    <br />
+    <br />
+}
+@*}*@
+
+
+
+
+@* -------------------- -------------------- -------------------- -------------------- --------------------EDW THA MPEI GIA COMPANIES -------------------- -------------------- -------------------- -------------------- --------------------*@
+
+
+@if (ShowCompanyRegistrationButton)
+{
+    @*
+@if (companyData != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Postal Code</th>
+                <th>Region</th>
+                <th>Town</th>
+                <th>Company Description</th>
+                <th>Areas Of Interest</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="readonly-input">@companyData.CompanyEmail</td>
+                <td><input type="text" @bind="companyData.CompanyPC" class="form-control" /></td>
+                <td class="form-group">
+                    <select @bind="companyData.CompanyRegions" class="form-control">
+                        <option value="">-- Update Region --</option>
+                        @foreach (var region in Regions)
+                        {
+                            <option value="@region">@region</option>
+                        }
+                    </select>
+                </td>
+
+                <td class="form-group">
+                    <select @bind="companyData.CompanyTown" class="form-control">
+                        <option value="">-- Update Town --</option>
+                        @if (!string.IsNullOrEmpty(companyData.CompanyRegions) && RegionToTownsMap.ContainsKey(companyData.CompanyRegions))
+                        {
+                            foreach (var town in RegionToTownsMap[companyData.CompanyRegions])
+                            {
+                                <option value="@town">@town</option>
+                            }
+                        }
+                    </select>
+                </td>
+
+                <td><input type="text" @bind="companyData.CompanyDescription" class="form-control" /></td>
+
+                <td class="form-control">
+                    <ul style="padding-left: 0;">
+                        @foreach (var area in ParseCompanyAreas(companyData.CompanyAreas))
+                        {
+                            <li style="display: flex; align-items: center; margin-bottom: 5px;">
+                                <span style="flex: 1;">@area</span>
+                                <button @onclick="() => RemoveArea(area)" class="btn btn-link" style="padding: 2px 6px; color: black;">
+                                    <span>&times;</span>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+
+
+                    <div style="margin-top: 10px;">
+                        <select @bind="selectedAreaId" class="form-control" style="width: 200px; display: inline-block;">
+                            <option value="">-- Select Area --</option>
+                            @foreach (var area in areas)
+                            {
+                                <option value="@area.Id">@area.AreaName</option>
+                            }
+                        </select>
+                        <br />
+                        <br />
+                        <button @onclick="AddSelectedArea" class="btn btn-primary" style="margin-left: 0px;">
+                         Add New Area Of Expertise
+                        </button>
+                    </div>
+                    @if (showDuplicateMessage)
+                    {
+                        <p class="text-danger">Area @duplicateAreaName is already registered.</p>
+                    }
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <h3>>> CEO Data</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Desired Skills</th>
+                <th>CEO Name</th>
+                <th>CEO Surname</th>
+                <th>CEO Tax ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text" @bind="companyData.CompanyDesiredSkills" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyCEOName" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyCEOSurname" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyTaxID" class="form-control" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <h3>>> HR Data</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>HR Name</th>
+                <th>HR Surname</th>
+                <th>HR Email</th>
+                <th>HR Telephone</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text" @bind="companyData.CompanyHRName" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyHRSurname" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyHREmail" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyHRTelephone" class="form-control" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <h3>>> Company Administrator Profile Data</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Administrator Email</th>
+                <th>Administrator Name</th>
+                <th>Administrator Surname</th>
+                <th>Administrator Telephone</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text" @bind="companyData.CompanyAdminEmail" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyAdminName" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyAdminSurname" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyAdminTelephone" class="form-control" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <h3>>> Corporate Activity Details </h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Company's Employees</th>
+                <th>Employees - Last Update</th>
+                <th>Turnover</th>
+                <th>Turnover - Last Update</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text" @bind="companyData.CompanyEmployees" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanEmployeesLastUpdate" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyTurnover" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyTurnoverLastUpdate" class="form-control" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Number Of Export Countries</th>
+                <th>Number Of Export Countries - Last Update</th>
+                <th>Export Countries</th>
+                <th>Export Countries - Last Update</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text" @bind="companyData.CompanyExportCountriesNumber" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyExportCountriesNumberLastUpdate" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyExportCountries" class="form-control" /></td>
+                <td><input type="text" @bind="companyData.CompanyExportCountriesLastUpdate" class="form-control" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <br/>
+    *@
+    @*
+    <div class="button-containerforcompanyjobs">
+        <button class="btn btn-updatecompanydata" @onclick="() => EditCompanyRegistration(companyData.Id)">Update Company Data</button>
+        <button class="btn btn-deletecompanydata" @onclick="DeleteCompany">Delete Company Data</button>
+        <button class="btn btn-showuploadedjobs" @onclick="LoadJobPositions">Show My Uploaded Jobs</button>
+        <button class="btn btn-showjobapplications" @onclick="LoadWhoApplied">Show Job Applications</button>
+
+    </div>
+    *@
+    <br />
+}
+@*}*@
+
+@* -------------------- -------------------- -------------------- --------------------EDW UA MPEI GIA TOUS PROFESSORS -------------------- -------------------- -------------------- -------------------- --------------------*@
+@if (professorData != null)
+{
+    <h3><strong>1)</strong> Download Student's CV (Αριθμός Μητρώου)</h3>
+    <div class="form-group">
+        <div class="input-group">
+            <input type="text" class="form-control" inputmode="numeric" @oninput="HandleRegistryNumberInput" />
+            <div class="input-group-append" style="margin-left: 10px;">
+                <button type="button" class="btn btn-submit" @onclick="DownloadFileByRegNumber">Download CV</button>
+            </div>
+        </div>
+    </div>
+    <br />
+    @if (downloadByRegistryIsOk)
+    {
+        <p>Student Not Found</p>
+    }
+    <br />
+    <br />
+    @*
+    <h3><strong>2)</strong> Πληροφορίες για Εγγεγραμμένους Φοιτητές</h3>
+    <p><strong>Total Number of Students Registered:</strong> @totalStudentsCount</p>
+    <div class="chart-container">
+    <div class="chart-item">
+        <button type="button" class="btn btn-info" @onclick="ToggleDoughnutChart">Γλώσσες Προγραμματισμού</button>
+        <br />
+        <canvas id="doughnutChart" style="display: none;"></canvas>
+        </div>
+        <div class="chart-item">
+            <button type="button" class="btn btn-info" @onclick="ToggleDepartmentDistributionChart">Ποσοστό Φοιτητών</button>
+            <br />
+            <canvas id="departmentDistributionChart" style="display: none;"></canvas>
+        </div>
+    </div>
+    <br />
+    *@
+
+
+    <h3><strong>3)</strong> Οι Πτυχιακές μου Εργασίες</h3>
+    @if (professorTheses != null && professorTheses.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Τίτλος Πτυχιακής</th>
+                    <th>Ενέργεια</th>
+                    <th>Φορές Ενημέρωσης</th>
+                    <th>Τελευταία Ενημέρωση</th>
+                    <th>Συνημμένο Αρχείο</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var thesis in professorTheses)
+                {
+                    <tr>
+                        <td>
+                            <button class="btn btn-link" @onclick="() => ToggleThesisDetails(thesis)">
+                                @if (thesisDetails.ContainsKey(thesis.Id) && thesisDetails[thesis.Id])
+                                {
+                                    <i class="fas fa-minus"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-plus"></i>
+                                }
+                                @thesis.ThesisTitle
+                            </button>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <button class="btn btn-danger" @onclick="() => DeleteThesis(thesis.Id)">Διαγραφή Πτυχιακής</button>
+                                <div style="margin-left: 10px;"></div>
+                                <button class="btn btn-edit" @onclick="() => EditThesis(thesis.Id)">Επεξεργασία Πτυχιακής</button>
+                            </div>
+                        </td>
+                        <td>@thesis.ThesisTimesUpdated</td>
+                        <td>
+                            @if (thesis.ThesisTimesUpdated == 0)
+                            {
+                                @(thesis.ThesisUploadDateTime.ToString("yyyy-MM-dd HH:mm:ss"))
+                            }
+                            else
+                            {
+                                @(thesis.ThesisUpdateDateTime.ToString("yyyy-MM-dd HH:mm:ss"))
+                            }
+                        </td>
+                        <td>
+                            @if (thesis.ThesisAttachment != null && thesis.ThesisAttachment.Length > 0)
+                            {
+                                <button class="btn btn-link" @onclick="() => DownloadThesisAttachment(thesis.Id)">Download Attachment</button>
+                            }
+                            else
+                            {
+                                <span>No Attachment</span>
+                            }
+                        </td>
+                    </tr>
+                    @if (thesisDetails.ContainsKey(thesis.Id) && thesisDetails[thesis.Id])
+                    {
+                        <tr>
+                            <td colspan="5">
+                                <table class="inner-table">
+                                    <tr>
+                                        <th>Ημερομηνία Υποβολής</th>
+                                        <td>@(thesis.ThesisUploadDateTime.ToString("dd/MM/yyyy HH:mm:ss"))</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Περιγραφή Πτυχιακής</th>
+                                        <td colspan="2" class="position-description">@thesis.ThesisDescription</td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Δεν υπάρχουν πτυχιακές εργασίες.</p>
+    }
+    <br />
+    <h3><strong>4)</strong> Αιτήσεις Πτυχιακών Εργασιών</h3>
+    @if (thesisApplications != null && thesisApplications.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Τίτλος Πτυχιακής</th>
+                    <th>Ημερομηνία Αίτησης</th>
+                    <th>Όνομα Φοιτητή</th>
+                    <th>Επώνυμο Φοιτητή</th>
+                    <th>Αρ. Μητρώου</th>
+                    <th>Διαγραφή Αίτησης Φοιτητή</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var thesis in thesisApplications)
+                {
+                    <tr>
+                        <td>@thesis.ThesisTitle</td>
+                        <td>@thesis.DateTimeApplied.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>@thesis.StudentName</td>
+                        <td>@thesis.StudentSurname</td>
+                        <td>@thesis.StudentRegNumber</td>
+                        <td>
+                            <button class="btn btn-danger" @onclick="@(() => DeleteThesisApplication(thesis.RNGForThesisUploaded.ToString()))">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <br />
+        <br />
+    }
+    else
+    {
+        <p>Δεν υπάρχουν αιτήσεις για πτυχιακές εργασίες.</p>
+    }
+}
+
+
+
+
+
+@if (showCVAlert)
+{
+    <div class="alert alert-warning" role="alert">
+        You have not attached a CV yet. Please upload your CV.
+    </div>
+}
+@if (updateSuccess)
+{
+    <div class="success-message">
+        <p><strong>Update Completed!</strong></p>
+    </div>
+}
+else if (updateError)
+{
+    <div class="error-message">
+        <p><strong>Error: Update Failed!</strong></p>
+    </div>
+}
+@if (userData == null)
+{
+    @if (ShowStudentRegistrationButton)
+    {
+        <button class="btn btn-registerdata" @onclick="GoToStudentRegistration">Register Your Data</button>
+        <br />
+    }
+}
+@if (professorData == null)
+{
+    @if (ShowProfessorRegistrationButton)
+    {
+        <button class="btn btn-registerdata" @onclick="GoToProfessorRegistration">Register Your Data</button>
+    }
+}
+
+@if (companyData == null)
+{
+
+    @if (ShowCompanyRegistrationButton)
+    {
+        <button class="btn btn-registerdata" @onclick="GoToCompanyRegistration">Register Company Data</button>
+
+    }
+}
+
+@if (researchGroupData == null)
+{
+    @if (ShowResearchGroupRegistrationButton)
+    {
+        <button class="btn btn-registerdata" @onclick="GoToResearchGroupRegistration">Register Research Group Data</button>
+    }
+}
+
+
+@* -------------------- -------------------- -------------------- -------------------- -------------------- --------------------EDW UA MPEI GIA TA COMPANIES -------------------- -------------------- -------------------- -------------------- --------------------*@
+@if (companyJobs != null && companyJobs.Any())
+{
+    <h3>Job Positions</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Action</th>
+                <th>Times Updated</th>
+                <th class="last-update-column">Last Update</th>
+                <th>Position Attachment</th> <!-- New column for attachment -->
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var position in companyJobs)
+            {
+                <tr>
+                    <td>
+                        <button class="btn btn-link" @onclick="() => TogglePositionDetails(position)">
+                            @if (positionDetails.ContainsKey(position.Id) && positionDetails[position.Id])
+                            {
+                                <i class="fas fa-minus"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-plus"></i>
+                            }
+                            @position.PositionTitle
+                        </button>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center;">
+                            <button class="btn btn-danger" @onclick="() => DeleteJobPosition(position.Id)">Delete Position</button>
+                            <div style="margin-left: 10px;"></div>
+                            <button class="btn btn-edit" @onclick="() => EditJobPosition(position.Id)">Edit Position</button>
+                        </div>
+                    </td>
+                    <td>@position.TimesUpdated</td>
+                    <td class="last-update-column">
+                        @if (position.TimesUpdated == 0)
+                        {
+                            @position.UploadDateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                        }
+                        else
+                        {
+                            @position.UpdateDateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                        }
+                    </td>
+                    <td>
+                        @if (position.PositionAttachment != null && position.PositionAttachment.Length > 0)
+                        {
+                            <button class="btn btn-link" @onclick="() => DownloadAttachment(position.Id)">Download Attachment</button>
+                        }
+                        else
+                        {
+                            <span>No Attachment</span>
+                        }
+                    </td>
+                </tr>
+                @if (positionDetails.ContainsKey(position.Id) && positionDetails[position.Id])
+                {
+                    <tr>
+                        <td colspan="4">
+                            <table class="inner-table">
+                                <tr>
+                                    <th>Upload Date</th>
+                                    <td>@position.UploadDateTime.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                </tr>
+                                <tr>
+                                    <th>Position Type</th>
+                                    <td>@position.PositionType</td>
+                                </tr>
+                                <tr>
+                                    <th>Position Description</th>
+                                    <td colspan="2" class="position-description">@position.PositionDescription</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <br />
+}
+
+@* -------------------- -------------------- -------------------- -------------------- TABLE GIA NA VLEPEI O COMPANY TIS AITISEIS POY GINANE STIN ETAIRIA GIA TA POSITION TIS -------------------- -------------------- -------------------- -------------------- --------------------*@
+@*
+@if (jobApplicationsmadeToCompany != null && jobApplicationsmadeToCompany.Any())
+{
+    <h3>Job Applications</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Application Creation</th>
+                <th>Position Title</th>
+                <th>Student's Avatar</th>
+                <th>Student's Registry Number</th>
+                <th>Applicant's Name</th>
+                <th>Applicant's Surname</th>
+                <th>Applicant's Email</th>
+                <th>Position Type</th>
+                <th>Accept Student's Application</th><!-- Add action column for accept button -->
+                <th>Reject Student's Application</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var application in jobApplicationsmadeToCompany)
+            {
+                <tr>
+                    <td>@application.DateTimeStudentAppliedForPosition</td>
+                    <td>@application.PositionTitleAppliedAtTheCompany</td>
+                    <td>
+                        <img src="@($"data:image/jpeg;base64,{Convert.ToBase64String(application.StudentImageApplied)}")" alt="Profile Picture" width="50" height="50" />
+                    </td>
+                    <td>@application.StudentRegNumberApplied</td>
+                    <td>@application.StudentNameApplied</td>
+                    <td>@application.StudentSurnameApplied</td>
+                    <td>@application.StudentEmailApplied</td>
+                    <td>@application.CompanyPositionTypeApplied</td>
+                    <td>
+                        <button class="btn btn-success" @onclick="() => AcceptApplicationAsCompany(application)">Accept</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-success" @onclick="() => RejectApplicationAsCompany(application)">Reject</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <br />
+}
+*@
+
+
+
+@*   -------------------- -------------------- -------------------- --------------------TABLE GIA NA VLEPEI O STUDENT TIS PTYXIAKES TOY ERGASIES -------------------- -------------------- -------------------- -------------------- -------------------- --------------------*@
+@if (showApplications)
+{
+    @if (thesisApplications != null && thesisApplications.Any())
+    {
+        <h3>Αίτηση Πτυχιακής Εργασίας Φοιτητή</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date Applied</th>
+                    <th>Thesis Title</th>
+                    <th>Supervisor's Email</th>
+                    <th>Supervisor's Name</th>
+                    <th>Supervisor's Surname</th>
+                    <th>Withdraw Thesis Application</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var thesis in thesisApplications)
+                {
+                    <tr>
+                        <td>@thesis.DateTimeApplied.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>@thesis.ThesisTitle</td>
+                        <td>@thesis.SupervisorEmail</td>
+                        <td>@thesis.SupervisorName</td>
+                        <td>@thesis.SupervisorSurname</td>
+                        <td>
+                            <button class="btn btn-danger" @onclick="@(() => DeleteThesisApplication(thesis.StudentRegNumber.ToString()))">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else if (showApplications)
+    {
+        <div class="alert alert-warning" role="alert">
+            <p>Δεν υπάρχει καμία Αίτηση για ανάληψη Πτυχιακής Εργασίας</p>
+        </div>
+    }
+
+
+
+
+    @* -------------------- -------------------- -------------------- -------------------- TABLE GIA NA VLEPEI O STUDENT TIS THESEIS ERGASIAS POU EKANE APPLY -------------------- -------------------- -------------------- -------------------- --------------------*@
+    @if (jobApplications != null && jobApplications.Any())
+    {
+        <h3>Αιτήσεις Εργασίας Φοιτητή</h3>
+        <label for="positionFilter">Filter by Position Type:</label>
+        <select id="positionFilter" onchange="filterTable()">
+            <option value="All">All</option>
+            <option value="Full-Time">Full-Time</option>
+            <option value="Part-Time">Part-Time</option>
+            <option value="Internship">Internship</option>
+        </select>
+        @*
+        <table class="table">
+            <thead>
+                <tr>
+                    @if (!ShowStudentRegistrationButton)
+                    {
+                        <th>Profile Picture</th>
+                        <th>Student Name</th>
+                        <th>Student Surname</th>
+                    }
+                    <th>Date Applied</th>
+                    <th>Job Type</th>
+                    <th>Position Applied For</th>
+                    <th>Student Registry Number</th>
+                    <th>Student's CV</th>
+                    @if (!ShowCompanyRegistrationButton)
+                    {
+                        <th>Company Applied</th>
+                    }
+                    <th>Withdraw Job Application</th>
+                </tr>
+            </thead>
+            
+            <tbody id="jobApplicationsTable">
+                @foreach (var application in jobApplications)
+                {
+                    // Get current student details from the Student navigation property
+                    var student = application.StudentDetails.Student;
+                    var company = application.CompanyDetails;
+
+                    <tr>
+                        @if (!ShowStudentRegistrationButton)
+                        {
+                            <td>
+                                @if (student?.Image != null)
+                                {
+                                    <img src="@($"data:image/jpeg;base64,{Convert.ToBase64String(student.Image)}")"
+                                         alt="Profile Picture" width="50" height="50" />
+                                }
+                                else
+                                {
+                                    <span>No Image</span>
+                                }
+                            </td>
+                            <td>@student?.Name</td>
+                            <td>@student?.Surname</td>
+                        }
+                        
+                        <td>@application.DateTimeStudentAppliedForPosition.ToString("yyyy-MM-dd HH:mm:ss")</td>
+            
+                        <td class="job-type">@company?.JobType</td>
+                        <td>@company?.JobTitle</td>
+                        <td>@student?.RegNumber</td>
+                        <td>
+                            @if (student?.Attachment != null) @* Changed from CV to Attachment 
+                            {
+                                <a href="@($"data:application/pdf;base64,{Convert.ToBase64String(student.Attachment)}")"
+                                   target="_blank">View CV</a>
+                            }
+                            else
+                            {
+                                <span>No CV</span>
+                            }
+                        </td>
+                        @if (!ShowCompanyRegistrationButton)
+                        {
+                            <td>@company?.CompanyName</td>
+                        }
+                        
+                        <td>
+                            <button class="btn btn-danger"
+                                    @onclick="@(() => WithdrawJobApplicationMadeByStudent(application))">
+                                Delete
+                            </button>
+                        </td>
+            
+                    </tr>
+                }
+            </tbody>
+    
+        </table>
+    *@
+    }
+}
+
+@* -------------------- -------------------- -------------------- --------------------ADMIN ACTIONS -------------------- -------------------- -------------------- -------------------- -------------------- --------------------*@
+@if (ShowAdminRegistrationButton)
+{
+    <div class="admin-registration-container">
+        <h2 class="section-title">Καταχώρηση Περιοχών και Ικανοτήτων</h2>
+
+        <div class="registration-section">
+            <h3 class="subsection-title">Καταχώρηση Νέας Ικανότητας</h3>
+            <EditForm Model="newSkill" OnValidSubmit="RegisterSkillsAsAdmin" class="form-container">
+                <div class="form-group">
+                    <label for="SkillName" class="form-label">Ικανότητα: </label>
+                    <InputText id="SkillName" @bind-Value="newSkill.SkillName" class="form-input" />
+                    <button type="submit" class="btn btn-registerdataasadmin">Καταχώρηση: </button>
+                </div>
+            </EditForm>
+        </div>
+
+        <div class="registration-section">
+            <h3 class="subsection-title">Καταχώρηση Περιοχής Εξειδίκευσης</h3>
+            <EditForm Model="newArea" OnValidSubmit="RegisterAreasAsAdmin" class="form-container">
+                <div class="form-group">
+                    <label for="AreaName" class="form-label">Περιοχή Εξειδίκευσης: </label>
+                    <InputText id="AreaName" @bind-Value="newArea.AreaName" class="form-input" />
+                    <button type="submit" class="btn btn-registerdataasadmin">Καταχώρηση: </button>
+                </div>
+            </EditForm>
+        </div>
+
+        <div class="registration-section">
+            <h3 class="subsection-title">Υποκατηγορίες Περιοχών Εξειδίκευσης</h3>
+            <EditForm Model="subAreaModel" class="form-container">
+                <!-- Added EditForm here -->
+                <div class="form-group">
+                    <label class="form-label">Επιλογή Περιοχής Εξειδίκευσης:</label>
+                    <InputSelect @bind-Value="selectedAreaId" class="form-select">
+                        <option value="">-- Επιλογή Περιοχής --</option>
+                        @foreach (var area in areas)
+                        {
+                            <option value="@area.Id">@area.AreaName</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                @if (selectedAreaId != null)
+                {
+                    var selectedArea = areas.FirstOrDefault(a => a.Id == selectedAreaId);
+                    if (selectedArea != null)
+                    {
+                        <div class="form-group">
+                            <label class="form-label">Υποκατηγορία Εξειδίκευσης για: @selectedArea.AreaName:</label>
+                            <InputText @bind-Value="subAreaFields" class="form-input" />
+                        </div>
+                        <button type="button" @onclick="SaveSubAreaFields" class="btn btn-save-subarea">Αποθήκευση Υποκατηγορίας Περιοχής Εξειδίκευσης</button>
+                    }
+                }
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* -------------------- -------------------- --------------------TELOS UI -------------------- -------------------- -------------------- --------------------*@
+
+
+
+@code {
+    private Area subAreaModel = new Area(); // Create an appropriate model class
+
+    private Student userData;
+    private Company companyData;
+    private Professor professorData;
+    private ResearchGroup researchGroupData;
+
+    private Skill skillData;
+    private bool updateCompanySuccess = false;
+    private bool updateCompanyError = false;
+    private IBrowserFile file;
+    private bool updateSuccess = false;
+    private bool updateError = false;
+    private bool ShowStudentRegistrationButton = false;
+    private bool ShowCompanyRegistrationButton = false;
+    private bool ShowProfessorRegistrationButton = false;
+    private bool ShowAdminRegistrationButton = false;
+    private bool ShowResearchGroupRegistrationButton = false;
+    private Dictionary<int, bool> positionDetails = new Dictionary<int, bool>();
+
+    private string userSignUpD = "";
+    private string userLogInD = "";
+    private DateTime? userLastProfileUpdate; // Nullable DateTime for last profile update
+    private DateTime? userLastCVUpdate;
+    private bool showCVAlert = false;
+
+    private CompanyJob job;
+    private List<CompanyJobApplied> jobApplications;
+
+    private Skill newSkill = new Skill();
+    private Area newArea = new Area();
+
+    private List<Area> areas; // List to store areas fetched from database
+    private int? selectedAreaId; // Selected area ID from dropdown
+    private string subAreaFields = ""; // Variable to store sub area fields input
+
+    private List<string> departments = new List<string> { "Πληροφορικής & Τηλεπικοινωνιών", "Ηλεκτρολόγων Μηχανικών", "Τεχνολογιών Ψηφιακής Βιομηχανίας", "Τοπογράφων Μηχανικών" }; // Add more departments here (DES EXCEL VASEWN APO DIONYSI)
+    private List<CompanyJob> companyJobs;
+    // Inject JSRuntime
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
+    private string errorMessage = "";
+
+    private IBrowserFile cvFile;
+    private Student newStudent = new Student(); // Example placeholder for Student model
+    private Company newCompany = new Company(); // Example placeholder for Company model
+    private List<Skill> userSkills = new List<Skill>();
+
+    private List<string> userKeywords = new List<string>();
+    private List<string> userAreas = new List<string>();
+
+    private bool showDuplicateMessage;
+    public bool downloadByRegistryIsOk = false;
+    private int totalStudentsCount = 0;
+    private string? registryNumberInput;
+    private bool isDoughnutChartVisible = false;
+    private bool isDepartmentDistributionChartVisible = false;
+    private Dictionary<string, int> departmentDistribution = new Dictionary<string, int>();
+    private Dictionary<string, int> skillDistribution = new Dictionary<string, int>();
+
+
+    private bool hasReadAsProfessorPermission = false;
+    private string professorName = "Anonymous User";
+    public Professor newProfessor = new Professor { };
+
+    private string duplicateAreaName;
+
+    private List<ProfessorThesis> professorTheses;
+    private Dictionary<int, bool> thesisDetails = new Dictionary<int, bool>();
+
+    private ProfessorThesis thesis = new ProfessorThesis();
+
+    private bool showSuccessMessage = false;
+    private bool showErrorMessage = false;
+    private bool showSuccessUpdateMessage = false;
+    private bool isEditing = false;
+
+    private List<ThesisApplication> thesisApplications;
+
+    bool showApplications = false;
+
+    private List<CompanyJobApplied> jobApplicationsmadeToCompany = new List<CompanyJobApplied>(); // List for job applications
+    private Student student;
+
+
+    private List<string> Regions = new List<string>
+    {
+        "Ανατολική Μακεδονία και Θράκη",
+        "Κεντρική Μακεδονία",
+        "Δυτική Μακεδονία",
+        "Ήπειρος",
+        "Θεσσαλία",
+        "Ιόνια Νησιά",
+        "Δυτική Ελλάδα",
+        "Κεντρική Ελλάδα",
+        "Αττική",
+        "Πελοπόννησος",
+        "Βόρειο Αιγαίο",
+        "Νότιο Αιγαίο",
+        "Κρήτη"
+};
+    private Dictionary<string, List<string>> RegionToTownsMap = new Dictionary<string, List<string>>
+    {
+        {"Ανατολική Μακεδονία και Θράκη", new List<string> {"Κομοτηνή", "Αλεξανδρούπολη", "Καβάλα", "Ξάνθη", "Δράμα", "Ορεστιάδα", "Διδυμότειχο", "Ίασμος", "Νέα Βύσσα", "Φέρες"}},
+        {"Κεντρική Μακεδονία", new List<string> {"Θεσσαλονίκη", "Κατερίνη", "Σέρρες", "Κιλκίς", "Πολύγυρος", "Ναούσα", "Έδεσσα", "Γιαννιτσά", "Καβάλα", "Άμφισσα"}},
+        {"Δυτική Μακεδονία", new List<string> {"Κοζάνη", "Φλώρινα", "Καστοριά", "Γρεβενά"}},
+        {"Ήπειρος", new List<string> {"Ιωάννινα", "Άρτα", "Πρέβεζα", "Ηγουμενίτσα"}},
+        {"Θεσσαλία", new List<string> {"Λάρισα", "Βόλος", "Τρίκαλα", "Καρδίτσα"}},
+        {"Ιόνια Νησιά", new List<string> {"Κέρκυρα", "Λευκάδα", "Κεφαλονιά", "Ζάκυνθος", "Ιθάκη", "Παξοί", "Κυθήρα"}},
+        {"Δυτική Ελλάδα", new List<string> {"Πάτρα", "Μεσολόγγι", "Αμφιλοχία", "Πύργος", "Αιγίο", "Ναύπακτος"}},
+        {"Κεντρική Ελλάδα", new List<string> {"Λαμία", "Χαλκίδα", "Λιβαδειά", "Θήβα", "Αλιάρτος", "Αμφίκλεια"}},
+        {"Αττική", new List<string> {"Αθήνα", "Πειραιάς", "Κηφισιά", "Παλλήνη", "Αγία Παρασκευή", "Χαλάνδρι", "Καλλιθέα", "Γλυφάδα", "Περιστέρι", "Αιγάλεω"}},
+        {"Πελοπόννησος", new List<string> {"Πάτρα", "Τρίπολη", "Καλαμάτα", "Κορίνθος", "Άργος", "Ναύπλιο", "Σπάρτη", "Κυπαρισσία", "Πύργος", "Μεσσήνη"}},
+        {"Βόρειο Αιγαίο", new List<string> {"Μυτιλήνη", "Χίος", "Λήμνος", "Σάμος", "Ίκαρος", "Λέσβος", "Θάσος", "Σκύρος", "Ψαρά"}},
+        {"Νότιο Αιγαίο", new List<string> {"Ρόδος", "Κως", "Κρήτη", "Κάρπαθος", "Σαντορίνη", "Μύκονος", "Νάξος", "Πάρος", "Σύρος", "Άνδρος"}},
+        {"Κρήτη", new List<string> {"Ηράκλειο", "Χανιά", "Ρέθυμνο", "Αγία Νικόλαος", "Ιεράπετρα", "Σητεία", "Κίσαμος", "Παλαιόχωρα", "Αρχάνες", "Ανώγεια"}},
+    };
+
+
+
+
+
+    private async Task OnDeleteUserClicked()
+    {
+        // Redirect the user to the Auth0 login page for re-authentication
+        var redirectUri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).ToString();
+        var authorizeUri = $"login?redirectUri=/" +
+            $"?client_id=owvXtznEkAHgNZSyxaJoEZNzmuSWuBUkd" +
+            $"&response_type=code" +
+            $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+            $"&prompt=login";
+
+        // Call JavaScript function to navigate
+        await JSRuntime.InvokeVoidAsync("redirectToAuth0", authorizeUri);
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserData();
+        await LoadCompanyData();
+        await LoadProfessorData();
+        await LoadResearchGroupData(); // Add this line
+
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        areas = await dbContext.Areas.ToListAsync();
+        totalStudentsCount = await dbContext.Students.CountAsync();
+
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var userEmail = user.FindFirst("name")?.Value;
+
+        if (!string.IsNullOrEmpty(userEmail))
+        {
+            professorTheses = await dbContext.ProfessorTheses
+                                             .Where(t => t.ProfessorEmailUsedToUploadThesis == userEmail)
+                                             .ToListAsync();
+        }
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var roleClaim = user.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
+            if (roleClaim != null)
+            {
+                professorName = user.Identity?.Name ?? "Anonymous User";
+                var userRole = roleClaim.Value;
+                hasReadAsProfessorPermission = userRole == "Professor";
+            }
+        }
+
+        @*
+        if (hasReadAsProfessorPermission)
+        {
+            await LoadSkillDistributionAsync();
+            await LoadDepartmentDistributionAsync();
+        }
+        *@
+    }
+
+    @*
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (hasReadAsProfessorPermission)
+        {
+            await JSRuntime.InvokeVoidAsync("createDoughnutChart", "doughnutChart", new
+            {
+                labels = skillDistribution.Keys.ToArray(),
+                datasets = new[]
+                {
+                    new
+                    {
+                        data = skillDistribution.Values.ToArray(),
+                        backgroundColor = new[]
+                        {
+                            "#FF6384",
+                            "#36A2EB",
+                            "#FFCE56",
+                            "#4BC0C0",
+                            "#9966FF",
+                            "#FF9F40"
+                        }
+                    }
+                }
+            });
+
+            await JSRuntime.InvokeVoidAsync("createDoughnutChart", "departmentDistributionChart", new
+            {
+                labels = departmentDistribution.Keys.ToArray(),
+                datasets = new[]
+                {
+                    new
+                    {
+                        data = departmentDistribution.Values.ToArray(),
+                        backgroundColor = new[]
+                        {
+                            "#FF6384",
+                            "#36A2EB",
+                            "#FFCE56",
+                            "#4BC0C0",
+                            "#9966FF",
+                            "#FF9F40"
+                        }
+                    }
+                }
+            });
+        }
+    }
+    *@
+
+    private async Task LoadUserData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var userEmail = user.FindFirst("name")?.Value;
+            var userSignUpDate = user.FindFirst("created_at")?.Value?.Split('T')[0];
+            var userLastLogin = user.FindFirst("last_login")?.Value;
+
+            Console.WriteLine($"User Signed Up at: {userSignUpDate}");
+            Console.WriteLine($"User Last Login was at: {userLastLogin}");
+
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            if (!string.IsNullOrEmpty(userSignUpDate))
+            {
+                userSignUpD = userSignUpDate;
+            }
+
+            if (!string.IsNullOrEmpty(userLastLogin))
+            {
+                userLogInD = userLastLogin;
+            }
+
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                userData = await dbContext.Students.FirstOrDefaultAsync(s => s.Email == userEmail);
+            }
+
+            // Initialize LastProfileUpdate
+            if (userData?.LastProfileUpdate != null)
+            {
+                userLastProfileUpdate = userData.LastProfileUpdate;
+            }
+
+            // Initialize LastCVUpdate
+            if (userData?.LastCVUpdate != null)
+            {
+                userLastCVUpdate = userData.LastCVUpdate;
+            }
+            if (userData?.LastCVUpdate == null)
+            {
+                userLastCVUpdate = null;
+            }
+
+            // Parse student-specific keywords
+            if (!string.IsNullOrEmpty(userData?.Keywords))
+            {
+                userKeywords = userData.Keywords.Split(',').Select(k => k.Trim()).ToList();
+            }
+
+            // Parse student-specific areas
+            if (!string.IsNullOrEmpty(userData?.TargetAreas))
+            {
+                userAreas = userData.TargetAreas.Split(',').Select(k => k.Trim()).ToList();
+            }
+
+            // Check if the user has the Student role
+            if (user.IsInRole("Student"))
+            {
+                ShowStudentRegistrationButton = true;
+            }
+            // Check if the user has the Company role
+            if (user.IsInRole("Company"))
+            {
+                ShowCompanyRegistrationButton = true;
+            }
+            // Check if the user has the Professor role
+            if (user.IsInRole("Professor"))
+            {
+                ShowProfessorRegistrationButton = true;
+            }
+            if (user.IsInRole("Admin"))
+            {
+                ShowAdminRegistrationButton = true;
+            }
+            if (user.IsInRole("ResearchGroup"))
+            {
+                ShowResearchGroupRegistrationButton = true;
+            }
+        }
+    }
+
+
+    private async Task LoadCompanyData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var companyEmail = user.FindFirst("name")?.Value; // Get user's email from custom claim name (email CLAIM IS "name")
+
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+            if (!string.IsNullOrEmpty(companyEmail))
+            {
+                companyData = await dbContext.Companies.FirstOrDefaultAsync(s => s.CompanyEmail == companyEmail);
+            }
+
+            // Check if the user has the Student role
+            if (user.IsInRole("Student"))
+            {
+                ShowStudentRegistrationButton = true;
+            }
+            // Check if the user has the Company role
+            if (user.IsInRole("Company"))
+            {
+                ShowCompanyRegistrationButton = true;
+            }
+            // Check if the user has the Company role
+            if (user.IsInRole("Professor"))
+            {
+                ShowProfessorRegistrationButton = true;
+            }
+            // Check if the user has the Research Group role
+            if (user.IsInRole("Research Group"))
+            {
+                ShowResearchGroupRegistrationButton = true;
+            }
+        }
+    }
+
+    private async Task HandleFileChange(InputFileChangeEventArgs e)
+    {
+        var selectedFiles = e.GetMultipleFiles();
+        file = selectedFiles.FirstOrDefault();
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            userData.Image = buffer;
+        }
+    }
+
+    private async Task UpdateUserData()
+    {
+        if (userData != null)
+        {
+            try
+            {
+                using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+                //Update userData in database
+                dbContext.Students.Update(userData);
+                dbContext.SaveChanges(); // Save changes synchronously
+
+                updateSuccess = true;
+                updateError = false;
+
+                // Navigate to studentRegistration page with pre-filled data
+                NavigationManager.NavigateTo($"/studentRegistration/{userData.Id}");
+            }
+            catch (Exception ex)
+            {
+                // Handle any errors that occur during the update process
+                Console.WriteLine($"Error updating user data: {ex.Message}");
+                updateSuccess = false;
+                updateError = true;
+            }
+        }
+    }
+
+    private async Task UpdateCompanyData()
+    {
+        if (companyData != null)
+        {
+            try
+            {
+                using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+                //Update userData in database
+                dbContext.Companies.Update(companyData);
+                dbContext.SaveChanges(); // Save changes synchronously
+
+                updateSuccess = true;
+                updateError = false;
+
+                // Navigate to studentRegistration page with pre-filled data
+                NavigationManager.NavigateTo($"/companyRegistration/{companyData.Id}");
+            }
+            catch (Exception ex)
+            {
+                // Handle any errors that occur during the update process
+                Console.WriteLine($"Error updating user data: {ex.Message}");
+                updateSuccess = false;
+                updateError = true;
+            }
+        }
+    }
+
+
+
+
+
+
+
+    private async Task RegisterSkillsAsAdmin()
+    {
+        try
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            // Check if the skill already exists
+            var existingSkill = await dbContext.Skills
+                .FirstOrDefaultAsync(s => s.SkillName == newSkill.SkillName);
+
+            if (existingSkill != null)
+            {
+                // Skill already exists, show error message
+                await JSRuntime.InvokeVoidAsync("showCustomAlert", $"Το Skill {newSkill.SkillName} έχει καταχωρηθεί ήδη!");
+                return;
+            }
+
+            // Skill does not exist, proceed with adding it
+            dbContext.Skills.Add(newSkill);
+            await dbContext.SaveChangesAsync();
+
+            // Optionally, display a success message
+            await JSRuntime.InvokeVoidAsync("showCustomAlert", $"Το Skill {newSkill.SkillName} καταχωρήθηκε επιτυχώς.");
+
+            // Reset the form
+            newSkill = new Skill();
+        }
+        catch (Exception ex)
+        {
+            // Handle any errors that occur during the registration process
+            Console.WriteLine($"Error registering skill: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showCustomAlert", $"Error registering skill: {ex.Message}");
+        }
+    }
+
+    private async Task RegisterAreasAsAdmin()
+    {
+        try
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            // Check if the area already exists
+            var existingArea = await dbContext.Areas
+                .FirstOrDefaultAsync(a => a.AreaName == newArea.AreaName);
+
+            if (existingArea != null)
+            {
+                // Area already exists, show error message
+                await JSRuntime.InvokeVoidAsync("showCustomAlert", $"Η Περιοχή {newArea.AreaName} έχει καταχωρηθεί ήδη!");
+                return;
+            }
+
+            // Area does not exist, proceed with adding it
+            dbContext.Areas.Add(newArea);
+            await dbContext.SaveChangesAsync();
+
+            // Optionally, display a success message
+            await JSRuntime.InvokeVoidAsync("showCustomAlert", $"Η Περιοχή {newArea.AreaName} καταχωρήθηκε επιτυχώς.");
+
+            // Reset the form
+            newArea = new Area();
+        }
+        catch (Exception ex)
+        {
+            // Handle any errors that occur during the registration process
+            Console.WriteLine($"Error registering Area Of Expertise: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showCustomAlert", $"Error registering Area Of Expertise: {ex.Message}");
+        }
+    }
+
+    private async Task SaveSubAreaFields()
+    {
+        try
+        {
+            var selectedArea = areas.FirstOrDefault(a => a.Id == selectedAreaId);
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+            if (selectedArea != null)
+            {
+                // Append the new sub area fields to the existing ones, separated by a comma
+                if (string.IsNullOrWhiteSpace(selectedArea.AreaSubFields))
+                {
+                    selectedArea.AreaSubFields = subAreaFields;
+                }
+                else
+                {
+                    selectedArea.AreaSubFields += ", " + subAreaFields;
+                }
+
+                dbContext.Areas.Update(selectedArea);
+                await dbContext.SaveChangesAsync();
+
+                // Optionally, display a success message
+                await JSRuntime.InvokeVoidAsync("showCustomAlert", $"Sub Area Fields for {selectedArea.AreaName} saved successfully.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any errors that occur during the saving process
+            Console.WriteLine($"Error saving Sub Area Fields: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showCustomAlert", $"Error saving Sub : {ex.Message}");
+        }
+    }
+
+    private async Task DeleteUser()
+    {
+        // Prompt the user to enter their name
+        string enteredName = await JSRuntime.InvokeAsync<string>("prompt", "Please enter your Full Name:");
+
+        // Get the user's name from the database
+        string userFullName = $"{userData.Name} {userData.Surname}";
+
+        // Check if the entered name matches the user's name in the database
+        if (enteredName != userFullName)
+        {
+            // If the names don't match, show an error message and return
+            await JSRuntime.InvokeVoidAsync("alert", "Invalid name. Deletion cancelled.");
+            return;
+        }
+
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        // If the names match, proceed with deletion
+        try
+        {
+            dbContext.Students.Remove(userData);
+            await dbContext.SaveChangesAsync();
+            userData = null; // Clear user data after deletion
+
+            // Redirect to the student registration page
+            NavigationManager.NavigateTo("/profile");
+        }
+        catch (Exception ex)
+        {
+            // Handle deletion error
+            Console.WriteLine($"Error deleting user data: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteCompany()
+    {
+        // Prompt the user to enter their name
+        string enteredName = await JSRuntime.InvokeAsync<string>("prompt", "Please enter your Company Name:");
+
+        // Get the user's name from the database
+        string companyFullName = $"{companyData.CompanyName}";
+
+        // Check if the entered name matches the user's name in the database
+        if (enteredName != companyFullName)
+        {
+            // If the names don't match, show an error message and return
+            await JSRuntime.InvokeVoidAsync("alert", "Invalid name. Deletion cancelled.");
+            return;
+        }
+
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        // If the names match, proceed with deletion
+        try
+        {
+            dbContext.Companies.Remove(companyData);
+            await dbContext.SaveChangesAsync();
+            companyData = null; // Clear user data after deletion
+
+            // Redirect to the student registration page
+            NavigationManager.NavigateTo("/profile");
+        }
+        catch (Exception ex)
+        {
+            // Handle deletion error
+            Console.WriteLine($"Error deleting user data: {ex.Message}");
+        }
+    }
+
+    private void GoToStudentRegistration()
+    {
+        NavigationManager.NavigateTo("/studentRegistration");
+    }
+
+    private void GoToCompanyRegistration()
+    {
+        NavigationManager.NavigateTo("/companyRegistration");
+    }
+
+    private void GoToProfessorRegistration()
+    {
+        NavigationManager.NavigateTo("/professorRegistration");
+    }
+
+    private void GoToResearchGroupRegistration()
+    {
+        NavigationManager.NavigateTo("/researchGroupRegistration");
+    }
+
+
+    private async Task TogglePositionDetails(CompanyJob position)
+    {
+        if (positionDetails.ContainsKey(position.Id))
+        {
+            positionDetails[position.Id] = !positionDetails[position.Id];
+        }
+        else
+        {
+            positionDetails[position.Id] = true; // Default to true if not found
+        }
+    }
+
+    private async Task DeleteJobPosition(int positionId)
+    {
+        try
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            // Find the position to delete
+            var position = await dbContext.CompanyJobs.FindAsync(positionId);
+            if (position != null)
+            {
+                // Remove the position from the database
+                dbContext.CompanyJobs.Remove(position);
+                await dbContext.SaveChangesAsync();
+
+                // Remove the position from the local list to update the UI
+                companyJobs.Remove(position);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any errors that occur during the deletion process
+            Console.WriteLine($"Error deleting job position: {ex.Message}");
+        }
+    }
+
+
+    private void EditJobPosition(int positionId)
+    {
+        // Assuming 'companyJobs' is a list of job positions and 'job' is a CompanyJob object
+        var jobToEdit = companyJobs.FirstOrDefault(j => j.Id == positionId);
+        if (jobToEdit != null)
+        {
+            // Set the job object to be edited
+            job = jobToEdit;
+            // Redirect to the uploadjobs page with the job information and editing flag in the query string
+            NavigationManager.NavigateTo($"/uploadjobs?positionId={positionId}&isEditing=true");
+        }
+        else
+        {
+            // Handle the case when the job position with the given positionId is not found
+            Console.WriteLine($"Job position with ID {positionId} not found.");
+        }
+    }
+
+    private async Task EditStudentRegistration(int studentId)
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        var studentRegistrationToEdit = await dbContext.Students.FindAsync(studentId);
+        if (studentRegistrationToEdit != null)
+        {
+            // Assuming 'newStudent' is the property in your component representing the student
+            newStudent = studentRegistrationToEdit;
+
+            // Navigation
+            NavigationManager.NavigateTo($"/studentRegistration?studentId={studentId}&isEditing=true");
+        }
+        else
+        {
+            Console.WriteLine($"Student with ID {studentId} not found.");
+        }
+    }
+
+
+
+    private async Task DownloadAttachment(int jobId)
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        var job = await dbContext.CompanyJobs.FindAsync(jobId);
+        if (job != null && job.PositionAttachment != null)
+        {
+            var fileName = $"{job.PositionTitle}_Attachment";
+            var mimeType = "application/octet-stream"; // or set the appropriate MIME type if known
+            var fileContent = new byte[job.PositionAttachment.Length];
+            job.PositionAttachment.CopyTo(fileContent, 0);
+            await JSRuntime.InvokeVoidAsync("BlazorDownloadAttachmentPositionFile", fileName, mimeType, fileContent);
+        }
+    }
+
+    // Method to load job positions uploaded by the current user
+    private async Task LoadJobPositions()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            if (user.Identity.IsAuthenticated)
+            {
+                var userEmail = user.FindFirst("name")?.Value; // Get user's email from custom claim name (email CLAIM IS "name")
+
+                // Retrieve job positions uploaded by the current user from the database
+                companyJobs = await dbContext.CompanyJobs.Where(j => j.EmailUsedToUploadJobs == userEmail).ToListAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any errors that occur during the loading process
+            Console.WriteLine($"Error loading job positions: {ex.Message}");
+        }
+    }
+
+    @*
+    private async Task LoadWhoApplied()
+    {
+        try
+        {
+            Console.WriteLine("LoadWhoApplied method invoked.");
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity.IsAuthenticated)
+            {
+                Console.WriteLine("User is authenticated.");
+                var companyEmail = user.FindFirst("name")?.Value; // Get user's email from custom claim name (email CLAIM IS "name")
+                if (!string.IsNullOrEmpty(companyEmail))
+                {
+                    Console.WriteLine($"Company email found: {companyEmail}");
+
+                    using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+                    // Retrieve job applications associated with the logged-in company from the database
+                    jobApplicationsmadeToCompany = await dbContext.CompanyJobsApplied
+                        .Where(j => j.CompanyEmailApplied == companyData.CompanyEmail)
+                        .ToListAsync();
+
+                    Console.WriteLine($"Job applications count: {jobApplicationsmadeToCompany.Count}");
+
+                    // Trigger UI update
+                    StateHasChanged();
+                }
+                else
+                {
+                    Console.WriteLine("Company email is null or empty.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("User is not authenticated.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any errors that occur during the loading process
+            Console.WriteLine($"Error loading job applications: {ex.Message}");
+        }
+    }
+    *@
+
+
+    @*
+    private async Task LoadUserApplications()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var userEmail = user.FindFirst("name")?.Value;
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                showApplications = true;
+
+                using var dbContext = await DbContextFactory.CreateDbContextAsync();
+                // Retrieve job applications with related data
+                jobApplications = await dbContext.CompanyJobsApplied
+                    .Include(a => a.StudentDetails)
+                    .Include(a => a.CompanyDetails)
+                    .Where(j => j.StudentEmailApplied == userEmail)
+                    .ToListAsync();
+
+                StateHasChanged();
+            }
+        }
+    }
+    *@
+    @*
+    private async Task DeleteJobApplication(string studentEmail)
+    {
+        try
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+            var applicationToDelete = await dbContext.CompanyJobsApplied
+                .FirstOrDefaultAsync(app => app.StudentEmailApplied == studentEmail);
+
+            if (applicationToDelete != null)
+            {
+                dbContext.CompanyJobsApplied.Remove(applicationToDelete);
+                await dbContext.SaveChangesAsync();
+
+                // Update local list by ID comparison
+                var appToRemove = jobApplications.FirstOrDefault(a => a.Id == applicationToDelete.Id);
+                if (appToRemove != null)
+                {
+                    jobApplications.Remove(appToRemove);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting job application: {ex.Message}");
+        }
+    }
+    *@
+
+
+    private async Task DeleteThesisApplication(string studentRegNumber)
+    {
+        try
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+            var applicationToDelete = dbContext.ThesisApplications.FirstOrDefault(app => app.StudentRegNumber.ToString() == studentRegNumber);
+
+            if (applicationToDelete != null)
+            {
+                dbContext.ThesisApplications.Remove(applicationToDelete);
+                await dbContext.SaveChangesAsync();
+                thesisApplications.Remove(applicationToDelete); // Update local list if needed
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting Thesis Application: {ex.Message}");
+        }
+    }
+
+    private async Task HandleCVFileChange(InputFileChangeEventArgs e)
+    {
+        cvFile = e.File;
+    }
+
+    private async Task SingleUploadCV(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            // Example: Copy file contents to memory stream
+            using var ms = new MemoryStream();
+            await e.File.OpenReadStream().CopyToAsync(ms);
+            newStudent.Attachment = ms.ToArray();
+            cvFile = e.File; // Update cvFile when CV file changes
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading CV: {ex.Message}");
+            // Handle error as needed
+        }
+    }
+
+    private async Task<List<Skill>> GetAllSkillsAsync()
+    {
+        try
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+            return await dbContext.Skills.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching skills: {ex.Message}");
+            return new List<Skill>();
+        }
+    }
+
+
+    private List<string> ParseCompanyAreas(string areasString)
+    {
+        if (string.IsNullOrEmpty(areasString))
+        {
+            return new List<string>();
+        }
+        else
+        {
+            return areasString.Split(',').ToList();
+        }
+    }
+
+    private void RemoveArea(string areaToRemove)
+    {
+        var areas = ParseCompanyAreas(companyData.CompanyAreas);
+        areas.Remove(areaToRemove);
+        companyData.CompanyAreas = string.Join(",", areas);
+    }
+
+    private void AddSelectedArea()
+    {
+        if (selectedAreaId.HasValue)
+        {
+            var selectedArea = areas.FirstOrDefault(a => a.Id == selectedAreaId.Value);
+            if (selectedArea != null)
+            {
+                var parsedAreas = ParseCompanyAreas(companyData.CompanyAreas);
+
+                if (!parsedAreas.Contains(selectedArea.AreaName.Trim()))
+                {
+                    parsedAreas.Add(selectedArea.AreaName.Trim());
+                    companyData.CompanyAreas = string.Join(",", parsedAreas);
+                    showDuplicateMessage = false;
+                }
+                else
+                {
+                    duplicateAreaName = selectedArea.AreaName;
+                    showDuplicateMessage = true;
+                }
+
+                selectedAreaId = null;
+            }
+        }
+    }
+
+    private async Task LoadProfessorData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var professorEmail = user.FindFirst("name")?.Value; // Get user's email from custom claim name (email CLAIM IS "name")
+            if (!string.IsNullOrEmpty(professorEmail))
+            {
+                using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+                professorData = await dbContext.Professors.FirstOrDefaultAsync(s => s.ProfEmail == professorEmail);
+                thesisApplications = await dbContext.GetThesisApplicationsAsync();
+
+
+            }
+
+            // Check if the user has the Student role
+            if (user.IsInRole("Student"))
+            {
+                ShowStudentRegistrationButton = true;
+            }
+            // Check if the user has the Company role
+            if (user.IsInRole("Company"))
+            {
+                ShowCompanyRegistrationButton = true;
+            }
+            // Check if the user has the Company role
+            if (user.IsInRole("Professor"))
+            {
+                ShowProfessorRegistrationButton = true;
+            }
+            // Check if the user has the Company role
+            if (user.IsInRole("ResearchGroup"))
+            {
+                ShowResearchGroupRegistrationButton = true;
+            }
+        }
+    }
+
+    private void HandleRegistryNumberInput(ChangeEventArgs e)
+    {
+        if (long.TryParse(e.Value?.ToString(), out long result))
+        {
+            newStudent.RegNumber = result;
+            registryNumberInput = result.ToString();
+        }
+        else
+        {
+            registryNumberInput = "";
+        }
+    }
+
+    private async Task DownloadFileByRegNumber()
+    {
+        try
+        {
+            var student = await FileUploadService.GetStudentByRegNumber(newStudent.RegNumber);
+            if (student == null)
+            {
+                downloadByRegistryIsOk = true;
+                throw new Exception("Registry Number not found.");
+            }
+
+            if (student.Attachment != null)
+            {
+                downloadByRegistryIsOk = true;
+                var fileContent = student.Attachment;
+                var fileName = $"{student.Name}_CV.pdf";
+                await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, fileContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error downloading file: {ex.Message}");
+        }
+    }
+
+
+   
+
+    private void ToggleThesisDetails(ProfessorThesis thesis)
+    {
+        if (thesisDetails.ContainsKey(thesis.Id))
+        {
+            thesisDetails[thesis.Id] = !thesisDetails[thesis.Id];
+        }
+        else
+        {
+            thesisDetails[thesis.Id] = true;
+        }
+    }
+
+    private async Task DeleteThesis(int thesisId)
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        var thesisToDelete = await dbContext.ProfessorTheses.FindAsync(thesisId);
+        if (thesisToDelete != null)
+        {
+            dbContext.ProfessorTheses.Remove(thesisToDelete);
+            await dbContext.SaveChangesAsync();
+            professorTheses.Remove(thesisToDelete);
+        }
+    }
+
+    private void EditThesis(int thesisId)
+    {
+        NavigationManager.NavigateTo($"/uploadthesis?thesisId={thesisId}&isEditing=true");
+    }
+
+    private async Task UpdateThesis()
+    {
+        try
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+            if (file != null)
+            {
+                var buffer = new byte[file.Size];
+                await file.OpenReadStream().ReadAsync(buffer);
+                thesis.ThesisAttachment = buffer;
+            }
+
+            dbContext.ProfessorTheses.Update(thesis);
+            thesis.ThesisTimesUpdated++;
+            thesis.ThesisUpdateDateTime = DateTime.Now;
+            await dbContext.SaveChangesAsync();
+
+            showSuccessUpdateMessage = true;
+            showErrorMessage = false;
+        }
+        catch (Exception)
+        {
+            showSuccessMessage = false;
+            showErrorMessage = true;
+            showSuccessUpdateMessage = false;
+        }
+    }
+
+    private async Task DownloadThesisAttachment(int thesisId)
+    {
+        Console.WriteLine($"DownloadThesisAttachment called with thesisId: {thesisId}");
+
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        var thesis = await dbContext.ProfessorTheses.FindAsync(thesisId);
+        if (thesis != null && thesis.ThesisAttachment != null)
+        {
+            var fileName = $"{thesis.ThesisTitle}_Attachment";
+            var mimeType = "application/pdf";
+            var fileContent = Convert.ToBase64String(thesis.ThesisAttachment);
+            Console.WriteLine($"File content length: {fileContent.Length}");
+            await JSRuntime.InvokeVoidAsync("BlazorDownloadAttachmentThesisFile", fileName, mimeType, fileContent);
+        }
+        else
+        {
+            Console.WriteLine("Thesis or attachment not found.");
+        }
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+
+    private void EditStudentRegistrationForUpdate(string Id)
+    {
+        NavigationManager.NavigateTo($"/studentRegistration/{userData.Id}");
+    }
+
+    private void EditCompanyRegistrationForUpdate(string Id)
+    {
+        NavigationManager.NavigateTo($"/companyRegistration/{companyData.Id}");
+    }
+
+    private async Task EditCompanyRegistration(int companyId)
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        var companyRegistrationToEdit = await dbContext.Companies.FindAsync(companyId);
+        if (companyRegistrationToEdit != null)
+        {
+            // Assuming 'newCompany' is the property in your component representing the student
+            newCompany = companyRegistrationToEdit;
+
+            // Navigation
+            NavigationManager.NavigateTo($"/companyRegistration?companyId={companyId}&isEditing=true");
+        }
+        else
+        {
+            Console.WriteLine($"Company with ID {companyId} not found.");
+        }
+    }
+
+    private async Task LoadResearchGroupData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var researchGroupEmail = user.FindFirst("name")?.Value;
+
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+            if (!string.IsNullOrEmpty(researchGroupEmail))
+            {
+                researchGroupData = await dbContext.ResearchGroups.FirstOrDefaultAsync(r => r.ResearchGroupEmail == researchGroupEmail);
+            }
+        }
+    }
+
+    private async Task EditResearchGroupRegistration(int researchGroupId)
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        var researchGroupToEdit = await dbContext.ResearchGroups.FindAsync(researchGroupId);
+        if (researchGroupToEdit != null)
+        {
+            NavigationManager.NavigateTo($"/researchGroupRegistration?researchGroupId={researchGroupId}&isEditing=true");
+        }
+        else
+        {
+            Console.WriteLine($"Research Group with ID {researchGroupId} not found.");
+        }
+    }
+
+    private async Task DeleteResearchGroup()
+    {
+        // Prompt the user to enter their research group name
+        string enteredName = await JSRuntime.InvokeAsync<string>("prompt", "Please enter your Research Group Name:");
+
+        // Get the research group name from the database
+        string researchGroupName = researchGroupData.ResearchGroupName;
+
+        // Check if the entered name matches
+        if (enteredName != researchGroupName)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Invalid name. Deletion cancelled.");
+            return;
+        }
+
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        try
+        {
+            dbContext.ResearchGroups.Remove(researchGroupData);
+            await dbContext.SaveChangesAsync();
+            researchGroupData = null;
+            NavigationManager.NavigateTo("/profile");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting research group data: {ex.Message}");
+        }
+    }
+
+}
+

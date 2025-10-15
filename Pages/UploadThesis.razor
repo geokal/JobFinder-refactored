@@ -1,0 +1,271 @@
+﻿@page "/uploadthesis"
+@using Microsoft.EntityFrameworkCore
+@using QuizManager.Models
+@inject Data.AppDbContext dbContext
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Net.Http.Json
+@using System.Net.Http
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@using QuizManager.Data
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.WebUtilities
+
+<style>
+    h3 {
+        font-size: 24px;
+        color: #FF5733;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .form-control-textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        height: 150px;
+    }
+
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #FF5733;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+        button:hover {
+            background-color: #e14e2b;
+        }
+
+    .error-message {
+        background-color: palevioletred;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    .good-message {
+        background-color: green;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    .textarea-container {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+
+        .textarea-container textarea {
+            width: 100%;
+            height: 150px; /* Adjust as needed */
+            padding-right: 50px; /* Ensure space for the counter */
+            box-sizing: border-box;
+        }
+
+    .char-counter {
+        position: absolute;
+        bottom: 8px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        color: #666;
+    }
+
+    .update-btn {
+        background-color: steelblue;
+        color: white;
+        margin-left: 10px;
+    }
+</style>
+
+<h3>Δημιουργία Πτυχιακής Εργασίας</h3>
+<br />
+
+@if (showSuccessMessage)
+{
+    <div class="good-message">
+        Η πτυχιακή εργασία υποβλήθηκε με επιτυχία!
+    </div>
+}
+@if (showErrorMessage)
+{
+    <div class="error-message">
+        Παρουσιάστηκε σφάλμα κατά την υποβολή της πτυχιακής εργασίας. Παρακαλώ προσπαθήστε ξανά.
+    </div>
+}
+@if (showSuccessUpdateMessage)
+{
+    <div class="good-message">
+        Η Ανανέωση της πτυχιακής εργασίας υποβλήθηκε με επιτυχία!
+    </div>
+}
+
+<EditForm Model="@thesis" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="thesisTitle">Ονομα Επιβλέποντα Καθηγητή:</label>
+        <InputText id="thesisProfessorName" class="form-control" @bind-Value="thesis.Professor.ProfName" />
+    </div>
+
+    <div class="form-group">
+        <label for="thesisTitle">Επώνυμο Επιβλέποντα Καθηγητή</label>
+        <InputText id="thesisProfessorSurname" class="form-control" @bind-Value="thesis.Professor.ProfSurname" />
+    </div>
+
+    <div class="form-group">
+        <label for="thesisTitle">Τίτλος Πτυχιακής:</label>
+        <InputText id="thesisTitle" class="form-control" @bind-Value="thesis.ThesisTitle" />
+    </div>
+
+    <div class="form-group">
+        <label for="thesisDescription">Περιγραφή Πτυχιακής:</label>
+        <InputTextAreaWithMaxLength @bind-Value="thesis.ThesisDescription" />
+    </div>
+
+    <div class="form-group">
+        <label for="thesisAttachment">Συνημμένο Αρχείο:</label>
+        <InputFile id="thesisAttachment" class="form-control" OnChange="HandleFileSelected" />
+    </div>
+
+    <button type="submit">Υποβολή</button>
+    @if (isEditing)
+    {
+        <button type="button" class="update-btn" @onclick="UpdateThesis">Ανανέωση</button>
+    }
+    </EditForm>
+
+    @code {
+    private ProfessorThesis thesis = new ProfessorThesis { Professor = new Professor() };
+    private IBrowserFile? uploadedFile;
+    private bool showSuccessMessage = false;
+    private bool showErrorMessage = false;
+    private bool showSuccessUpdateMessage = false;
+    private bool isEditing = false;
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        uploadedFile = e.File;
+        var buffer = new byte[uploadedFile.Size];
+        await uploadedFile.OpenReadStream().ReadAsync(buffer);
+        thesis.ThesisAttachment = buffer;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userEmail = user.FindFirst("name")?.Value;
+            thesis.RNGForThesisUploaded = new Random().NextInt64();
+            thesis.ProfessorEmailUsedToUploadThesis = userEmail;
+            thesis.ThesisUploadDateTime = DateTime.Now;
+
+            dbContext.ProfessorTheses.Add(thesis);
+            await dbContext.SaveChangesAsync();
+
+            showSuccessMessage = true;
+            showErrorMessage = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            showSuccessMessage = false;
+            showErrorMessage = true;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        thesis.Professor ??= new Professor();
+
+        var uri = new Uri(NavigationManager.Uri);
+        var queryParameters = QueryHelpers.ParseQuery(uri.Query);
+        if (queryParameters.TryGetValue("thesisId", out var thesisId))
+        {
+            if (int.TryParse(thesisId, out var id))
+            {
+                var thesisToEdit = await dbContext.ProfessorTheses
+                    .Include(t => t.Professor)
+                    .FirstOrDefaultAsync(t => t.Id == id);
+
+                if (thesisToEdit != null)
+                {
+                    thesis = thesisToEdit;
+                }
+                else
+                {
+                    Console.WriteLine($"Thesis with ID {id} not found.");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Invalid thesisId provided: {thesisId}");
+            }
+        }
+
+        if (queryParameters.TryGetValue("isEditing", out var editingFlag))
+        {
+            if (bool.TryParse(editingFlag, out var isEditingValue))
+            {
+                isEditing = isEditingValue;
+            }
+            else
+            {
+                Console.WriteLine($"Invalid isEditing flag provided: {editingFlag}");
+            }
+        }
+
+        if (!isEditing)
+        {
+            thesis.ThesisTimesUpdated = 0;
+        }
+    }
+
+    private async Task UpdateThesis()
+    {
+        try
+        {
+            dbContext.ProfessorTheses.Update(thesis);
+            thesis.ThesisTimesUpdated++;
+            thesis.ThesisUpdateDateTime = DateTime.Now;
+            await dbContext.SaveChangesAsync();
+
+            showSuccessUpdateMessage = true;
+            showErrorMessage = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            showSuccessMessage = false;
+            showErrorMessage = true;
+            showSuccessUpdateMessage = false;
+        }
+    }
+}

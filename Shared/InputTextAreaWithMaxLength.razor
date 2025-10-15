@@ -1,0 +1,38 @@
+﻿<style>
+    .custom-textarea {
+        width: 100%;
+        max-width: 800px; /* Adjust max-width as needed */
+        /* Additional styling */
+    }
+</style>
+
+<div class="textarea-container">
+    <textarea id="@Id"
+              class="@($"{CssClass} custom-textarea")"
+              value="@internalValue"
+              @oninput="HandleInput"
+              maxlength="1000"
+              @attributes="AdditionalAttributes"></textarea>
+    <div class="char-counter">@($"{internalValue?.Length ?? 0} / 1000")</div>
+</div>
+
+@code {
+    [Parameter] public string CssClass { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;  // The value bound from the parent component
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }  // Callback to notify parent about value changes
+    [Parameter] public Dictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();  // To handle extra attributes (like placeholder, required)
+    [Parameter] public string Id { get; set; } = string.Empty;  // The Id for the textarea
+
+    private string internalValue;
+
+    protected override void OnInitialized()
+    {
+        internalValue = Value;  // Initialize internal value when component is first created
+    }
+
+    private void HandleInput(ChangeEventArgs e)
+    {
+        internalValue = e.Value?.ToString() ?? string.Empty;  // Update internal value on user input
+        ValueChanged.InvokeAsync(internalValue);  // Trigger the ValueChanged callback to notify parent component
+    }
+}

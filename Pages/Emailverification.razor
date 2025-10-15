@@ -1,0 +1,280 @@
+﻿@page "/email-verification"
+
+@using System.Net.Http
+@using System.Net.Http.Headers
+@using System.Text.Json
+@using System.Security.Claims
+@using QuizManager.Data
+@using System.Text
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+
+<style>
+    .modern-button {
+        background-color: #28a745; /* Success green */
+        color: white; /* White text color */
+        border: 2px solid black; /* Black border */
+        padding: 12px 24px; /* Spacious padding */
+        font-size: 16px; /* Larger font size */
+        font-weight: 500; /* Medium weight for the text */
+        border-radius: 8px; /* Rounded corners */
+        cursor: pointer; /* Pointer cursor on hover */
+        transition: all 0.3s ease; /* Smooth transition effect */
+        display: inline-flex; /* Align icon and text inline */
+        align-items: center; /* Center icon and text vertically */
+    }
+
+        .modern-button i {
+            margin-right: 8px; /* Space between icon and text */
+        }
+
+        .modern-button:hover {
+            background-color: #218838; /* Darker green on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow on hover */
+            border-color: #1e7e34; /* Darker border color on hover */
+        }
+
+        .modern-button:active {
+            transform: translateY(0); /* Button 'press' effect */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Reduced shadow when pressed */
+        }
+
+        .modern-button:focus {
+            outline: none; /* Remove focus outline */
+            box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.5); /* Blue focus border */
+        }
+</style>
+
+@if (!isEmailVerified && !(contextUser?.Identity?.IsAuthenticated ?? false))
+{
+    <div class="alert alert-danger" role="alert">
+        <h5 class="alert-heading">Απαιτείται η Επαλήθευση του Email σας!</h5>
+        <br/>
+        <p>Για να συνεχίσετε, παρακαλούμε ελέγξτε τα εισερχόμενά σας και <strong>Επαληθεύστε το Email σας</strong>.</p>
+        <p>Σε περίπτωση που δεν έχετε λάβει email στα Εισερχόμενα (είτε Ανεπιθύμητα) του λογαριασμού σας,  <strong>αποστείλετε ξανά Email Επιβεβαίωσης με την παρακάτω φόρμα</strong>.</p>
+    </div>
+
+    <div class="form-group">
+        <label for="emailInput" class="font-weight-bold">Πληκτρολογείστε το Email σας</label>
+        <input type="email" class="form-control" id="emailInput" @bind="email" placeholder="example@mail.com" required />
+    </div>
+
+    <div class="d-flex justify-content-between mt-3">
+        <button class="modern-button" @onclick="ResendVerificationLink">
+            Επαναποστολή Συνδέσμου
+        </button>
+        <button class="modern-button" @onclick="RedirectToHome">
+            Είσοδος στον Λογαριασμό μου
+        </button>
+    </div>
+}
+@inject HttpClient HttpClient
+
+@code {
+    private bool isEmailVerified;
+    private ClaimsPrincipal contextUser;
+    private string email;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAuthenticationState();
+    }
+
+    private async Task RefreshAuthenticationState()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        contextUser = authState.User;
+        isEmailVerified = await IsEmailVerified(contextUser); 
+
+        Console.WriteLine($"Email verified status: {isEmailVerified}");
+    }
+
+    private async Task<bool> IsEmailVerified(ClaimsPrincipal user)
+    {
+        var email = user.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+        if (!string.IsNullOrEmpty(email))
+        {
+            return await IsEmailAlreadyVerified(email);
+        }
+        return false;
+    }
+
+    private void RedirectToHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private async Task ResendVerificationLink()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(email))
+            {
+                // Check if the email is already verified
+                bool isVerified = await IsEmailAlreadyVerified(email);
+
+                if (isVerified)
+                {
+                    await JSRuntime.InvokeVoidAsync("confirmActionWithHTML2", "Αυτό το Email έχει ήδη Επικυρωθεί");
+                    return;
+                }
+
+                // Perform a lookup to retrieve the unique identification number associated with the entered email
+                string userId = await GetUserIdFromEmail(email);
+
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    using (var client = new HttpClient())
+                    {
+                        // Set the API endpoint URL
+                        var apiUrl = "https://dev-75kcw8hj0pzojdod.us.auth0.com/api/v2/jobs/verification-email";
+
+                        // Set the Management API token in the Authorization header
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkFaSk9ILXY5NHZjOXNJZnplNnh6MSJ9.eyJpc3MiOiJodHRwczovL2Rldi03NWtjdzhoajBwem9qZG9kLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJFSWVsR2J1WjRNRGdLRHBmc0VMVHNrT1NUdGFzM2ZKcUBjbGllbnRzIiwiYXVkIjoiaHR0cHM6Ly9kZXYtNzVrY3c4aGowcHpvamRvZC51cy5hdXRoMC5jb20vYXBpL3YyLyIsImlhdCI6MTc1ODA5OTE3MywiZXhwIjoxNzYwNjkxMTczLCJzY29wZSI6InJlYWQ6Y2xpZW50X2dyYW50cyBjcmVhdGU6Y2xpZW50X2dyYW50cyBkZWxldGU6Y2xpZW50X2dyYW50cyB1cGRhdGU6Y2xpZW50X2dyYW50cyByZWFkOnVzZXJzIHVwZGF0ZTp1c2VycyBkZWxldGU6dXNlcnMgY3JlYXRlOnVzZXJzIHJlYWQ6dXNlcnNfYXBwX21ldGFkYXRhIHVwZGF0ZTp1c2Vyc19hcHBfbWV0YWRhdGEgZGVsZXRlOnVzZXJzX2FwcF9tZXRhZGF0YSBjcmVhdGU6dXNlcnNfYXBwX21ldGFkYXRhIHJlYWQ6dXNlcl9jdXN0b21fYmxvY2tzIGNyZWF0ZTp1c2VyX2N1c3RvbV9ibG9ja3MgZGVsZXRlOnVzZXJfY3VzdG9tX2Jsb2NrcyBjcmVhdGU6dXNlcl90aWNrZXRzIHJlYWQ6Y2xpZW50cyB1cGRhdGU6Y2xpZW50cyBkZWxldGU6Y2xpZW50cyBjcmVhdGU6Y2xpZW50cyByZWFkOmNsaWVudF9rZXlzIHVwZGF0ZTpjbGllbnRfa2V5cyBkZWxldGU6Y2xpZW50X2tleXMgY3JlYXRlOmNsaWVudF9rZXlzIHJlYWQ6Y29ubmVjdGlvbnMgdXBkYXRlOmNvbm5lY3Rpb25zIGRlbGV0ZTpjb25uZWN0aW9ucyBjcmVhdGU6Y29ubmVjdGlvbnMgcmVhZDpyZXNvdXJjZV9zZXJ2ZXJzIHVwZGF0ZTpyZXNvdXJjZV9zZXJ2ZXJzIGRlbGV0ZTpyZXNvdXJjZV9zZXJ2ZXJzIGNyZWF0ZTpyZXNvdXJjZV9zZXJ2ZXJzIHJlYWQ6ZGV2aWNlX2NyZWRlbnRpYWxzIHVwZGF0ZTpkZXZpY2VfY3JlZGVudGlhbHMgZGVsZXRlOmRldmljZV9jcmVkZW50aWFscyBjcmVhdGU6ZGV2aWNlX2NyZWRlbnRpYWxzIHJlYWQ6cnVsZXMgdXBkYXRlOnJ1bGVzIGRlbGV0ZTpydWxlcyBjcmVhdGU6cnVsZXMgcmVhZDpydWxlc19jb25maWdzIHVwZGF0ZTpydWxlc19jb25maWdzIGRlbGV0ZTpydWxlc19jb25maWdzIHJlYWQ6aG9va3MgdXBkYXRlOmhvb2tzIGRlbGV0ZTpob29rcyBjcmVhdGU6aG9va3MgcmVhZDphY3Rpb25zIHVwZGF0ZTphY3Rpb25zIGRlbGV0ZTphY3Rpb25zIGNyZWF0ZTphY3Rpb25zIHJlYWQ6ZW1haWxfcHJvdmlkZXIgdXBkYXRlOmVtYWlsX3Byb3ZpZGVyIGRlbGV0ZTplbWFpbF9wcm92aWRlciBjcmVhdGU6ZW1haWxfcHJvdmlkZXIgYmxhY2tsaXN0OnRva2VucyByZWFkOnN0YXRzIHJlYWQ6aW5zaWdodHMgcmVhZDp0ZW5hbnRfc2V0dGluZ3MgdXBkYXRlOnRlbmFudF9zZXR0aW5ncyByZWFkOmxvZ3MgcmVhZDpsb2dzX3VzZXJzIHJlYWQ6c2hpZWxkcyBjcmVhdGU6c2hpZWxkcyB1cGRhdGU6c2hpZWxkcyBkZWxldGU6c2hpZWxkcyByZWFkOmFub21hbHlfYmxvY2tzIGRlbGV0ZTphbm9tYWx5X2Jsb2NrcyB1cGRhdGU6dHJpZ2dlcnMgcmVhZDp0cmlnZ2VycyByZWFkOmdyYW50cyBkZWxldGU6Z3JhbnRzIHJlYWQ6Z3VhcmRpYW5fZmFjdG9ycyB1cGRhdGU6Z3VhcmRpYW5fZmFjdG9ycyByZWFkOmd1YXJkaWFuX2Vucm9sbG1lbnRzIGRlbGV0ZTpndWFyZGlhbl9lbnJvbGxtZW50cyBjcmVhdGU6Z3VhcmRpYW5fZW5yb2xsbWVudF90aWNrZXRzIHJlYWQ6dXNlcl9pZHBfdG9rZW5zIGNyZWF0ZTpwYXNzd29yZHNfY2hlY2tpbmdfam9iIGRlbGV0ZTpwYXNzd29yZHNfY2hlY2tpbmdfam9iIHJlYWQ6Y3VzdG9tX2RvbWFpbnMgZGVsZXRlOmN1c3RvbV9kb21haW5zIGNyZWF0ZTpjdXN0b21fZG9tYWlucyB1cGRhdGU6Y3VzdG9tX2RvbWFpbnMgcmVhZDplbWFpbF90ZW1wbGF0ZXMgY3JlYXRlOmVtYWlsX3RlbXBsYXRlcyB1cGRhdGU6ZW1haWxfdGVtcGxhdGVzIHJlYWQ6bWZhX3BvbGljaWVzIHVwZGF0ZTptZmFfcG9saWNpZXMgcmVhZDpyb2xlcyBjcmVhdGU6cm9sZXMgZGVsZXRlOnJvbGVzIHVwZGF0ZTpyb2xlcyByZWFkOnByb21wdHMgdXBkYXRlOnByb21wdHMgcmVhZDpicmFuZGluZyB1cGRhdGU6YnJhbmRpbmcgZGVsZXRlOmJyYW5kaW5nIHJlYWQ6bG9nX3N0cmVhbXMgY3JlYXRlOmxvZ19zdHJlYW1zIGRlbGV0ZTpsb2dfc3RyZWFtcyB1cGRhdGU6bG9nX3N0cmVhbXMgY3JlYXRlOnNpZ25pbmdfa2V5cyByZWFkOnNpZ25pbmdfa2V5cyB1cGRhdGU6c2lnbmluZ19rZXlzIHJlYWQ6bGltaXRzIHVwZGF0ZTpsaW1pdHMgY3JlYXRlOnJvbGVfbWVtYmVycyByZWFkOnJvbGVfbWVtYmVycyBkZWxldGU6cm9sZV9tZW1iZXJzIHJlYWQ6ZW50aXRsZW1lbnRzIHJlYWQ6YXR0YWNrX3Byb3RlY3Rpb24gdXBkYXRlOmF0dGFja19wcm90ZWN0aW9uIHJlYWQ6b3JnYW5pemF0aW9uc19zdW1tYXJ5IGNyZWF0ZTphdXRoZW50aWNhdGlvbl9tZXRob2RzIHJlYWQ6YXV0aGVudGljYXRpb25fbWV0aG9kcyB1cGRhdGU6YXV0aGVudGljYXRpb25fbWV0aG9kcyBkZWxldGU6YXV0aGVudGljYXRpb25fbWV0aG9kcyByZWFkOm9yZ2FuaXphdGlvbnMgdXBkYXRlOm9yZ2FuaXphdGlvbnMgY3JlYXRlOm9yZ2FuaXphdGlvbnMgZGVsZXRlOm9yZ2FuaXphdGlvbnMgY3JlYXRlOm9yZ2FuaXphdGlvbl9tZW1iZXJzIHJlYWQ6b3JnYW5pemF0aW9uX21lbWJlcnMgZGVsZXRlOm9yZ2FuaXphdGlvbl9tZW1iZXJzIGNyZWF0ZTpvcmdhbml6YXRpb25fY29ubmVjdGlvbnMgcmVhZDpvcmdhbml6YXRpb25fY29ubmVjdGlvbnMgdXBkYXRlOm9yZ2FuaXphdGlvbl9jb25uZWN0aW9ucyBkZWxldGU6b3JnYW5pemF0aW9uX2Nvbm5lY3Rpb25zIGNyZWF0ZTpvcmdhbml6YXRpb25fbWVtYmVyX3JvbGVzIHJlYWQ6b3JnYW5pemF0aW9uX21lbWJlcl9yb2xlcyBkZWxldGU6b3JnYW5pemF0aW9uX21lbWJlcl9yb2xlcyBjcmVhdGU6b3JnYW5pemF0aW9uX2ludml0YXRpb25zIHJlYWQ6b3JnYW5pemF0aW9uX2ludml0YXRpb25zIGRlbGV0ZTpvcmdhbml6YXRpb25faW52aXRhdGlvbnMgcmVhZDpzY2ltX2NvbmZpZyBjcmVhdGU6c2NpbV9jb25maWcgdXBkYXRlOnNjaW1fY29uZmlnIGRlbGV0ZTpzY2ltX2NvbmZpZyBjcmVhdGU6c2NpbV90b2tlbiByZWFkOnNjaW1fdG9rZW4gZGVsZXRlOnNjaW1fdG9rZW4gZGVsZXRlOnBob25lX3Byb3ZpZGVycyBjcmVhdGU6cGhvbmVfcHJvdmlkZXJzIHJlYWQ6cGhvbmVfcHJvdmlkZXJzIHVwZGF0ZTpwaG9uZV9wcm92aWRlcnMgZGVsZXRlOnBob25lX3RlbXBsYXRlcyBjcmVhdGU6cGhvbmVfdGVtcGxhdGVzIHJlYWQ6cGhvbmVfdGVtcGxhdGVzIHVwZGF0ZTpwaG9uZV90ZW1wbGF0ZXMgY3JlYXRlOmVuY3J5cHRpb25fa2V5cyByZWFkOmVuY3J5cHRpb25fa2V5cyB1cGRhdGU6ZW5jcnlwdGlvbl9rZXlzIGRlbGV0ZTplbmNyeXB0aW9uX2tleXMgcmVhZDpzZXNzaW9ucyBkZWxldGU6c2Vzc2lvbnMgcmVhZDpyZWZyZXNoX3Rva2VucyBkZWxldGU6cmVmcmVzaF90b2tlbnMgY3JlYXRlOnNlbGZfc2VydmljZV9wcm9maWxlcyByZWFkOnNlbGZfc2VydmljZV9wcm9maWxlcyB1cGRhdGU6c2VsZl9zZXJ2aWNlX3Byb2ZpbGVzIGRlbGV0ZTpzZWxmX3NlcnZpY2VfcHJvZmlsZXMgY3JlYXRlOnNzb19hY2Nlc3NfdGlja2V0cyBkZWxldGU6c3NvX2FjY2Vzc190aWNrZXRzIHJlYWQ6Zm9ybXMgdXBkYXRlOmZvcm1zIGRlbGV0ZTpmb3JtcyBjcmVhdGU6Zm9ybXMgcmVhZDpmbG93cyB1cGRhdGU6Zmxvd3MgZGVsZXRlOmZsb3dzIGNyZWF0ZTpmbG93cyByZWFkOmZsb3dzX3ZhdWx0IHJlYWQ6Zmxvd3NfdmF1bHRfY29ubmVjdGlvbnMgdXBkYXRlOmZsb3dzX3ZhdWx0X2Nvbm5lY3Rpb25zIGRlbGV0ZTpmbG93c192YXVsdF9jb25uZWN0aW9ucyBjcmVhdGU6Zmxvd3NfdmF1bHRfY29ubmVjdGlvbnMgcmVhZDpmbG93c19leGVjdXRpb25zIGRlbGV0ZTpmbG93c19leGVjdXRpb25zIHJlYWQ6Y29ubmVjdGlvbnNfb3B0aW9ucyB1cGRhdGU6Y29ubmVjdGlvbnNfb3B0aW9ucyByZWFkOnNlbGZfc2VydmljZV9wcm9maWxlX2N1c3RvbV90ZXh0cyB1cGRhdGU6c2VsZl9zZXJ2aWNlX3Byb2ZpbGVfY3VzdG9tX3RleHRzIGNyZWF0ZTpuZXR3b3JrX2FjbHMgdXBkYXRlOm5ldHdvcmtfYWNscyByZWFkOm5ldHdvcmtfYWNscyBkZWxldGU6bmV0d29ya19hY2xzIGRlbGV0ZTp2ZGNzX3RlbXBsYXRlcyByZWFkOnZkY3NfdGVtcGxhdGVzIGNyZWF0ZTp2ZGNzX3RlbXBsYXRlcyB1cGRhdGU6dmRjc190ZW1wbGF0ZXMgY3JlYXRlOmN1c3RvbV9zaWduaW5nX2tleXMgcmVhZDpjdXN0b21fc2lnbmluZ19rZXlzIHVwZGF0ZTpjdXN0b21fc2lnbmluZ19rZXlzIGRlbGV0ZTpjdXN0b21fc2lnbmluZ19rZXlzIHJlYWQ6ZmVkZXJhdGVkX2Nvbm5lY3Rpb25zX3Rva2VucyBkZWxldGU6ZmVkZXJhdGVkX2Nvbm5lY3Rpb25zX3Rva2VucyBjcmVhdGU6dXNlcl9hdHRyaWJ1dGVfcHJvZmlsZXMgcmVhZDp1c2VyX2F0dHJpYnV0ZV9wcm9maWxlcyB1cGRhdGU6dXNlcl9hdHRyaWJ1dGVfcHJvZmlsZXMgZGVsZXRlOnVzZXJfYXR0cmlidXRlX3Byb2ZpbGVzIHJlYWQ6Y2xpZW50X2NyZWRlbnRpYWxzIGNyZWF0ZTpjbGllbnRfY3JlZGVudGlhbHMgdXBkYXRlOmNsaWVudF9jcmVkZW50aWFscyBkZWxldGU6Y2xpZW50X2NyZWRlbnRpYWxzIHJlYWQ6b3JnYW5pemF0aW9uX2NsaWVudF9ncmFudHMgY3JlYXRlOm9yZ2FuaXphdGlvbl9jbGllbnRfZ3JhbnRzIGRlbGV0ZTpvcmdhbml6YXRpb25fY2xpZW50X2dyYW50cyByZWFkOmV2ZW50X3N0cmVhbXMgY3JlYXRlOmV2ZW50X3N0cmVhbXMgdXBkYXRlOmV2ZW50X3N0cmVhbXMgZGVsZXRlOmV2ZW50X3N0cmVhbXMgcmVhZDpldmVudF9kZWxpdmVyaWVzIHVwZGF0ZTpldmVudF9kZWxpdmVyaWVzIiwiZ3R5IjoiY2xpZW50LWNyZWRlbnRpYWxzIiwiYXpwIjoiRUllbEdidVo0TURnS0RwZnNFTFRza09TVHRhczNmSnEifQ.uDYnCAXn4lBV5_9Qu5IGT7NB25n1dKSi-PP7oN7dN1J-NXWvAxqCRUqpEfg0LYhu70rGV8N2LSSWVSdPHKuAkpzhihHzEgKSFJsbaD_KSNGLCsnh3ZtN0G7oxnhcSO1ww9AbgeoOkkNXO0GOtKDuvX6avXCYfhGzfnH1Dc9VjJLRyPMZAL4M7aKXxSgRQl9XLR7LzUTW22sHj_pRQ4lZzhH8N0CtSnoORkmsRalYjGcel6nm_v7LjpcZtiEr1uLYlem_d3-0-F5DPkhc5At_DWBLBOQhTIkljsxp70wIPQDUhtQwT5fR57-RAljiwkk-c1CnqTKeAtVp4Bgsh5e9QQ");
+
+                        // Define the request body containing the user's email
+                        var requestBody = new { user_id = userId };
+
+                        // Convert the request body to JSON
+                        var jsonBody = JsonSerializer.Serialize(requestBody);
+
+                        // Create a StringContent object containing the JSON body
+                        var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                        // Send the HTTP POST request to resend the verification email
+                        var response = await client.PostAsync(apiUrl, content);
+
+                        // Check if the request was successful
+                        if (response.IsSuccessStatusCode)
+                        {
+                            // Display success message to the user
+                            await JSRuntime.InvokeVoidAsync("confirmActionWithHTML2", "Έχει γίνει Αποστολή του Συνδέσμου Επικύρωσης στο Email σας");
+                        }
+                        else
+                        {
+                            // Display error message to the user
+                            await JSRuntime.InvokeVoidAsync("confirmActionWithHTML2", "Αποτυχία Επαναποστολής Συνδέσμου Επικύρωσης");
+
+                            // Log the response content and status code for debugging
+                            var responseContent = await response.Content.ReadAsStringAsync();
+                            Console.WriteLine($"Failed to resend verification link. Response: {response.StatusCode}, Content: {responseContent}");
+                        }
+                    }
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("confirmActionWithHTML2", "Το Email ΔΕΝ Βρέθηκε.");
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("confirmActionWithHTML2", "Πληκτρολογείστε μια έγκυρη διεύθυνση Email");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions that occur during the request
+            await JSRuntime.InvokeVoidAsync("confirmActionWithHTML2", $"Παρουσιάστηκε Πρόβλημα : {ex.Message}");
+            Console.WriteLine($"An error occurred: {ex}");
+        }
+    }
+
+    private string GenerateVerificationToken()
+    {
+        // Generate a unique token (e.g., using GUID)
+        var token = Guid.NewGuid().ToString();
+
+        // Get the current time and add 5 minutes to it for expiration
+        var expirationTime = DateTime.UtcNow.AddMinutes(5);
+
+        // Encode the token and expiration time as a single string
+        var encodedToken = $"{token}:{expirationTime:o}";
+
+        return encodedToken;
+    }
+
+    private async Task<string> GetUserIdFromEmail(string email)
+    {
+        try
+        {
+            // Perform the request to fetch user information based on email
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://dev-75kcw8hj0pzojdod.us.auth0.com/api/v2/users-by-email?email={Uri.EscapeDataString(email)}");
+
+            // Set the Management API token in the Authorization header
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkFaSk9ILXY5NHZjOXNJZnplNnh6MSJ9.eyJpc3MiOiJodHRwczovL2Rldi03NWtjdzhoajBwem9qZG9kLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJFSWVsR2J1WjRNRGdLRHBmc0VMVHNrT1NUdGFzM2ZKcUBjbGllbnRzIiwiYXVkIjoiaHR0cHM6Ly9kZXYtNzVrY3c4aGowcHpvamRvZC51cy5hdXRoMC5jb20vYXBpL3YyLyIsImlhdCI6MTc1ODA5OTE3MywiZXhwIjoxNzYwNjkxMTczLCJzY29wZSI6InJlYWQ6Y2xpZW50X2dyYW50cyBjcmVhdGU6Y2xpZW50X2dyYW50cyBkZWxldGU6Y2xpZW50X2dyYW50cyB1cGRhdGU6Y2xpZW50X2dyYW50cyByZWFkOnVzZXJzIHVwZGF0ZTp1c2VycyBkZWxldGU6dXNlcnMgY3JlYXRlOnVzZXJzIHJlYWQ6dXNlcnNfYXBwX21ldGFkYXRhIHVwZGF0ZTp1c2Vyc19hcHBfbWV0YWRhdGEgZGVsZXRlOnVzZXJzX2FwcF9tZXRhZGF0YSBjcmVhdGU6dXNlcnNfYXBwX21ldGFkYXRhIHJlYWQ6dXNlcl9jdXN0b21fYmxvY2tzIGNyZWF0ZTp1c2VyX2N1c3RvbV9ibG9ja3MgZGVsZXRlOnVzZXJfY3VzdG9tX2Jsb2NrcyBjcmVhdGU6dXNlcl90aWNrZXRzIHJlYWQ6Y2xpZW50cyB1cGRhdGU6Y2xpZW50cyBkZWxldGU6Y2xpZW50cyBjcmVhdGU6Y2xpZW50cyByZWFkOmNsaWVudF9rZXlzIHVwZGF0ZTpjbGllbnRfa2V5cyBkZWxldGU6Y2xpZW50X2tleXMgY3JlYXRlOmNsaWVudF9rZXlzIHJlYWQ6Y29ubmVjdGlvbnMgdXBkYXRlOmNvbm5lY3Rpb25zIGRlbGV0ZTpjb25uZWN0aW9ucyBjcmVhdGU6Y29ubmVjdGlvbnMgcmVhZDpyZXNvdXJjZV9zZXJ2ZXJzIHVwZGF0ZTpyZXNvdXJjZV9zZXJ2ZXJzIGRlbGV0ZTpyZXNvdXJjZV9zZXJ2ZXJzIGNyZWF0ZTpyZXNvdXJjZV9zZXJ2ZXJzIHJlYWQ6ZGV2aWNlX2NyZWRlbnRpYWxzIHVwZGF0ZTpkZXZpY2VfY3JlZGVudGlhbHMgZGVsZXRlOmRldmljZV9jcmVkZW50aWFscyBjcmVhdGU6ZGV2aWNlX2NyZWRlbnRpYWxzIHJlYWQ6cnVsZXMgdXBkYXRlOnJ1bGVzIGRlbGV0ZTpydWxlcyBjcmVhdGU6cnVsZXMgcmVhZDpydWxlc19jb25maWdzIHVwZGF0ZTpydWxlc19jb25maWdzIGRlbGV0ZTpydWxlc19jb25maWdzIHJlYWQ6aG9va3MgdXBkYXRlOmhvb2tzIGRlbGV0ZTpob29rcyBjcmVhdGU6aG9va3MgcmVhZDphY3Rpb25zIHVwZGF0ZTphY3Rpb25zIGRlbGV0ZTphY3Rpb25zIGNyZWF0ZTphY3Rpb25zIHJlYWQ6ZW1haWxfcHJvdmlkZXIgdXBkYXRlOmVtYWlsX3Byb3ZpZGVyIGRlbGV0ZTplbWFpbF9wcm92aWRlciBjcmVhdGU6ZW1haWxfcHJvdmlkZXIgYmxhY2tsaXN0OnRva2VucyByZWFkOnN0YXRzIHJlYWQ6aW5zaWdodHMgcmVhZDp0ZW5hbnRfc2V0dGluZ3MgdXBkYXRlOnRlbmFudF9zZXR0aW5ncyByZWFkOmxvZ3MgcmVhZDpsb2dzX3VzZXJzIHJlYWQ6c2hpZWxkcyBjcmVhdGU6c2hpZWxkcyB1cGRhdGU6c2hpZWxkcyBkZWxldGU6c2hpZWxkcyByZWFkOmFub21hbHlfYmxvY2tzIGRlbGV0ZTphbm9tYWx5X2Jsb2NrcyB1cGRhdGU6dHJpZ2dlcnMgcmVhZDp0cmlnZ2VycyByZWFkOmdyYW50cyBkZWxldGU6Z3JhbnRzIHJlYWQ6Z3VhcmRpYW5fZmFjdG9ycyB1cGRhdGU6Z3VhcmRpYW5fZmFjdG9ycyByZWFkOmd1YXJkaWFuX2Vucm9sbG1lbnRzIGRlbGV0ZTpndWFyZGlhbl9lbnJvbGxtZW50cyBjcmVhdGU6Z3VhcmRpYW5fZW5yb2xsbWVudF90aWNrZXRzIHJlYWQ6dXNlcl9pZHBfdG9rZW5zIGNyZWF0ZTpwYXNzd29yZHNfY2hlY2tpbmdfam9iIGRlbGV0ZTpwYXNzd29yZHNfY2hlY2tpbmdfam9iIHJlYWQ6Y3VzdG9tX2RvbWFpbnMgZGVsZXRlOmN1c3RvbV9kb21haW5zIGNyZWF0ZTpjdXN0b21fZG9tYWlucyB1cGRhdGU6Y3VzdG9tX2RvbWFpbnMgcmVhZDplbWFpbF90ZW1wbGF0ZXMgY3JlYXRlOmVtYWlsX3RlbXBsYXRlcyB1cGRhdGU6ZW1haWxfdGVtcGxhdGVzIHJlYWQ6bWZhX3BvbGljaWVzIHVwZGF0ZTptZmFfcG9saWNpZXMgcmVhZDpyb2xlcyBjcmVhdGU6cm9sZXMgZGVsZXRlOnJvbGVzIHVwZGF0ZTpyb2xlcyByZWFkOnByb21wdHMgdXBkYXRlOnByb21wdHMgcmVhZDpicmFuZGluZyB1cGRhdGU6YnJhbmRpbmcgZGVsZXRlOmJyYW5kaW5nIHJlYWQ6bG9nX3N0cmVhbXMgY3JlYXRlOmxvZ19zdHJlYW1zIGRlbGV0ZTpsb2dfc3RyZWFtcyB1cGRhdGU6bG9nX3N0cmVhbXMgY3JlYXRlOnNpZ25pbmdfa2V5cyByZWFkOnNpZ25pbmdfa2V5cyB1cGRhdGU6c2lnbmluZ19rZXlzIHJlYWQ6bGltaXRzIHVwZGF0ZTpsaW1pdHMgY3JlYXRlOnJvbGVfbWVtYmVycyByZWFkOnJvbGVfbWVtYmVycyBkZWxldGU6cm9sZV9tZW1iZXJzIHJlYWQ6ZW50aXRsZW1lbnRzIHJlYWQ6YXR0YWNrX3Byb3RlY3Rpb24gdXBkYXRlOmF0dGFja19wcm90ZWN0aW9uIHJlYWQ6b3JnYW5pemF0aW9uc19zdW1tYXJ5IGNyZWF0ZTphdXRoZW50aWNhdGlvbl9tZXRob2RzIHJlYWQ6YXV0aGVudGljYXRpb25fbWV0aG9kcyB1cGRhdGU6YXV0aGVudGljYXRpb25fbWV0aG9kcyBkZWxldGU6YXV0aGVudGljYXRpb25fbWV0aG9kcyByZWFkOm9yZ2FuaXphdGlvbnMgdXBkYXRlOm9yZ2FuaXphdGlvbnMgY3JlYXRlOm9yZ2FuaXphdGlvbnMgZGVsZXRlOm9yZ2FuaXphdGlvbnMgY3JlYXRlOm9yZ2FuaXphdGlvbl9tZW1iZXJzIHJlYWQ6b3JnYW5pemF0aW9uX21lbWJlcnMgZGVsZXRlOm9yZ2FuaXphdGlvbl9tZW1iZXJzIGNyZWF0ZTpvcmdhbml6YXRpb25fY29ubmVjdGlvbnMgcmVhZDpvcmdhbml6YXRpb25fY29ubmVjdGlvbnMgdXBkYXRlOm9yZ2FuaXphdGlvbl9jb25uZWN0aW9ucyBkZWxldGU6b3JnYW5pemF0aW9uX2Nvbm5lY3Rpb25zIGNyZWF0ZTpvcmdhbml6YXRpb25fbWVtYmVyX3JvbGVzIHJlYWQ6b3JnYW5pemF0aW9uX21lbWJlcl9yb2xlcyBkZWxldGU6b3JnYW5pemF0aW9uX21lbWJlcl9yb2xlcyBjcmVhdGU6b3JnYW5pemF0aW9uX2ludml0YXRpb25zIHJlYWQ6b3JnYW5pemF0aW9uX2ludml0YXRpb25zIGRlbGV0ZTpvcmdhbml6YXRpb25faW52aXRhdGlvbnMgcmVhZDpzY2ltX2NvbmZpZyBjcmVhdGU6c2NpbV9jb25maWcgdXBkYXRlOnNjaW1fY29uZmlnIGRlbGV0ZTpzY2ltX2NvbmZpZyBjcmVhdGU6c2NpbV90b2tlbiByZWFkOnNjaW1fdG9rZW4gZGVsZXRlOnNjaW1fdG9rZW4gZGVsZXRlOnBob25lX3Byb3ZpZGVycyBjcmVhdGU6cGhvbmVfcHJvdmlkZXJzIHJlYWQ6cGhvbmVfcHJvdmlkZXJzIHVwZGF0ZTpwaG9uZV9wcm92aWRlcnMgZGVsZXRlOnBob25lX3RlbXBsYXRlcyBjcmVhdGU6cGhvbmVfdGVtcGxhdGVzIHJlYWQ6cGhvbmVfdGVtcGxhdGVzIHVwZGF0ZTpwaG9uZV90ZW1wbGF0ZXMgY3JlYXRlOmVuY3J5cHRpb25fa2V5cyByZWFkOmVuY3J5cHRpb25fa2V5cyB1cGRhdGU6ZW5jcnlwdGlvbl9rZXlzIGRlbGV0ZTplbmNyeXB0aW9uX2tleXMgcmVhZDpzZXNzaW9ucyBkZWxldGU6c2Vzc2lvbnMgcmVhZDpyZWZyZXNoX3Rva2VucyBkZWxldGU6cmVmcmVzaF90b2tlbnMgY3JlYXRlOnNlbGZfc2VydmljZV9wcm9maWxlcyByZWFkOnNlbGZfc2VydmljZV9wcm9maWxlcyB1cGRhdGU6c2VsZl9zZXJ2aWNlX3Byb2ZpbGVzIGRlbGV0ZTpzZWxmX3NlcnZpY2VfcHJvZmlsZXMgY3JlYXRlOnNzb19hY2Nlc3NfdGlja2V0cyBkZWxldGU6c3NvX2FjY2Vzc190aWNrZXRzIHJlYWQ6Zm9ybXMgdXBkYXRlOmZvcm1zIGRlbGV0ZTpmb3JtcyBjcmVhdGU6Zm9ybXMgcmVhZDpmbG93cyB1cGRhdGU6Zmxvd3MgZGVsZXRlOmZsb3dzIGNyZWF0ZTpmbG93cyByZWFkOmZsb3dzX3ZhdWx0IHJlYWQ6Zmxvd3NfdmF1bHRfY29ubmVjdGlvbnMgdXBkYXRlOmZsb3dzX3ZhdWx0X2Nvbm5lY3Rpb25zIGRlbGV0ZTpmbG93c192YXVsdF9jb25uZWN0aW9ucyBjcmVhdGU6Zmxvd3NfdmF1bHRfY29ubmVjdGlvbnMgcmVhZDpmbG93c19leGVjdXRpb25zIGRlbGV0ZTpmbG93c19leGVjdXRpb25zIHJlYWQ6Y29ubmVjdGlvbnNfb3B0aW9ucyB1cGRhdGU6Y29ubmVjdGlvbnNfb3B0aW9ucyByZWFkOnNlbGZfc2VydmljZV9wcm9maWxlX2N1c3RvbV90ZXh0cyB1cGRhdGU6c2VsZl9zZXJ2aWNlX3Byb2ZpbGVfY3VzdG9tX3RleHRzIGNyZWF0ZTpuZXR3b3JrX2FjbHMgdXBkYXRlOm5ldHdvcmtfYWNscyByZWFkOm5ldHdvcmtfYWNscyBkZWxldGU6bmV0d29ya19hY2xzIGRlbGV0ZTp2ZGNzX3RlbXBsYXRlcyByZWFkOnZkY3NfdGVtcGxhdGVzIGNyZWF0ZTp2ZGNzX3RlbXBsYXRlcyB1cGRhdGU6dmRjc190ZW1wbGF0ZXMgY3JlYXRlOmN1c3RvbV9zaWduaW5nX2tleXMgcmVhZDpjdXN0b21fc2lnbmluZ19rZXlzIHVwZGF0ZTpjdXN0b21fc2lnbmluZ19rZXlzIGRlbGV0ZTpjdXN0b21fc2lnbmluZ19rZXlzIHJlYWQ6ZmVkZXJhdGVkX2Nvbm5lY3Rpb25zX3Rva2VucyBkZWxldGU6ZmVkZXJhdGVkX2Nvbm5lY3Rpb25zX3Rva2VucyBjcmVhdGU6dXNlcl9hdHRyaWJ1dGVfcHJvZmlsZXMgcmVhZDp1c2VyX2F0dHJpYnV0ZV9wcm9maWxlcyB1cGRhdGU6dXNlcl9hdHRyaWJ1dGVfcHJvZmlsZXMgZGVsZXRlOnVzZXJfYXR0cmlidXRlX3Byb2ZpbGVzIHJlYWQ6Y2xpZW50X2NyZWRlbnRpYWxzIGNyZWF0ZTpjbGllbnRfY3JlZGVudGlhbHMgdXBkYXRlOmNsaWVudF9jcmVkZW50aWFscyBkZWxldGU6Y2xpZW50X2NyZWRlbnRpYWxzIHJlYWQ6b3JnYW5pemF0aW9uX2NsaWVudF9ncmFudHMgY3JlYXRlOm9yZ2FuaXphdGlvbl9jbGllbnRfZ3JhbnRzIGRlbGV0ZTpvcmdhbml6YXRpb25fY2xpZW50X2dyYW50cyByZWFkOmV2ZW50X3N0cmVhbXMgY3JlYXRlOmV2ZW50X3N0cmVhbXMgdXBkYXRlOmV2ZW50X3N0cmVhbXMgZGVsZXRlOmV2ZW50X3N0cmVhbXMgcmVhZDpldmVudF9kZWxpdmVyaWVzIHVwZGF0ZTpldmVudF9kZWxpdmVyaWVzIiwiZ3R5IjoiY2xpZW50LWNyZWRlbnRpYWxzIiwiYXpwIjoiRUllbEdidVo0TURnS0RwZnNFTFRza09TVHRhczNmSnEifQ.uDYnCAXn4lBV5_9Qu5IGT7NB25n1dKSi-PP7oN7dN1J-NXWvAxqCRUqpEfg0LYhu70rGV8N2LSSWVSdPHKuAkpzhihHzEgKSFJsbaD_KSNGLCsnh3ZtN0G7oxnhcSO1ww9AbgeoOkkNXO0GOtKDuvX6avXCYfhGzfnH1Dc9VjJLRyPMZAL4M7aKXxSgRQl9XLR7LzUTW22sHj_pRQ4lZzhH8N0CtSnoORkmsRalYjGcel6nm_v7LjpcZtiEr1uLYlem_d3-0-F5DPkhc5At_DWBLBOQhTIkljsxp70wIPQDUhtQwT5fR57-RAljiwkk-c1CnqTKeAtVp4Bgsh5e9QQ");
+
+            // Send the request
+            var response = await client.SendAsync(request);
+
+            // Ensure the request was successful
+            if (response.IsSuccessStatusCode)
+            {
+                // Parse the JSON response
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var users = JsonSerializer.Deserialize<List<JsonElement>>(jsonContent);
+
+                // Find the user_id for the provided email
+                var user = users.FirstOrDefault(u => u.TryGetProperty("email", out var emailElement) && emailElement.GetString() == email);
+                if (user.TryGetProperty("user_id", out var userIdElement))
+                {
+                    // Extract the 'user_id' value
+                    string userId = userIdElement.GetString();
+                    return userId;
+                }
+                else
+                {
+                    // Handle case where 'user_id' property is missing
+                    Console.WriteLine("User ID not found for the provided email.");
+                    return null;
+                }
+            }
+            else
+            {
+                // Handle HTTP error
+                Console.WriteLine($"Failed to fetch user information. Status code: {response.StatusCode}");
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions that occur during the request
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            return null;
+        }
+    }
+
+    private async Task<bool> IsEmailAlreadyVerified(string email)
+    {
+        try
+        {
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://dev-75kcw8hj0pzojdod.us.auth0.com/api/v2/users-by-email?email={Uri.EscapeDataString(email)}");
+
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkFaSk9ILXY5NHZjOXNJZnplNnh6MSJ9.eyJpc3MiOiJodHRwczovL2Rldi03NWtjdzhoajBwem9qZG9kLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJFSWVsR2J1WjRNRGdLRHBmc0VMVHNrT1NUdGFzM2ZKcUBjbGllbnRzIiwiYXVkIjoiaHR0cHM6Ly9kZXYtNzVrY3c4aGowcHpvamRvZC51cy5hdXRoMC5jb20vYXBpL3YyLyIsImlhdCI6MTc1ODA5OTE3MywiZXhwIjoxNzYwNjkxMTczLCJzY29wZSI6InJlYWQ6Y2xpZW50X2dyYW50cyBjcmVhdGU6Y2xpZW50X2dyYW50cyBkZWxldGU6Y2xpZW50X2dyYW50cyB1cGRhdGU6Y2xpZW50X2dyYW50cyByZWFkOnVzZXJzIHVwZGF0ZTp1c2VycyBkZWxldGU6dXNlcnMgY3JlYXRlOnVzZXJzIHJlYWQ6dXNlcnNfYXBwX21ldGFkYXRhIHVwZGF0ZTp1c2Vyc19hcHBfbWV0YWRhdGEgZGVsZXRlOnVzZXJzX2FwcF9tZXRhZGF0YSBjcmVhdGU6dXNlcnNfYXBwX21ldGFkYXRhIHJlYWQ6dXNlcl9jdXN0b21fYmxvY2tzIGNyZWF0ZTp1c2VyX2N1c3RvbV9ibG9ja3MgZGVsZXRlOnVzZXJfY3VzdG9tX2Jsb2NrcyBjcmVhdGU6dXNlcl90aWNrZXRzIHJlYWQ6Y2xpZW50cyB1cGRhdGU6Y2xpZW50cyBkZWxldGU6Y2xpZW50cyBjcmVhdGU6Y2xpZW50cyByZWFkOmNsaWVudF9rZXlzIHVwZGF0ZTpjbGllbnRfa2V5cyBkZWxldGU6Y2xpZW50X2tleXMgY3JlYXRlOmNsaWVudF9rZXlzIHJlYWQ6Y29ubmVjdGlvbnMgdXBkYXRlOmNvbm5lY3Rpb25zIGRlbGV0ZTpjb25uZWN0aW9ucyBjcmVhdGU6Y29ubmVjdGlvbnMgcmVhZDpyZXNvdXJjZV9zZXJ2ZXJzIHVwZGF0ZTpyZXNvdXJjZV9zZXJ2ZXJzIGRlbGV0ZTpyZXNvdXJjZV9zZXJ2ZXJzIGNyZWF0ZTpyZXNvdXJjZV9zZXJ2ZXJzIHJlYWQ6ZGV2aWNlX2NyZWRlbnRpYWxzIHVwZGF0ZTpkZXZpY2VfY3JlZGVudGlhbHMgZGVsZXRlOmRldmljZV9jcmVkZW50aWFscyBjcmVhdGU6ZGV2aWNlX2NyZWRlbnRpYWxzIHJlYWQ6cnVsZXMgdXBkYXRlOnJ1bGVzIGRlbGV0ZTpydWxlcyBjcmVhdGU6cnVsZXMgcmVhZDpydWxlc19jb25maWdzIHVwZGF0ZTpydWxlc19jb25maWdzIGRlbGV0ZTpydWxlc19jb25maWdzIHJlYWQ6aG9va3MgdXBkYXRlOmhvb2tzIGRlbGV0ZTpob29rcyBjcmVhdGU6aG9va3MgcmVhZDphY3Rpb25zIHVwZGF0ZTphY3Rpb25zIGRlbGV0ZTphY3Rpb25zIGNyZWF0ZTphY3Rpb25zIHJlYWQ6ZW1haWxfcHJvdmlkZXIgdXBkYXRlOmVtYWlsX3Byb3ZpZGVyIGRlbGV0ZTplbWFpbF9wcm92aWRlciBjcmVhdGU6ZW1haWxfcHJvdmlkZXIgYmxhY2tsaXN0OnRva2VucyByZWFkOnN0YXRzIHJlYWQ6aW5zaWdodHMgcmVhZDp0ZW5hbnRfc2V0dGluZ3MgdXBkYXRlOnRlbmFudF9zZXR0aW5ncyByZWFkOmxvZ3MgcmVhZDpsb2dzX3VzZXJzIHJlYWQ6c2hpZWxkcyBjcmVhdGU6c2hpZWxkcyB1cGRhdGU6c2hpZWxkcyBkZWxldGU6c2hpZWxkcyByZWFkOmFub21hbHlfYmxvY2tzIGRlbGV0ZTphbm9tYWx5X2Jsb2NrcyB1cGRhdGU6dHJpZ2dlcnMgcmVhZDp0cmlnZ2VycyByZWFkOmdyYW50cyBkZWxldGU6Z3JhbnRzIHJlYWQ6Z3VhcmRpYW5fZmFjdG9ycyB1cGRhdGU6Z3VhcmRpYW5fZmFjdG9ycyByZWFkOmd1YXJkaWFuX2Vucm9sbG1lbnRzIGRlbGV0ZTpndWFyZGlhbl9lbnJvbGxtZW50cyBjcmVhdGU6Z3VhcmRpYW5fZW5yb2xsbWVudF90aWNrZXRzIHJlYWQ6dXNlcl9pZHBfdG9rZW5zIGNyZWF0ZTpwYXNzd29yZHNfY2hlY2tpbmdfam9iIGRlbGV0ZTpwYXNzd29yZHNfY2hlY2tpbmdfam9iIHJlYWQ6Y3VzdG9tX2RvbWFpbnMgZGVsZXRlOmN1c3RvbV9kb21haW5zIGNyZWF0ZTpjdXN0b21fZG9tYWlucyB1cGRhdGU6Y3VzdG9tX2RvbWFpbnMgcmVhZDplbWFpbF90ZW1wbGF0ZXMgY3JlYXRlOmVtYWlsX3RlbXBsYXRlcyB1cGRhdGU6ZW1haWxfdGVtcGxhdGVzIHJlYWQ6bWZhX3BvbGljaWVzIHVwZGF0ZTptZmFfcG9saWNpZXMgcmVhZDpyb2xlcyBjcmVhdGU6cm9sZXMgZGVsZXRlOnJvbGVzIHVwZGF0ZTpyb2xlcyByZWFkOnByb21wdHMgdXBkYXRlOnByb21wdHMgcmVhZDpicmFuZGluZyB1cGRhdGU6YnJhbmRpbmcgZGVsZXRlOmJyYW5kaW5nIHJlYWQ6bG9nX3N0cmVhbXMgY3JlYXRlOmxvZ19zdHJlYW1zIGRlbGV0ZTpsb2dfc3RyZWFtcyB1cGRhdGU6bG9nX3N0cmVhbXMgY3JlYXRlOnNpZ25pbmdfa2V5cyByZWFkOnNpZ25pbmdfa2V5cyB1cGRhdGU6c2lnbmluZ19rZXlzIHJlYWQ6bGltaXRzIHVwZGF0ZTpsaW1pdHMgY3JlYXRlOnJvbGVfbWVtYmVycyByZWFkOnJvbGVfbWVtYmVycyBkZWxldGU6cm9sZV9tZW1iZXJzIHJlYWQ6ZW50aXRsZW1lbnRzIHJlYWQ6YXR0YWNrX3Byb3RlY3Rpb24gdXBkYXRlOmF0dGFja19wcm90ZWN0aW9uIHJlYWQ6b3JnYW5pemF0aW9uc19zdW1tYXJ5IGNyZWF0ZTphdXRoZW50aWNhdGlvbl9tZXRob2RzIHJlYWQ6YXV0aGVudGljYXRpb25fbWV0aG9kcyB1cGRhdGU6YXV0aGVudGljYXRpb25fbWV0aG9kcyBkZWxldGU6YXV0aGVudGljYXRpb25fbWV0aG9kcyByZWFkOm9yZ2FuaXphdGlvbnMgdXBkYXRlOm9yZ2FuaXphdGlvbnMgY3JlYXRlOm9yZ2FuaXphdGlvbnMgZGVsZXRlOm9yZ2FuaXphdGlvbnMgY3JlYXRlOm9yZ2FuaXphdGlvbl9tZW1iZXJzIHJlYWQ6b3JnYW5pemF0aW9uX21lbWJlcnMgZGVsZXRlOm9yZ2FuaXphdGlvbl9tZW1iZXJzIGNyZWF0ZTpvcmdhbml6YXRpb25fY29ubmVjdGlvbnMgcmVhZDpvcmdhbml6YXRpb25fY29ubmVjdGlvbnMgdXBkYXRlOm9yZ2FuaXphdGlvbl9jb25uZWN0aW9ucyBkZWxldGU6b3JnYW5pemF0aW9uX2Nvbm5lY3Rpb25zIGNyZWF0ZTpvcmdhbml6YXRpb25fbWVtYmVyX3JvbGVzIHJlYWQ6b3JnYW5pemF0aW9uX21lbWJlcl9yb2xlcyBkZWxldGU6b3JnYW5pemF0aW9uX21lbWJlcl9yb2xlcyBjcmVhdGU6b3JnYW5pemF0aW9uX2ludml0YXRpb25zIHJlYWQ6b3JnYW5pemF0aW9uX2ludml0YXRpb25zIGRlbGV0ZTpvcmdhbml6YXRpb25faW52aXRhdGlvbnMgcmVhZDpzY2ltX2NvbmZpZyBjcmVhdGU6c2NpbV9jb25maWcgdXBkYXRlOnNjaW1fY29uZmlnIGRlbGV0ZTpzY2ltX2NvbmZpZyBjcmVhdGU6c2NpbV90b2tlbiByZWFkOnNjaW1fdG9rZW4gZGVsZXRlOnNjaW1fdG9rZW4gZGVsZXRlOnBob25lX3Byb3ZpZGVycyBjcmVhdGU6cGhvbmVfcHJvdmlkZXJzIHJlYWQ6cGhvbmVfcHJvdmlkZXJzIHVwZGF0ZTpwaG9uZV9wcm92aWRlcnMgZGVsZXRlOnBob25lX3RlbXBsYXRlcyBjcmVhdGU6cGhvbmVfdGVtcGxhdGVzIHJlYWQ6cGhvbmVfdGVtcGxhdGVzIHVwZGF0ZTpwaG9uZV90ZW1wbGF0ZXMgY3JlYXRlOmVuY3J5cHRpb25fa2V5cyByZWFkOmVuY3J5cHRpb25fa2V5cyB1cGRhdGU6ZW5jcnlwdGlvbl9rZXlzIGRlbGV0ZTplbmNyeXB0aW9uX2tleXMgcmVhZDpzZXNzaW9ucyBkZWxldGU6c2Vzc2lvbnMgcmVhZDpyZWZyZXNoX3Rva2VucyBkZWxldGU6cmVmcmVzaF90b2tlbnMgY3JlYXRlOnNlbGZfc2VydmljZV9wcm9maWxlcyByZWFkOnNlbGZfc2VydmljZV9wcm9maWxlcyB1cGRhdGU6c2VsZl9zZXJ2aWNlX3Byb2ZpbGVzIGRlbGV0ZTpzZWxmX3NlcnZpY2VfcHJvZmlsZXMgY3JlYXRlOnNzb19hY2Nlc3NfdGlja2V0cyBkZWxldGU6c3NvX2FjY2Vzc190aWNrZXRzIHJlYWQ6Zm9ybXMgdXBkYXRlOmZvcm1zIGRlbGV0ZTpmb3JtcyBjcmVhdGU6Zm9ybXMgcmVhZDpmbG93cyB1cGRhdGU6Zmxvd3MgZGVsZXRlOmZsb3dzIGNyZWF0ZTpmbG93cyByZWFkOmZsb3dzX3ZhdWx0IHJlYWQ6Zmxvd3NfdmF1bHRfY29ubmVjdGlvbnMgdXBkYXRlOmZsb3dzX3ZhdWx0X2Nvbm5lY3Rpb25zIGRlbGV0ZTpmbG93c192YXVsdF9jb25uZWN0aW9ucyBjcmVhdGU6Zmxvd3NfdmF1bHRfY29ubmVjdGlvbnMgcmVhZDpmbG93c19leGVjdXRpb25zIGRlbGV0ZTpmbG93c19leGVjdXRpb25zIHJlYWQ6Y29ubmVjdGlvbnNfb3B0aW9ucyB1cGRhdGU6Y29ubmVjdGlvbnNfb3B0aW9ucyByZWFkOnNlbGZfc2VydmljZV9wcm9maWxlX2N1c3RvbV90ZXh0cyB1cGRhdGU6c2VsZl9zZXJ2aWNlX3Byb2ZpbGVfY3VzdG9tX3RleHRzIGNyZWF0ZTpuZXR3b3JrX2FjbHMgdXBkYXRlOm5ldHdvcmtfYWNscyByZWFkOm5ldHdvcmtfYWNscyBkZWxldGU6bmV0d29ya19hY2xzIGRlbGV0ZTp2ZGNzX3RlbXBsYXRlcyByZWFkOnZkY3NfdGVtcGxhdGVzIGNyZWF0ZTp2ZGNzX3RlbXBsYXRlcyB1cGRhdGU6dmRjc190ZW1wbGF0ZXMgY3JlYXRlOmN1c3RvbV9zaWduaW5nX2tleXMgcmVhZDpjdXN0b21fc2lnbmluZ19rZXlzIHVwZGF0ZTpjdXN0b21fc2lnbmluZ19rZXlzIGRlbGV0ZTpjdXN0b21fc2lnbmluZ19rZXlzIHJlYWQ6ZmVkZXJhdGVkX2Nvbm5lY3Rpb25zX3Rva2VucyBkZWxldGU6ZmVkZXJhdGVkX2Nvbm5lY3Rpb25zX3Rva2VucyBjcmVhdGU6dXNlcl9hdHRyaWJ1dGVfcHJvZmlsZXMgcmVhZDp1c2VyX2F0dHJpYnV0ZV9wcm9maWxlcyB1cGRhdGU6dXNlcl9hdHRyaWJ1dGVfcHJvZmlsZXMgZGVsZXRlOnVzZXJfYXR0cmlidXRlX3Byb2ZpbGVzIHJlYWQ6Y2xpZW50X2NyZWRlbnRpYWxzIGNyZWF0ZTpjbGllbnRfY3JlZGVudGlhbHMgdXBkYXRlOmNsaWVudF9jcmVkZW50aWFscyBkZWxldGU6Y2xpZW50X2NyZWRlbnRpYWxzIHJlYWQ6b3JnYW5pemF0aW9uX2NsaWVudF9ncmFudHMgY3JlYXRlOm9yZ2FuaXphdGlvbl9jbGllbnRfZ3JhbnRzIGRlbGV0ZTpvcmdhbml6YXRpb25fY2xpZW50X2dyYW50cyByZWFkOmV2ZW50X3N0cmVhbXMgY3JlYXRlOmV2ZW50X3N0cmVhbXMgdXBkYXRlOmV2ZW50X3N0cmVhbXMgZGVsZXRlOmV2ZW50X3N0cmVhbXMgcmVhZDpldmVudF9kZWxpdmVyaWVzIHVwZGF0ZTpldmVudF9kZWxpdmVyaWVzIiwiZ3R5IjoiY2xpZW50LWNyZWRlbnRpYWxzIiwiYXpwIjoiRUllbEdidVo0TURnS0RwZnNFTFRza09TVHRhczNmSnEifQ.uDYnCAXn4lBV5_9Qu5IGT7NB25n1dKSi-PP7oN7dN1J-NXWvAxqCRUqpEfg0LYhu70rGV8N2LSSWVSdPHKuAkpzhihHzEgKSFJsbaD_KSNGLCsnh3ZtN0G7oxnhcSO1ww9AbgeoOkkNXO0GOtKDuvX6avXCYfhGzfnH1Dc9VjJLRyPMZAL4M7aKXxSgRQl9XLR7LzUTW22sHj_pRQ4lZzhH8N0CtSnoORkmsRalYjGcel6nm_v7LjpcZtiEr1uLYlem_d3-0-F5DPkhc5At_DWBLBOQhTIkljsxp70wIPQDUhtQwT5fR57-RAljiwkk-c1CnqTKeAtVp4Bgsh5e9QQ");
+
+            var response = await client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var users = JsonSerializer.Deserialize<List<JsonElement>>(jsonContent);
+
+                var user = users.FirstOrDefault(u => u.TryGetProperty("email", out var emailElement) && emailElement.GetString() == email);
+                if (user.TryGetProperty("email_verified", out var emailVerifiedElement))
+                {
+                    return emailVerifiedElement.GetBoolean();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+
+        return false;
+    }
+
+}

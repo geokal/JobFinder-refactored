@@ -1,0 +1,1036 @@
+﻿@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@using System.Text.Json
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@using QuizManager.Data; 
+@using Microsoft.EntityFrameworkCore;
+@using QuizManager.Models
+@using System.Net.Mail
+@inject FileUploadService FileUploadService
+@inject IDbContextFactory<AppDbContext> DbContextFactory
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Net.Http.Json
+@using System.Net.Http
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject InternshipEmailService InternshipEmailService
+@using System.Collections.Generic
+@using System.Linq
+@using System.Threading.Tasks
+@inject IJSRuntime JS
+@using System.Globalization;
+@using System.Text;
+
+
+<style>
+.dark-red-text {
+    color: darkred;
+}
+
+
+    .black-text {
+        color: black;
+    }
+    .good-message {
+        background-color: green;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+
+    .text-underlined {
+        text-decoration: underline;
+    }
+
+    .center-sev {
+        position: fixed;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: block;
+        width: 400px; /* or specific px value */
+        height: 150px; /* maintains aspect ratio */
+    }
+
+    .center-uoa {
+        position: fixed;
+        bottom: 250px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: block;
+    }
+
+    .news-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 15px; /* Adjusted padding for a cleaner look */
+        border: 1px solid #e0e0e0; /* Lighter border */
+        border-radius: 10px; /* Smoother border radius */
+        background-color: #ffffff; /* White background */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        transition: transform 0.3s ease; /* Smooth transform on hover */
+    }
+
+        .news-container:hover {
+            transform: translateY(-5px); /* Lift effect on hover */
+        }
+
+    .news-article {
+        background-color: #fdfdfd; /* Slightly off-white background */
+        padding: 15px; /* More padding for better spacing */
+        border: 1px solid #e0e0e0; /* Lighter border */
+        border-radius: 8px; /* Smoother border radius */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+        font-size: 14px; /* Smaller font size */
+        transition: transform 0.3s ease; /* Smooth transform on hover */
+    }
+
+        .news-article:hover {
+            transform: translateY(-3px); /* Lift effect on hover */
+        }
+
+        .news-article h3 {
+            margin: 0 0 10px; /* Space between title and content */
+            font-size: 16px; /* Slightly larger font size */
+        }
+
+        .news-article p {
+            margin: 0;
+            color: #555; /* Softer text color */
+        }
+
+        .news-article a {
+            text-decoration: none; /* Remove underline from links */
+            color: #007bff; /* Modern link color */
+            transition: color 0.3s ease; /* Smooth color transition */
+        }
+
+            .news-article a:hover {
+                color: #0056b3; /* Darker color on hover */
+            }
+
+    .news-heading {
+        font-size: 20px; /* Larger font size */
+        font-weight: bold; /* Bold text */
+        color: orange; /* Orange color */
+    }
+
+    .right-side-content {
+        position: fixed;
+        right: 20px; /* Adjust this value to move it more/less to the right */
+        top: 40px; /* Adjust this value to move it more/less to the top */
+        width: 200px; /* Adjust the width as needed */
+    }
+
+    .useful-links {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        padding: 10px;
+        background-color: #f0f0f0; /* Background color */
+        border-top: 1px solid #ddd; /* Border on top */
+        width: 100%; /* Full width */
+    }
+
+        .useful-links ul {
+            list-style-type: none; /* Remove bullet points */
+            padding: 0;
+            margin: 0;
+        }
+
+            .useful-links ul li {
+                display: inline; /* Display links inline */
+                margin-right: 20px; /* Add spacing between links */
+            }
+
+        .useful-links a {
+            text-decoration: none; /* Remove underline from links */
+            color: #333; /* Link color */
+        }
+
+        .weather-container {
+        position: fixed;
+        bottom: 20px; /* Adjust top position as needed */
+        right: 10px; /* Adjust right position as needed */
+        padding: 10px;
+        z-index: 10; /* Ensure the weather container stays in front of the image */
+        color: white;
+        font-weight: bold;
+        }
+
+    .platform-news-container {
+        position: fixed;
+        bottom: 580px; /* Adjust top position as needed */
+        right: 20px; /* Adjust right position as needed */
+        background-color: #f0f0f0;
+        padding: 10px;
+        max-height: 400px; /* Ensure the container has a fixed height */
+        overflow-y: auto; /* Allow scrolling if content exceeds max-height */
+        width: 600px; /* Fixed width for the container */
+    }
+
+    .news-article {
+        margin-bottom: 3px; /* Space between announcements */
+    }
+
+    .announcement-description {
+        display: none; /* Initially hide description */
+        max-width: 100%;
+        margin-top: 5px; /* Space above description */
+        margin-left: 20px; /* Indentation */
+        overflow-wrap: break-word; /* Break long words */
+        word-wrap: break-word; /* Break long words */
+    }
+
+        .announcement-description.expanded {
+            display: block; /* Show description when expanded */
+        }
+
+        .right-side-announcements {
+            position: fixed; /* Keep it fixed on the right side */
+            right: 20px; /* Adjust this value as needed */
+            top: 200px; /* Position below the header, adjust as necessary */
+            width: 200px; /* Adjust the width as needed */
+            background-color: #ffffff; /* Same background as news containers */
+            border: 1px solid #e0e0e0; /* Same border style */
+            border-radius: 10px; /* Same border radius */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Same shadow effect */
+            padding: 15px; /* Padding for inner content */
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Space between announcements */
+}
+
+    .yellow-text {
+        color: yellow; /* or any other shade you prefer */
+    }
+
+    .black-text {
+        color: black; /* or any other shade you prefer */
+    }
+
+    .dark-red {
+        color: darkred; /* You can also use a specific hex color code like #8B0000 */
+    }
+
+    .event-description {
+        display: none; /* Hide by default */
+    }
+
+        .event-description.expanded {
+            display: block; /* Show when expanded */
+        }
+
+    .calendar {
+        position: fixed;
+        bottom: 450px;
+        right: 10px;
+        background-color: #f0f0f0;
+        padding: 10px;
+        width: 280px; /* Adjust width for better fit */
+        margin: auto;
+        font-size: 0.9em;
+        border: 2px solid #007BFF;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        padding: 0;
+        text-align: center; /* Center text */
+    }
+
+    .day-header {
+        font-weight: bold;
+        background-color: #f0f0f0;
+        padding: 5px;
+        font-size: 0.8em;
+        white-space: normal;
+        word-wrap: break-word;
+        max-width: 30px; /* Ensure headers don't overflow */
+        overflow: hidden; /* Hide overflowed text */
+        text-overflow: ellipsis; /* Add ellipsis if text is too long */
+    }
+
+    .empty-cell {
+        background-color: transparent;
+    }
+
+    .day-cell {
+        border: 1px solid #ddd;
+        text-align: center;
+        cursor: pointer;
+        padding: 10px;
+        transition: background-color 0.3s;
+        font-size: 0.9em;
+        min-width: 30px; /* Ensure day cells have a minimum width */
+    }
+
+        .day-cell:hover {
+            background-color: #e0e0e0;
+        }
+
+    .event-indicator {
+        color: darkred;
+        font-weight: bold;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    .btn-small {
+        padding: 5px 10px;
+        background-color: #007BFF;
+        border: none;
+        color: white;
+        cursor: pointer;
+        margin: 0 5px;
+        transition: background-color 0.3s;
+        border-radius: 5px;
+    }
+
+        .btn-small:hover {
+            background-color: #0056b3;
+        }
+
+    .event-day {
+        background-color: green;
+        color: white;
+        padding: 5px;
+        border-radius: 8px;
+        display: inline-block;
+        box-sizing: content-box;
+    }
+
+    .highlighted {
+        background-color: green;
+        color: white;
+        padding: 5px;
+        border-radius: 8px;
+        display: inline-block;
+        box-sizing: content-box;
+    }
+
+    /* Basic modal styling */
+    .modal {
+        display: block;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent background */
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 5px;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+
+    .today {
+        background-color: #007BFF; /* Blue background */
+        color: white;
+        padding: 5px;
+        border-radius: 8px;
+        display: inline-block;
+        box-sizing: content-box;
+    }
+
+    .backgroundimage-page {
+        position: fixed;
+        display: block;
+        margin-left: -32px; /* Extends the image leftwards */
+        margin-right: -500px; /* Extends the image rightwards */
+        height: 100vh; /* Full viewport height */
+        width: 100vw; /* Full viewport width */
+        object-fit: cover; /* Ensures the image covers the container without distortion */
+        bottom: 5px;
+    }
+
+</style>
+
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <Authorizing>
+                    <p>Determining session state, please wait...</p>
+                </Authorizing>
+                <NotAuthorized>
+                    
+                    @if (isAuthenticated)
+                    {
+                        @if (isEmailVerified)
+                        {
+                            <h1>Σημαντική Ειδοποίηση!!!</h1>
+                            <p>Δεν είστε εξουσιοδοτημένοι για να συνεχίσετε! Δείτε στα εισερχόμενα μηνύματά σας, ώστε να επαληθεύσετε το email σας!</p>
+                            <p>Στην συνέχεια προχωρήστε σε Σύνδεση μέσω της Κεντρικής σελίδας</p>
+                        }
+
+                    }
+                    else
+                    {
+                        // Redirect unauthenticated users to login
+                        if (Navigation.Uri.EndsWith("/")) // or check specific route
+                        {
+                            var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+                            Navigation.NavigateTo($"login?redirectUri={returnUrl}", forceLoad: true);
+                        }
+
+                        <!-- Footer and content you already have -->
+                        <div class="footer-container">
+                            <div class="useful-links">
+                                <ul>
+                                    <li><a href="https://www.uoa.gr/">University Of Athens</a></li>
+                                    <li><a href="https://eclass.uoa.gr/">eClass</a></li>
+                                    <li><a href="https://fogus.gr/">Support</a></li>
+                                </ul>
+                            </div>
+                            <div class="weather-container">
+                                @if (weatherData != null)
+                                {
+                                    <p>Καιρός στην Αθήνα: <strong>@weatherData.temp_c °C</strong></p>
+                                }
+                                else
+                                {
+                                    <p>Παρακαλώ Περιμένετε......</p>
+                                }
+                            </div>
+                        </div>
+                        <img src="/Images/Latest_Background_2May25.png" class="backgroundimage-page" />
+                    }
+
+                    @if (isModalVisibleToShowEventsOnCalendarForEachClickedDay)
+                    {
+                        <div class="modal">
+                            <div class="modal-content">
+                                <h3>Εκδηλώσεις στις: @selectedDate?.ToString("MMMM dd, yyyy")</h3>
+
+                                @if (selectedDateEvents.Any())
+                                {
+                                    <ul>
+                                        @foreach (var eventItem in selectedDateEvents)
+                                        {
+                                            <li>@eventItem.CompanyEventTitle</li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <p>Καμία Εκδήλωση για αυτήν τη μέρα!</p>
+                                }
+
+                                <button @onclick="CloseModalShowingTheEventsOnCalendar">Κλείσιμο</button>
+                            </div>
+                        </div>
+                    }
+
+
+
+
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+
+        <NotFound>
+            <PageTitle>Not found</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <div class="footer-container">
+                    <div class="useful-links">
+                        <ul>
+                            <li><a href="https://www.uoa.gr/">University Of Athens</a></li>
+                            <li><a href="https://eclass.uoa.gr/">eClass</a></li>
+                            <li><a href="https://fogus.gr/">Support</a></li>
+                        </ul>
+                    </div>
+                    <div class="foot-container">
+                        @if (weatherData != null)
+                        {
+                            <p>Temperature In Athens: @weatherData.temp_c °C</p>
+                        }
+                        else
+                        {
+                            <p>Weather information not available</p>
+                        }
+                    </div>
+                </div>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+
+
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+@code {
+    private bool isAuthenticated;
+    private bool isEmailVerified;
+    private List<NewsArticle> newsArticles;
+    private List<NewsArticle> svseNewsArticles;
+    private string fetchError;
+    private WeatherData weatherData;
+    private string errorMessage;
+    private List<AnnouncementAsCompany> announcements = new List<AnnouncementAsCompany>(); // Declare it as a list
+    private List<AnnouncementAsProfessor> professorannouncements = new List<AnnouncementAsProfessor>(); // Declare it as a list
+    public List<AnnouncementAsCompany> Announcements { get; set; }
+    public List<AnnouncementAsProfessor> ProfessorAnnouncements { get; set; }
+    public List<CompanyEvent> CompanyEventsToShowAtFrontPage { get; set; }
+
+    private bool showAnnouncements = false;
+    private string announcementsHeading = "<span class='black-text'>Ανακοινώσεις</span> <span class='dark-red-text'>Πλατφόρμας</span>";
+    private int expandedAnnouncementId = -1;
+    private int expandedProfessorAnnouncementId = -1;
+    private int expandedCompanyEventId = -1;
+
+    private int currentPage = 1; 
+    private int pageSize = 3;    
+    private int totalPages => (int)Math.Ceiling((double)Announcements.Where(a => a.CompanyAnnouncementStatus == "Δημοσιευμένη").Count() / pageSize);
+
+    private int currentPageForProfessorAnnouncements = 1;
+    private int totalPagesForProfessorAnnouncements => (int)Math.Ceiling((double)ProfessorAnnouncements.Where(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη").Count() / pageSize);
+
+    private int currentCompanyEventPage = 1;
+    private int currentCompanyEventpageSize = 3;
+    private int totalPagesForCompanyEvents => (int)Math.Ceiling((double)CompanyEventsToShowAtFrontPage.Where(a => a.CompanyEventStatus == "Δημοσιευμένη").Count() / currentCompanyEventpageSize);
+
+    private DateTime currentMonth = DateTime.Today;
+    private string[] daysOfWeek = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+    private int firstDayOfMonth => (int)new DateTime(currentMonth.Year, currentMonth.Month, 1).DayOfWeek;
+    private List<CompanyEvent> selectedDateEvents = new List<CompanyEvent>();
+    private bool isModalVisibleToShowEventsOnCalendarForEachClickedDay = false;
+    private int daysInCurrentMonth => DateTime.DaysInMonth(currentMonth.Year, currentMonth.Month);
+    private int totalCellsInGrid;
+    private int remainingCells => totalCellsInGrid - (firstDayOfMonth + daysInCurrentMonth);
+    private int remainingCellsValue; 
+    private DateTime? selectedDate;
+    private Dictionary<int, List<CompanyEvent>> eventsForDate = new Dictionary<int, List<CompanyEvent>>();
+    private int selectedDay = 0; // To store the selected day
+    private int highlightedDay = 0; // To store the day that needs to be highlighted
+    private int adjustedFirstDayOfMonth => (firstDayOfMonth == 0) ? 6 : firstDayOfMonth - 1; // Adjust Sunday (0) to Saturday (6) and Monday (1) to 0
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity.IsAuthenticated;
+
+        if (isAuthenticated)
+        {
+            var user = authState.User;
+            isEmailVerified = IsEmailVerified(user);
+        }
+
+        // Fetch necessary data
+        newsArticles = await FetchNewsArticlesAsync();
+        svseNewsArticles = await FetchSVSENewsArticlesAsync();
+        Announcements = await FetchAnnouncementsAsync();
+        ProfessorAnnouncements = await FetchProfessorAnnouncementsAsync();
+        CompanyEventsToShowAtFrontPage = await FetchCompanyEventsAsync();
+
+        LoadEventsForCalendar();
+        CalculateRemainingCells();
+
+        try
+        {
+            var apiUrl = "http://api.weatherapi.com/v1/forecast.json?key=551267e1b73849c5bf0104738240406&q=Athens&days=1&aqi=no&alerts=no";
+            var response = await HttpClient.GetAsync(apiUrl);
+            response.EnsureSuccessStatusCode();
+            var jsonString = await response.Content.ReadAsStringAsync();
+
+            var weatherResponse = JsonSerializer.Deserialize<WeatherResponse>(jsonString);
+            if (weatherResponse == null || weatherResponse.current == null)
+            {
+                errorMessage = "Weather data not found in API response.";
+                return;
+            }
+
+            weatherData = weatherResponse.current;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Error fetching weather data: " + ex.Message;
+            Console.WriteLine(errorMessage);
+        }
+    }
+
+
+    private async Task<List<AnnouncementAsCompany>> FetchAnnouncementsAsync()
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+        var announcements = await dbContext.AnnouncementsAsCompany.AsNoTracking().ToListAsync(); 
+        return announcements;
+    }
+
+    private async Task<List<CompanyEvent>> FetchCompanyEventsAsync()
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        var companyevents = await dbContext.CompanyEvents.AsNoTracking().ToListAsync(); 
+        return companyevents;
+    }
+
+    private async Task<List<AnnouncementAsProfessor>> FetchProfessorAnnouncementsAsync()
+    {
+        
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+        var professorannouncements = await dbContext.AnnouncementsAsProfessor.AsNoTracking().ToListAsync(); 
+        return professorannouncements;
+    }
+
+
+    private async Task<List<NewsArticle>> FetchNewsArticlesAsync()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync("https://www.uoa.gr/el/anakoinoseis_kai_ekdiloseis/anakoinoseis/");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+
+            var htmlDocument = new HtmlAgilityPack.HtmlDocument();
+            htmlDocument.LoadHtml(content);
+
+            var articles = new List<NewsArticle>();
+
+            var articleNodes = htmlDocument.DocumentNode.SelectNodes("//div[contains(@class, 'topnews')]");
+            if (articleNodes != null)
+            {
+                // Limit the number of articles to 3
+                for (int i = 0; i < Math.Min(articleNodes.Count, 3); i++)
+                {
+                    var articleNode = articleNodes[i];
+
+                    var titleNode = articleNode.SelectSingleNode(".//h3[@class='article__title']/a");
+                    var title = titleNode?.InnerText.Trim();
+                    var relativeUrl = titleNode?.Attributes["href"]?.Value;
+                    var url = new Uri(new Uri("https://www.uoa.gr"), relativeUrl).ToString(); // Convert relative URL to absolute URL
+
+                    var dateNode = articleNode.SelectSingleNode(".//span[@class='article__date']/time");
+                    var date = dateNode?.Attributes["datetime"]?.Value;
+
+                    var categoryNode = articleNode.SelectSingleNode(".//span[@class='article__category']/a");
+                    var category = categoryNode?.InnerText.Trim();
+
+                    articles.Add(new NewsArticle
+                        {
+                            Title = title,
+                            Url = url,
+                            Date = date,
+                            Category = category
+                        });
+                }
+            }
+
+            return articles;
+        }
+        catch (Exception ex)
+        {
+            fetchError = ex.Message;
+            return null;
+        }
+        StateHasChanged();
+    }
+
+    private async Task<List<NewsArticle>> FetchSVSENewsArticlesAsync()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync("https://svse.gr/index.php/nea-anakoinoseis");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+
+            var htmlDocument = new HtmlAgilityPack.HtmlDocument();
+            htmlDocument.LoadHtml(content);
+
+            var articles = new List<NewsArticle>();
+
+            // Update the XPath expression to select all article nodes
+            var articleNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[1]/div/section[2]/div/div/div/main/div/div[3]/div[1]/div/div");
+
+            if (articleNodes != null)
+            {
+                foreach (var articleNode in articleNodes.Take(3)) // Take only the first 3 articles
+                {
+                    var titleNode = articleNode.SelectSingleNode(".//h2/a");
+                    var title = titleNode?.InnerText.Trim();
+                    var relativeUrl = titleNode?.Attributes["href"]?.Value;
+                    var url = new Uri(new Uri("https://svse.gr"), relativeUrl).ToString(); // Convert relative URL to absolute URL
+
+                    var dateNode = articleNode.SelectSingleNode(".//time");
+                    var date = dateNode?.InnerText.Trim();
+
+                    articles.Add(new NewsArticle
+                        {
+                            Title = title,
+                            Url = url,
+                            Date = date,
+                            Category = "SVSE News" 
+                        });
+                }
+            }
+            else
+            {
+                fetchError = "No articles found with the specified XPath.";
+            }
+            StateHasChanged();
+            return articles;
+        }
+        catch (Exception ex)
+        {
+            fetchError = ex.Message;
+            return null;
+        }
+        
+    }
+
+
+    private bool IsEmailVerified(ClaimsPrincipal user)
+    {
+        return user.Claims.Any(c => c.Type == "email_verified" && c.Value == "true");
+    }
+
+
+
+
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (isAuthenticated && !isEmailVerified && firstRender)
+        {
+            _ = HandleRedirectionAsync();
+        }
+    }
+
+    private async Task HandleRedirectionAsync()
+    {
+        try
+        {
+            var userRole = await GetUserRole();
+
+            switch (userRole)
+            {
+                case "Student":
+                    NavigationManager.NavigateTo("/");
+                    break;
+                case "Company":
+                    NavigationManager.NavigateTo("/");
+                    break;
+                case "Professor":
+                    NavigationManager.NavigateTo("/");
+                    break;
+                default:
+                    NavigationManager.NavigateTo("/"); 
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error redirecting user: {ex.Message}");
+        }
+    }
+
+
+    private async Task<string> GetUserRole()
+    {
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        if (user.IsInRole("Student"))
+        {
+            return "Student";
+        }
+        else if (user.IsInRole("Company"))
+        {
+            return "Company";
+        }
+        else if (user.IsInRole("Professor"))
+        {
+            return "Professor";
+        }
+        else
+        {
+            return string.Empty;
+        }
+    }
+
+
+    public class NewsArticle
+    {
+        public string Title { get; set; }
+        public string Url { get; set; }
+        public string Date { get; set; }
+        public string Category { get; set; }
+    }
+
+    public class WeatherData
+    {
+        public int is_day { get; set; }
+        public double temp_c { get; set; }
+    }
+
+    public class ConditionInfo
+    {
+        public string Text { get; set; }
+    }
+    public class WeatherResponse
+    {
+        public WeatherData current { get; set; }
+    }
+
+    private void ToggleAnnouncements()
+    {
+        showAnnouncements = !showAnnouncements;
+    }
+
+    private void ToggleDescription(int announcementId)
+    {
+        if (expandedAnnouncementId == announcementId)
+        {
+            expandedAnnouncementId = -1;
+        }
+        else
+        {
+            expandedAnnouncementId = announcementId;
+        }
+    }
+
+    private void ToggleDescriptionForProfessorAnnouncements(int announcementId)
+    {
+        if (expandedProfessorAnnouncementId == announcementId)
+        {
+            expandedProfessorAnnouncementId = -1;
+        }
+        else
+        {
+            expandedProfessorAnnouncementId = announcementId;
+        }
+    }
+
+    private void ToggleDescriptionForCompanyEvent(int companyeventId)
+    {
+        if (expandedCompanyEventId == companyeventId)
+        {
+            expandedCompanyEventId = -1;
+            Console.WriteLine($"Collapsed event {companyeventId}");
+        }
+        else
+        {
+            expandedCompanyEventId = companyeventId;
+            Console.WriteLine($"Expanded event {companyeventId}");
+        }
+    }
+
+
+    private async Task DownloadAnnouncementAttachmentFrontPage(byte[] attachmentData, string fileName)
+    {
+        if (attachmentData != null && attachmentData.Length > 0)
+        {
+            var base64 = Convert.ToBase64String(attachmentData);
+            var fileUrl = $"data:application/pdf;base64,{base64}";
+
+            await JSRuntime.InvokeVoidAsync("triggerDownload", fileUrl, fileName);
+        }
+    }
+
+    private async Task DownloadProfessorAnnouncementAttachmentFrontPage(byte[] attachmentData, string fileName)
+    {
+        if (attachmentData != null && attachmentData.Length > 0)
+        {
+            var base64 = Convert.ToBase64String(attachmentData);
+            var fileUrl = $"data:application/pdf;base64,{base64}";
+
+            await JSRuntime.InvokeVoidAsync("triggerDownload", fileUrl, fileName);
+        }
+    }
+
+    private async Task DownloadCompanyEventAttachmentFrontPage(byte[] attachmentData, string fileName)
+    {
+        if (attachmentData != null && attachmentData.Length > 0)
+        {
+            var base64 = Convert.ToBase64String(attachmentData);
+            var fileUrl = $"data:application/pdf;base64,{base64}";
+
+            await JSRuntime.InvokeVoidAsync("triggerDownload", fileUrl, fileName);
+        }
+    }
+
+    private void ChangePage(int pageNumber)
+    {
+        if (pageNumber >= 1 && pageNumber <= totalPages)
+        {
+            currentPage = pageNumber;
+        }
+        StateHasChanged();
+    }
+
+    private void ChangePageForProfessorAnnouncements(int pageNumberForProfessorAnnouncements)
+    {
+        if (pageNumberForProfessorAnnouncements >= 1 && pageNumberForProfessorAnnouncements <= totalPagesForProfessorAnnouncements)
+        {
+            currentPageForProfessorAnnouncements = pageNumberForProfessorAnnouncements;
+        }
+        StateHasChanged();
+    }
+
+    private void ChangePageForCompanyEvents(int pageNumberForCompanyEvents)
+    {
+        if (pageNumberForCompanyEvents >= 1 && pageNumberForCompanyEvents <= totalPagesForCompanyEvents)
+        {
+            currentCompanyEventPage = pageNumberForCompanyEvents;
+        }
+        StateHasChanged();
+    }
+
+    private void LoadEventsForCalendar()
+    {
+        eventsForDate.Clear();
+        int currentYear = currentMonth.Year;
+        int currentMonthNumber = currentMonth.Month;
+
+        // Loop through the events for the current month
+        foreach (var eventItem in CompanyEventsToShowAtFrontPage)
+        {
+            if (eventItem.CompanyEventActiveDate.Year == currentYear &&
+                eventItem.CompanyEventActiveDate.Month == currentMonthNumber)
+            {
+                int eventDay = eventItem.CompanyEventActiveDate.Day;
+                if (!eventsForDate.ContainsKey(eventDay))
+                {
+                    eventsForDate[eventDay] = new List<CompanyEvent>();
+                }
+                eventsForDate[eventDay].Add(eventItem);
+            }
+        }
+
+        // If highlighted day is not valid for this month, reset it
+        if (highlightedDay != 0 && !eventsForDate.ContainsKey(highlightedDay))
+        {
+            highlightedDay = 0; // Reset it if there's no event for the day in the current month
+        }
+
+        // After loading events, ensure the selected and highlighted day is respected
+        if (selectedDay != 0 && eventsForDate.ContainsKey(selectedDay))
+        {
+            highlightedDay = selectedDay; // Keep the selected day highlighted if valid
+        }
+
+        StateHasChanged();
+    }
+
+
+
+    private void ShowPreviousMonth()
+    {
+        currentMonth = currentMonth.AddMonths(-1);
+        LoadEventsForCalendar();
+        CalculateRemainingCells();  // Recalculate when changing the month
+        StateHasChanged();
+
+    }
+
+    private void ShowNextMonth()
+    {
+        currentMonth = currentMonth.AddMonths(1);
+        LoadEventsForCalendar();
+        CalculateRemainingCells();  
+        StateHasChanged();
+
+    }
+
+    private void OnDateClicked(DateTime clickedDate)
+    {
+        selectedDay = clickedDate.Day;  // Store the selected day
+        highlightedDay = selectedDay;   // Set this day as highlighted
+
+        // Handle events for this date (if any)
+        if (eventsForDate.TryGetValue(selectedDay, out var events) && events.Any())
+        {
+            selectedDateEvents = events;
+        }
+        else
+        {
+            selectedDateEvents = new List<CompanyEvent>();
+        }
+
+        // Show the modal
+        isModalVisibleToShowEventsOnCalendarForEachClickedDay = true;
+        StateHasChanged();
+    }
+
+
+
+    private void CloseModalShowingTheEventsOnCalendar()
+    {
+        isModalVisibleToShowEventsOnCalendarForEachClickedDay = false;
+        selectedDateEvents.Clear();
+
+        // Re-render the calendar and highlight the selected day
+        LoadEventsForCalendar();  // Reload events for the current month
+        StateHasChanged();
+    }
+
+
+
+    private void ShowEventsForDate(List<CompanyEvent> events)
+    {
+        selectedDateEvents = events;
+        isModalVisibleToShowEventsOnCalendarForEachClickedDay = true;
+        StateHasChanged();
+
+    }
+
+    private void CalculateRemainingCells()
+    {
+        remainingCellsValue = totalCellsInGrid - (firstDayOfMonth + daysInCurrentMonth);
+    }
+
+    private void ChangeMonth(int monthChange)
+    {
+        currentMonth = currentMonth.AddMonths(monthChange);
+
+        // Reset the highlighted day if it's invalid for the new month
+        LoadEventsForCalendar();  // This will handle the resetting of highlightedDay
+    }
+
+}

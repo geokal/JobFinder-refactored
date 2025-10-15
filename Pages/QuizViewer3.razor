@@ -1,0 +1,2174 @@
+﻿@page "/professorRegistration"
+@using Microsoft.EntityFrameworkCore
+@using QuizManager.Data
+@attribute [Authorize]
+@using QuizManager.Models
+@using System.IO
+@using System.Security.Claims
+@using System.Text.RegularExpressions
+@inject IJSRuntime JSRuntime
+@inject Data.AppDbContext dbContext
+@inject FileUploadService FileUploadService
+@inject IDbContextFactory<AppDbContext> DbContextFactory
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+
+<style>
+    /* Message styles */
+    .good-message {
+        background-color: green;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .error-message {
+        background-color: palevioletred;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Button styles */
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        outline: none;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s;
+    }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+    .btn-submit {
+        background-color: #28a745;
+    }
+
+        .btn-submit:hover {
+            background-color: #218838;
+        }
+
+    .btn-submit1 {
+        background-color: #0056b3;
+    }
+
+    .btn-upload {
+        background-color: burlywood;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-upload:hover {
+            background-color: #45a049;
+        }
+
+    /* Form structure - ultra-wide */
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin: 20px auto;
+        width: 98%;
+        max-width: 2400px;
+        padding: 0 10px;
+        box-sizing: border-box;
+    }
+
+    .grouped-section {
+        background-color: #d0eaff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 2px solid black;
+        width: 100%;
+        min-width: 600px;
+        box-sizing: border-box;
+    }
+
+    /* Form groups */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+    /* Typography */
+    body {
+        background-color: #f0f0f0;
+        color: #000000;
+    }
+
+    h3 {
+        font-size: 24px;
+        color: #FF5733;
+    }
+
+    h4 {
+        font-size: 24px;
+        color: darkblue;
+    }
+
+    /* Input styles */
+    .readonly-input {
+        background-color: #888888;
+        color: navajowhite;
+        font-weight: bold;
+        width: 100%;
+        max-width: 550px;
+    }
+
+    .select-with-arrow {
+        position: relative;
+        width: 100%;
+        max-width: 550px;
+    }
+
+        .select-with-arrow select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 8l3-3 3 3h0" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 20px 20px;
+        }
+
+    /* Input group styles */
+    .input-group {
+        display: flex;
+        align-items: stretch;
+        width: 100%;
+        max-width: 550px;
+    }
+
+        .input-group .form-control {
+            flex: 1 1 auto;
+            width: 1%;
+            margin-bottom: 0;
+        }
+
+    .input-group-append {
+        display: flex;
+        margin-left: -1px;
+    }
+
+    .input-group-text {
+        display: flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        margin-bottom: 0;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #495057;
+        text-align: center;
+        white-space: nowrap;
+        background-color: #e9ecef;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+
+    /* Multiselect container styles */
+    .multiselect-container {
+        position: relative;
+        width: 100%;
+        max-width: 550px;
+    }
+
+    .selected-items-display {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 6px 12px;
+        min-height: 38px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: white;
+    }
+
+        .selected-items-display .placeholder {
+            color: #6c757d;
+        }
+
+    .selected-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .selected-tag {
+        background-color: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .remove-tag {
+        cursor: pointer;
+        font-weight: bold;
+        color: #6c757d;
+    }
+
+        .remove-tag:hover {
+            color: #dc3545;
+        }
+
+    .dropdown-arrow {
+        color: #6c757d;
+    }
+
+    .multiselect-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        z-index: 1000;
+        max-height: 300px;
+        overflow-y: auto;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .multiselect-option {
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .multiselect-option:hover {
+            background-color: #f8f9fa;
+        }
+
+    .multiselect-actions {
+        padding: 8px;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 8px;
+    }
+
+    .options-container {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .search-container {
+        border-bottom: 1px solid #eee;
+    }
+
+    /* Button containers */
+    .button-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 5px;
+        }
+
+            .button-container button:hover {
+                background-color: #0056b3;
+            }
+
+    /* Form check elements */
+    .form-check .form-check-input:disabled ~ .form-check-label {
+        color: #000;
+        opacity: 1;
+    }
+
+    /* Animations */
+    @@keyframes blink {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .blinking {
+        animation: blink 1s infinite;
+        color: black;
+        font-size: 2em;
+        text-align: left;
+    }
+
+    /* Validation animations */
+    .shake {
+        animation: shake 0.5s;
+        border: 2px solid red !important;
+    }
+
+    @@keyframes shake {
+        0% {
+            transform: translateX(0);
+        }
+
+        20% {
+            transform: translateX(-10px);
+        }
+
+        40% {
+            transform: translateX(10px);
+        }
+
+        60% {
+            transform: translateX(-10px);
+        }
+
+        80% {
+            transform: translateX(10px);
+        }
+
+        100% {
+            transform: translateX(0);
+        }
+    }
+
+    .shake-input {
+        background-color: #fff0f0 !important;
+    }
+
+    .is-invalid {
+        border: 1px solid red;
+    }
+
+    /* Fields of work and skills containers */
+    .d-flex {
+        display: flex;
+    }
+
+    .align-items-center {
+        align-items: center;
+    }
+
+    .mx-1 {
+        margin-left: 0.25rem;
+        margin-right: 0.25rem;
+    }
+
+    .mb-1 {
+        margin-bottom: 0.25rem;
+    }
+
+    .px-2 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Responsive behavior */
+    @@media (min-width: 1280px) {
+        .form-container {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .grouped-section {
+            flex: 1 1 calc(50% - 20px);
+            min-width: 600px;
+        }
+    }
+
+    @@media (min-width: 1920px) {
+        .form-container {
+            flex-wrap: nowrap;
+        }
+
+        .grouped-section {
+            flex: 1 1 calc(33.33% - 20px);
+            min-width: 600px;
+        }
+    }
+
+    @@media (max-width: 1279px) {
+        .form-container {
+            flex-direction: column;
+        }
+
+        .grouped-section {
+            width: 100%;
+            min-width: 100%;
+        }
+    }
+
+    /* Character count styling */
+    .character-count {
+        font-size: 12px;
+        color: #6c757d;
+        text-align: right;
+        margin-top: 5px;
+    }
+
+    /* Custom checkbox styling */
+    .form-check {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .form-check-input {
+        margin-right: 0.5rem;
+    }
+
+    /* Alert styles */
+    .alert {
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+    }
+
+    .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+
+    .alert-warning {
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+    }
+
+    /* Textarea styling */
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    /* Select box styling for fields/skills */
+    select.form-control {
+        height: 200px;
+    }
+
+    /* Center icons in fields/skills sections */
+    .text-center {
+        text-align: center;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+</style>
+
+@if (!hasReadAsProfessorPermission)
+    {
+        @*
+        <div class="error-message">
+            <p><strong>You are Not a Professor</strong></p>
+            <p><strong>Please Login as Professor!</strong></p>
+        </div>
+        *@
+    }
+    else
+    {
+    <h3 style="color: #000000;"><strong>★ Πληροφορίες Καθηγητή ★</strong></h3>
+    <EditForm Model="@newProfessor" OnValidSubmit="SubmitForm">
+        <div class="form-container">
+            <div class="grouped-section">
+                <h4>1) Στοιχεία Καθηγητή</h4>
+
+                <div class="form-group">
+                    <label><strong>Email Επικοινωνίας</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfEmail"
+                                   readonly
+                                   class="@($"{profEmailInputClass} form-control readonly-input")" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Μοναδικό ID Καθηγητή</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                        <InputText @bind-Value="newProfessor.Professor_UniqueID"
+                                   readonly
+                                   class="readonly-input form-control"
+                                   style="color: blue;"
+                                   placeholder="Δημιουργείται αυτόματα μετά την πρώτη σας Εγγραφή" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Φωτογραφία Προφίλ</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group @profProfilePhotoInputClass">
+                        <span class="input-group-text"><i class="fa-solid fa-image"></i></span>
+                        <InputFile OnChange="HandleFileChange" accept="image/*" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Όνομα</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfName"
+                                   class="@($"{profNameInputClass} form-control")" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Επώνυμο</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfSurname"
+                                   class="@($"{profSurnameInputClass} form-control")" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Πανεπιστημιακό Ίδρυμα</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-university"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfUniversity" readonly class="form-control readonly-input" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Σχολή</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <select value="@newProfessor.ProfSchool"
+                            @onchange="OnSchoolChange"
+                            class="@($"{profSchoolInputClass} select-with-arrow")">
+                        <option value="">-- Επιλογή Σχολής --</option>
+                        @foreach (var school in schools)
+                        {
+                            <option value="@school">@school</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Τμήμα</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <select value="@newProfessor.ProfDepartment"
+                            @onchange="OnDepartmentChange"
+                            class="@($"{profDepartmentInputClass} select-with-arrow")"
+                            disabled="@(string.IsNullOrEmpty(newProfessor.ProfSchool))">
+                        <option value="">-- Επιλογή Τμήματος --</option>
+                        @if (!string.IsNullOrEmpty(newProfessor.ProfSchool))
+                        {
+                            @foreach (var department in departments)
+                            {
+                                <option value="@department">@department</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Βαθμίδα ΔΕΠ</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <select @bind="newProfessor.ProfVahmidaDEP"
+                            class="@($"{profVathmidaInputClass} select-with-arrow")">
+                        <option value="">-- Επιλέξτε Βαθμίδα ΔΕΠ --</option>
+                        @foreach (var vathmida in vathmidesDEP)
+                        {
+                            <option value="@vathmida">@vathmida</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Γνωστικό Αντικείμενο</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-book"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfGnostikoAntikeimeno"
+                                   class="@($"{profGnostikoInputClass} form-control")"
+                                   placeholder="Περιγράψτε το γνωστικό σας αντικείμενο" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>ΦΕΚ</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group @profFEKInputClass">
+                        <span class="input-group-text"><i class="fa-solid fa-file-pdf"></i></span>
+                        <InputFile OnChange="HandleFEKUpload" accept=".pdf" class="form-control" />
+                    </div>
+                    @if (!string.IsNullOrEmpty(fekFileName))
+                    {
+                        <div style="color: green; font-size: 12px; margin-top: 5px;">
+                            <i class="fa-solid fa-check"></i> @fekFileName
+                        </div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Ερευνητική Ομάδα</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-users"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfResearchGroup" readonly class="form-control readonly-input" />
+                    </div>
+                    <small class="form-text text-muted">
+                        @researchGroupMessage
+                    </small>
+                </div>
+
+                <br />
+                <h4>2) Εργαστήριο</h4>
+
+                <div class="form-group">
+                    <label><strong>Θεσμοθετημένο Ερευνητικό Εργαστήριο</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-flask"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfLab" class="form-control"
+                                   placeholder="Εισαγωγή ονομάτος.." />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>ΦΕΚ Εργαστηρίου</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-file-contract"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfLabFEK" class="form-control"
+                                   placeholder="Εισαγωγή αριθμού.." />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Αρχείο ΦΕΚ Εργαστηρίου</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-file-pdf"></i></span>
+                        <InputFile OnChange="HandleLabFEKUpload" accept=".pdf" class="form-control" />
+                        @if (!string.IsNullOrEmpty(labFekFileName))
+                        {
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-danger" type="button" @onclick="ClearLabFEKFile">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(labFekFileName))
+                    {
+                        <div style="color: green; font-size: 12px; margin-top: 5px;">
+                            <i class="fa-solid fa-check"></i> @labFekFileName
+                        </div>
+                    }
+                    <small class="form-text text-muted">
+                        Επιλέξτε αρχείο(.pdf) προς μεταμόρφωση..
+                    </small>
+                </div>
+                <br />
+
+                @*AREAS*@
+                <div class="form-group">
+                    <label><strong>Περιοχές Ενδιαφέροντος</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Αναζήτηση/Προσθήκη Πεδίου Ενδιαφέροντος"
+                               @bind="fieldOfWorkSearchTerm" @oninput="FilterAvailableFieldsOfWork" />
+                        <div class="input-group-append">
+                            <span class="input-group-text"><i class="fas fa-search" style="color: #4682b4;"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-list-alt" style="color: #4682b4; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="availableFieldsOfWork" class="form-control" size="10" multiple @onchange="OnFieldOfWorkSelect" style="height: 200px;">
+                                @foreach (var field in filteredFieldsOfWork)
+                                {
+                                    <option @key="field.AreaName" value="@field.AreaName" @onclick="() => ToggleFieldOfWorkExpansion(field.AreaName)">
+                                        @field.AreaName
+                                    </option>
+                                    @if (expandedFieldsOfWork.Contains(field.AreaName))
+                                    {
+                                        var subFields = field.AreaSubFields?.Split(',');
+                                        if (subFields != null)
+                                        {
+                                            foreach (var subField in subFields)
+                                            {
+                                                <option @key="subField" value="@subField" style="padding-left: 20px;">• @subField</option>
+                                            }
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="d-flex flex-column mx-1">
+                            <button type="button" class="btn btn-outline-primary mb-1 px-2" @onclick="MoveSelectedFieldOfWorkToRight">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary px-2" @onclick="MoveSelectedFieldOfWorkToLeft">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="selectedFieldsOfWork" class="form-control @profFieldsOfWorkInputClass" size="10" multiple style="height: 200px;">
+                                @foreach (var selectedField in selectedFieldsOfWork)
+                                {
+                                    <option @key="selectedField.AreaName">@selectedField.AreaName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                @*SKILLS*@
+                <div class="form-group">
+                    <label><strong>Εξειδικευμένες Δεξιότητες</strong></label>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Αναζήτηση/Προσθήκη Δεξιότητας"
+                               @bind="skillSearchTerm" @oninput="FilterAvailableSkills" />
+                        <div class="input-group-append">
+                            <span class="input-group-text"><i class="fas fa-search" style="color: #4682b4;"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-list-alt" style="color: #4682b4; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="availableSkills" class="form-control" size="10" multiple style="height: 200px;">
+                                @foreach (var skill in filteredSkills)
+                                {
+                                    <option @key="skill.SkillName" value="@skill.SkillName">
+                                        @skill.SkillName
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="d-flex flex-column mx-1">
+                            <button type="button" class="btn btn-outline-primary mb-1 px-2" @onclick="MoveSelectedToRight">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary px-2" @onclick="MoveSelectedToLeft">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="selectedSkills" class="form-control @profSkillsInputClass" size="10" multiple style="height: 200px;">
+                                @foreach (var skill in selectedSkills)
+                                {
+                                    <option @key="skill.SkillName">@skill.SkillName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="professorDescription"><strong>Σύντομο Βιογραφικό</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="@profPersonalDescriptionInputClass">
+                        <textarea @bind="newProfessor.ProfPersonalDescription"
+                                  class="form-control"
+                                  rows="5"
+                                  placeholder="Περιγράψτε συνοπτικά το επαγγελματικό σας προφίλ, τις ερευνητικές σας δραστηριότητες και τα κύρια ενδιαφέροντά σας..."
+                                  maxlength="1000">
+                        </textarea>
+                        @if (!string.IsNullOrEmpty(newProfessor.ProfPersonalDescription))
+                        {
+                            <div class="character-count" style="font-size: 12px; color: #6c757d; text-align: right; margin-top: 5px;">
+                                Χαρακτήρες: @newProfessor.ProfPersonalDescription.Length/1000
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Βιογραφικό</strong></label>
+                    <InputFile OnChange="SingleUploadCV" />
+                </div>
+            </div>
+
+            <div class="grouped-section">
+                <h4>3) Στοιχεία Επικοινωνίας</h4>
+
+                <div class="form-group">
+                    <label><strong>Τηλέφωνο Εργασίας</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfWorkTelephone"
+                                   class="@($"{profWorkTelephoneInputClass} form-control")"
+                                   maxlength="10"
+                                   @oninput="ValidatePhoneNumber" />
+                    </div>
+                    @if (phoneError)
+                    {
+                        <div style="color: red; font-size: 12px;">@phoneErrorMessage</div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Προσωπικό Τηλέφωνο</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfPersonalTelephone" class="form-control" maxlength="10" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Εμφάνιση Πρ. Τηλεφώνου Επικοινωνίας</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <InputRadioGroup @bind-Value="newProfessor.ProfPersonalTelephoneVisibility" Name="telephoneVisibility">
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <InputRadio Value="true" class="form-check-input" /> Ναι
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <InputRadio Value="false" class="form-check-input" /> Όχι
+                            </label>
+                        </div>
+                    </InputRadioGroup>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Προσωπική Ιστοσελίδα</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-globe"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfPersonalWebsite" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Προφίλ LinkedIn</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fab fa-linkedin"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfLinkedInSite" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Προφίλ Scholar</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-graduation-cap"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfScholarProfile" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Προφίλ Orchid</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-seedling"></i></span>
+                        <InputText @bind-Value="newProfessor.ProfOrchidProfile" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add error message display here -->
+        @if (showValidationError)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Σφάλμα:</strong> @errorMessage
+            </div>
+        }
+
+        <div class="form-check" @onclick="ShowMessage">
+            <CustomCheckbox @bind-Value="agreeTerms" @ref="customCheckbox" />
+            <label class="form-check-label" for="customCheckboxId">
+                Έχω διαβάσει και αποδέχομαι τους
+                <a @onclick="ShowUserAgreementModal" style="text-decoration: underline; color: blue;">όρους συμμετοχής</a>
+                στην πλατφόρμα
+            </label>
+        </div>
+        <br />
+
+        @if (showMessage)
+        {
+            <div class="alert alert-warning" role="alert">
+                Πατήστε πρώτα παραπάνω στους <span style="color: blue;">όρους συμμετοχής</span> και στην συνέχεια επιλέξτε Αποδοχή Όρων για να συνεχίσετε!
+            </div>
+        }
+
+        <div class="form-check">
+            @if (!userAlreadyRegistered)
+            {
+                <button type="submit" class="btn btn-submit1" disabled="@(!agreeTerms)">Αποθήκευση</button>
+            }
+            <UserAgreementModal OnAgree="AgreeToTerms" OnDecline="DeclineTerms" />
+        </div>
+        <br />
+        @if (saved)
+        {
+            <br />
+            <p class="good-message"><strong>Η Εγγραφή Πραγματοποιήθηκε Επιτυχώς!</strong></p>
+        }
+        <br />
+        @if (error && !showValidationError)
+        {
+            <div class="alert alert-danger" role="alert">
+                <p>...Κάτι πήγε Λάθος!</p>
+            </div>
+        }
+        <br />
+        @if (userAlreadyRegistered)
+        {
+            <button type="button" class="btn btn-submit1" disabled="@(!agreeTerms)" @onclick="UpdateProfessorRegistration">Ανανέωση</button>
+        }
+        <br />
+        @if (updated)
+        {
+            <p class="good-message"><strong>Η Ανανέωση των στοιχείων σας πραγματοποιήθηκε Επιτυχώς</strong></p>
+        }
+        <br />
+        <br />
+        <br />
+    </EditForm>
+}
+
+@inject FileUploadService FileUploadService;
+@inject IJSRuntime JSRuntime;
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+@code {
+
+    // Validation state variables
+    private string profEmailInputClass = "";
+    private string profNameInputClass = "";
+    private string profSurnameInputClass = "";
+    private string profSchoolInputClass = "";
+    private string profDepartmentInputClass = "";
+    private string profVathmidaInputClass = "";
+    private string profGnostikoInputClass = "";
+    private string profFEKInputClass = "";
+    private string profWorkTelephoneInputClass = "";
+    private string profPersonalDescriptionInputClass = "";
+    private string profFieldsOfWorkInputClass = "";
+    private string profSkillsInputClass = "";
+    private string profProfilePhotoInputClass = "";
+
+    private bool showValidationError = false;
+    private string errorMessage = "";
+
+    private Dictionary<string, List<string>> schoolDepartments = new()
+        {
+            ["ΑΓΡΟΤΙΚΗΣ ΑΝΑΠΤΥΞΗΣ, ΔΙΑΤΡΟΦΗΣ ΚΑΙ ΑΕΙΦΟΡΙΑΣ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΑΓΡΟΤΙΚΗΣ ΑΝΑΠΤΥΞΗΣ, ΑΓΡΟΔΙΑΤΡΟΦΗΣ ΚΑΙ ΔΙΑΧΕΙΡΙΣΗΣ ΦΥΣΙΚΩΝ ΠΟΡΩΝ"
+    },
+            ["ΕΠΙΣΤΗΜΩΝ ΑΓΩΓΗΣ"] = new List<string>
+    {
+        "ΠΑΙΔΑΓΩΓΙΚΟ ΤΜΗΜΑ ΔΗΜΟΤΙΚΗΣ ΕΚΠΑΙΔΕΥΣΗΣ",
+        "ΤΜΗΜΑ ΕΚΠΑΙΔΕΥΣΗΣ ΚΑΙ ΑΓΩΓΗΣ ΣΤΗΝ ΠΡΟΣΧΟΛΙΚΗ ΗΛΙΚΙΑ"
+    },
+            ["ΕΠΙΣΤΗΜΩΝ ΥΓΕΙΑΣ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΙΑΤΡΙΚΗΣ",
+        "ΤΜΗΜΑ ΝΟΣΗΛΕΥΤΙΚΗΣ",
+        "ΤΜΗΜΑ ΟΔΟΝΤΙΑΤΡΙΚΗΣ",
+        "ΤΜΗΜΑ ΦΑΡΜΑΚΕΥΤΙΚΗΣ"
+    },
+            ["ΕΠΙΣΤΗΜΗΣ ΦΥΣΙΚΗΣ ΑΓΩΓΗΣ ΚΑΙ ΑΘΛΗΤΙΣΜΟΥ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΕΠΙΣΤΗΜΗΣ ΦΥΣΙΚΗΣ ΑΓΩΓΗΣ ΚΑΙ ΑΘΛΗΤΙΣΜΟΥ"
+    },
+            ["ΘΕΟΛΟΓΙΚΗ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΘΕΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΚΟΙΝΩΝΙΚΗΣ ΘΕΟΛΟΓΙΑΣ ΚΑΙ ΘΡΗΣΚΕΙΟΛΟΓΙΑΣ"
+    },
+            ["ΘΕΤΙΚΩΝ ΕΠΙΣΤΗΜΩΝ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΑΕΡΟΔΙΑΣΤΗΜΙΚΗΣ ΕΠΙΣΤΗΜΗΣ ΚΑΙ ΤΕΧΝΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΒΙΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΓΕΩΛΟΓΙΑΣ ΚΑΙ ΓΕΩΠΕΡΙΒΑΛΛΟΝΤΟΣ",
+        "ΤΜΗΜΑ ΙΣΤΟΡΙΑΣ ΚΑΙ ΦΙЛΟΣΟΦΙΑΣ ΤΗΣ ΕΠΙΣΤΗΜΗΣ",
+        "ΤΜΗΜΑ ΜΑΘΗΜΑΤΙΚΩΝ",
+        "ΤΜΗΜΑ ΠΛΗΡΟΦΟΡΙΚΗΣ ΚΑΙ ΤΗΛΕΠΙΚΟΙΝΩΝΙΩΝ",
+        "ΤΜΗΜΑ ΤΕΧΝΟΛΟΓΙΩΝ ΨΗΦΙΑΚΗΣ ΒΙΟΜΗΧΑΝΙΑΣ",
+        "ΤΜΗΜΑ ΦΥΣΙΚΗΣ",
+        "ΤΜΗΜΑ ΧΗΜΕΙΑΣ"
+    },
+            ["ΝΟΜΙΚΗ"] = new List<string>
+    {
+        "ΝΟΜΙΚΗ ΣΧΟΛΗ"
+    },
+            ["ΟΙΚΟΝΟΜΙΚΩΝ ΚΑΙ ΠΟΛΙΤΙΚΩΝ ΕΠΙΣΤΗΜΩΝ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΔΙΑΧΕΙΡΙΣΗΣ ΛΙΜΕΝΩΝ ΚΑΙ ΝΑΥΤΙΛΙΑΣ",
+        "ΤΜΗΜΑ ΕΠΙΚΟΙΝΩΝΙΑΣ ΚΑΙ ΜΕΣΩΝ ΜΑΖΙΚΗΣ ΕΝΗΜΕΡΩΣΗΣ",
+        "ΤΜΗΜΑ ΟΙΚΟΝΟΜΙΚΩΝ ΕΠΙΣΤΗΜΩΝ",
+        "ΤΜΗΜΑ ΠΟΛΙΤΙΚΗΣ ΕΠΙΣΤΗΜΗΣ ΚΑΙ ΔΗΜΟΣΙΑΣ ΔΙΟΙΚΗΣΗΣ",
+        "ΤΜΗΜΑ ΤΟΥΡΚΙΚΩΝ ΣΠΟΥΔΩΝ ΚΑΙ ΣΥΓΧΡΟΝΩΝ ΑΣΙΑΤΙΚΩΝ ΣΠΟΥΔΩΝ",
+        "ΤΜΗΜΑ ΔΙΟΙΚΗΣΗΣ ΕΠΙΧΕΙΡΗΣΕΩΝ ΚΑΙ ΟΡΓΑΝΙΣΜΩΝ",
+        "ΤΜΗΜΑ ΚΟΙΝΩΝΙΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΨΗΦΙΑΚΩΝ ΤΕΧΝΩΝ ΚΑΙ ΚΙΝΗΜΑΤΟΓΡΑΦΟΥ"
+    },
+            ["ΦΙΛΟΣΟΦΙΚΗ"] = new List<string>
+    {
+        "ΠΑΙΔΑΓΩΓΙΚΟ ΤΜΗΜΑ ΔΕΥΤΕΡΟΒΑΘΜΙΑΣ ΕΚΠΑΙΔΕΥΣΗΣ",
+        "ΤΜΗΜΑ ΑΓΓΛΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΓΑΛΛΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΓΕΡΜΑΝΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΘΕΑΤΡΙΚΩΝ ΣΠΟΥΔΩΝ",
+        "ΤΜΗΜΑ ΙΣΠΑΝΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΙΣΤΟΡΙΑΣ ΚΑΙ ΑΡΧΑΙΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΙΤΑΛΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΜΟΥΣΙΚΩΝ ΣΠΟΥΔΩΝ",
+        "ΤΜΗΜΑ ΡΩΣΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ ΚΑΙ ΣΛΑΒΙΚΩΝ ΣΠΟΥΔΩΝ",
+        "ΤΜΗΜΑ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΦΙΛΟΣΟΦΙΑΣ",
+        "ΤΜΗΜΑ ΨΥΧΟΛΟΓΙΑΣ"
+    }
+        };
+
+    private List<string> schools = new();
+    private List<string> departments = new();
+
+    private string fekFileName = string.Empty;
+    private string labFekFileName = string.Empty; // New variable for lab FEK file
+    private string researchGroupMessage = "Γίνεται έλεγχος...";
+    private IBrowserFile fekFile;
+    private IBrowserFile labFekFile; // New variable for lab FEK file
+
+    private bool hasReadAsProfessorPermission = false;
+    private string? registryNumberInput;
+    public Student newStudent = new Student();
+    public bool downloadByRegistryIsOk = false;
+
+    private Dictionary<string, int> skillDistribution = new Dictionary<string, int>();
+    private Dictionary<string, int> departmentDistribution = new Dictionary<string, int>();
+    private bool showDoughnutChart = false; 
+    private bool isDoughnutChartVisible = false;
+    private bool isDepartmentDistributionChartVisible = false;
+    private int totalStudentsCount = 0;
+
+    public Professor newProfessor = new Professor { };
+    public bool saved = false;
+    public bool error = false;
+    public bool showprofessorSearch = false;
+    private string professorName = "Anonymous User";
+
+    private string ProfUniversityInitialName = "Εθνικό & Καποδιστριακό Πανεπιστήμιο Αθηνών";
+    private bool agreeTerms = false;
+    private CustomCheckbox customCheckbox;
+    private bool userAlreadyRegistered = false;
+
+    public List<string> courses = new List<string>(); // Initialize the list in the constructor
+
+    private string selectedDepartment = "";
+    private Dictionary<string, bool> selectedCoursesDictionary = new Dictionary<string, bool>();
+
+    private List<Area> areas;
+    private IBrowserFile file;
+    public bool updated = false;
+
+    private string fieldOfWorkSearchTerm = string.Empty;
+    private List<Area> availableFieldsOfWork = new(); // Populated with fields from the database
+    private List<Area> filteredFieldsOfWork = new();
+    private List<Area> selectedFieldsOfWork = new();
+    private HashSet<string> expandedFieldsOfWork = new();
+
+    private string? skillSearchTerm;
+    private List<Skill> availableSkills = new(); // Populate with available skills from the database or other source
+    private List<Skill> filteredSkills = new();
+    private List<Skill> selectedSkills = new();
+    private List<string> expandedSkills = new(); // Tracks expanded skills for subfield display
+
+    private bool showMessage = false;
+    private bool phoneError = false;
+    private string phoneErrorMessage = "";
+
+
+    private List<string> vathmidesDEP = new List<string>
+    {
+        "Ομότιμος Καθηγητής",
+        "Καθηγητής (Α' Βαθμίδας)",
+        "Αναπληρωτής Καθηγητής",
+        "Επίκουρος Καθηγητής"
+    };
+
+
+    private async Task SubmitForm()
+    {
+        error = false;
+        saved = false;
+        showValidationError = false;
+
+        // Reset all input classes
+        ResetValidationClasses();
+
+        // List to track missing mandatory fields
+        var missingFields = new List<string>();
+
+        // Validate ONLY mandatory fields
+        if (string.IsNullOrEmpty(newProfessor.ProfEmail))
+        {
+            profEmailInputClass = "shake shake-input";
+            missingFields.Add("Email Επικοινωνίας");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfName))
+        {
+            profNameInputClass = "shake shake-input";
+            missingFields.Add("Όνομα");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfSurname))
+        {
+            profSurnameInputClass = "shake shake-input";
+            missingFields.Add("Επώνυμο");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfSchool))
+        {
+            profSchoolInputClass = "shake shake-input";
+            missingFields.Add("Σχολή");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfDepartment))
+        {
+            profDepartmentInputClass = "shake shake-input";
+            missingFields.Add("Τμήμα");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfVahmidaDEP))
+        {
+            profVathmidaInputClass = "shake shake-input";
+            missingFields.Add("Βαθμίδα ΔΕΠ");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfGnostikoAntikeimeno))
+        {
+            profGnostikoInputClass = "shake shake-input";
+            missingFields.Add("Γνωστικό Αντικείμενο");
+        }
+        if ((newProfessor.ProfFEK == null || newProfessor.ProfFEK.Length == 0) && string.IsNullOrEmpty(fekFileName))
+        {
+            profFEKInputClass = "shake shake-input";
+            missingFields.Add("ΦΕΚ");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfWorkTelephone))
+        {
+            profWorkTelephoneInputClass = "shake shake-input";
+            missingFields.Add("Τηλέφωνο Εργασίας");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfPersonalDescription))
+        {
+            profPersonalDescriptionInputClass = "shake shake-input";
+            missingFields.Add("Σύντομο Βιογραφικό");
+        }
+        if (selectedFieldsOfWork.Count == 0)
+        {
+            profFieldsOfWorkInputClass = "shake shake-input";
+            missingFields.Add("Πεδία Ενδιαφέροντος");
+        }
+
+        // Validate phone number format
+        if (!string.IsNullOrEmpty(newProfessor.ProfWorkTelephone) &&
+            (newProfessor.ProfWorkTelephone.Length != 10 || !Regex.IsMatch(newProfessor.ProfWorkTelephone, @"^\d{10}$")))
+        {
+            profWorkTelephoneInputClass = "shake shake-input";
+            if (!missingFields.Contains("Τηλέφωνο Εργασίας"))
+            {
+                missingFields.Add("Τηλέφωνο Εργασίας (πρέπει να είναι 10 ψηφία)");
+            }
+        }
+
+        // Lab FEK validation
+        if (!string.IsNullOrEmpty(newProfessor.ProfLabFEK) &&
+            (newProfessor.ProfLabFEK_AttachmentFile == null || newProfessor.ProfLabFEK_AttachmentFile.Length == 0))
+        {
+            missingFields.Add("Αρχείο ΦΕΚ Εργαστηρίου (απαιτείται όταν συμπληρώνεται ο αριθμός ΦΕΚ)");
+        }
+
+        // Check if any mandatory field is empty
+        if (missingFields.Count > 0)
+        {
+            error = true;
+            showValidationError = true;
+            errorMessage = $"Συμπληρώστε τα ακόλουθα υποχρεωτικά πεδία: {string.Join(", ", missingFields)}";
+            return;
+        }
+
+        // Check for duplicate entries only for new registration
+        if (!userAlreadyRegistered)
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+            var existingProfessor = await dbContext.Professors
+                .FirstOrDefaultAsync(c => c.ProfEmail == newProfessor.ProfEmail);
+
+            if (existingProfessor != null)
+            {
+                error = true;
+                showValidationError = true;
+                errorMessage = "Υπάρχει ήδη καθηγητής με αυτό το email.";
+                return;
+            }
+        }
+
+        try
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            // Prepare and save the data
+            newProfessor.ProfGeneralSkills = string.Join(",", selectedSkills.Select(skill => skill.SkillName));
+            newProfessor.ProfGeneralFieldOfWork = string.Join(", ", selectedFieldsOfWork.Select(area => area.AreaName));
+
+            if (string.IsNullOrEmpty(newProfessor.Professor_UniqueID))
+            {
+                newProfessor.Professor_UniqueID = "PROF_" + HashingHelper.HashString(newProfessor.ProfEmail);
+            }
+
+            if (userAlreadyRegistered)
+            {
+                dbContext.Professors.Update(newProfessor);
+            }
+            else
+            {
+                dbContext.Professors.Add(newProfessor);
+            }
+
+            await dbContext.SaveChangesAsync();
+
+            // Indicate success
+            saved = true;
+            error = false;
+            showValidationError = false;
+
+            // Reset validation classes after success
+            await Task.Delay(3000);
+            ResetValidationClasses();
+
+            NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            error = true;
+            showValidationError = true;
+            errorMessage = "Σφάλμα κατά την αποθήκευση. Παρακαλώ δοκιμάστε ξανά.";
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+   {
+        // Initialize schools and departments
+        schools = schoolDepartments.Keys.ToList();
+        departments = new List<string>();
+
+        // Initialize school and department to empty values
+        newProfessor.ProfSchool = string.Empty;
+        newProfessor.ProfDepartment = string.Empty;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userEmail = user.Identity.Name;
+
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        await CheckResearchGroupMembership();
+
+        // Load available Areas
+        availableFieldsOfWork = await dbContext.Areas.ToListAsync();
+        filteredFieldsOfWork = new List<Area>(availableFieldsOfWork);
+
+
+        // Load available Skills
+        availableSkills = await dbContext.Skills.ToListAsync();
+        filteredSkills = new List<Skill>(availableSkills);
+
+
+        // Initialize filtered list with available fields that aren't selected
+        filteredFieldsOfWork = availableFieldsOfWork
+            .Where(f => !selectedFieldsOfWork.Any(sf => sf.AreaName == f.AreaName))
+            .ToList();        filteredSkills = new List<Skill>(availableSkills);
+
+        areas = await dbContext.Areas.ToListAsync();
+
+        // Retrieve professor data from the database
+        var professorFromDb = await dbContext.Professors.FirstOrDefaultAsync(s => s.ProfEmail == userEmail);        
+
+        newProfessor.ProfUniversity = ProfUniversityInitialName;
+        newProfessor.ProfCourses = ""; 
+        selectedCoursesDictionary.Clear();
+        foreach (var course in courses)
+        {
+            selectedCoursesDictionary[course] = false;
+        }
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var roleClaim = user.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
+            if (roleClaim != null)
+            {
+                professorName = user.Identity?.Name ?? "Anonymous User";
+                newProfessor.ProfEmail = professorName;
+                var userRole = roleClaim.Value;
+                Console.WriteLine($"User Role: {userRole}");
+                Console.WriteLine($"User Email: {professorName}");
+                hasReadAsProfessorPermission = userRole == "Professor";
+            }
+        } 
+
+        if (professorFromDb != null)
+        {
+            userAlreadyRegistered = true;
+            newProfessor = professorFromDb; // Load existing data
+
+            await CheckResearchGroupMembership();
+
+            // Populate the selected areas from the professor's data
+            if (!string.IsNullOrEmpty(professorFromDb.ProfGeneralFieldOfWork))
+            {
+                var selectedAreaNames = professorFromDb.ProfGeneralFieldOfWork
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim())
+                    .Distinct()
+                    .ToList();
+
+                // Filter out selected areas from availableFieldsOfWork
+                availableFieldsOfWork = availableFieldsOfWork
+                    .Where(f => !selectedAreaNames.Contains(f.AreaName))
+                    .ToList();
+
+                // Get the selected Areas that exist in the Database
+                selectedFieldsOfWork = availableFieldsOfWork
+                    .Where(f => selectedAreaNames.Contains(f.AreaName))
+                    .ToList();
+
+                // Add any missing custom areas that don't exist in availableFieldsOfWork
+                var missingCustomAreas = selectedAreaNames
+                    .Where(name => !selectedFieldsOfWork.Any(f => f.AreaName == name))
+                    .Select(name => new Area { AreaName = name })
+                    .ToList();
+
+                selectedFieldsOfWork.AddRange(missingCustomAreas);
+
+                // Update filteredFieldsOfWork to reflect the changes
+                filteredFieldsOfWork = new List<Area>(availableFieldsOfWork);
+            }
+
+
+            // Populate the selected skills from the professor's data
+            if (!string.IsNullOrEmpty(professorFromDb.ProfGeneralSkills))
+            {
+                var selectedSkillNames = professorFromDb.ProfGeneralSkills
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim())
+                    .Distinct()
+                    .ToList();
+
+                // Filter out selected skills from availableSkills
+                availableSkills = availableSkills
+                    .Where(s => !selectedSkillNames.Contains(s.SkillName))
+                    .ToList();
+
+                // Get the selected skills that exist in the database
+                selectedSkills = availableSkills
+                    .Where(s => selectedSkillNames.Contains(s.SkillName))
+                    .ToList();
+
+                // Add any missing custom skills that don't exist in availableSkills
+                var missingCustomSkills = selectedSkillNames
+                    .Where(name => !selectedSkills.Any(s => s.SkillName == name))
+                    .Select(name => new Skill { SkillName = name })
+                    .ToList();
+
+                selectedSkills.AddRange(missingCustomSkills);
+
+                // Update filteredSkills to reflect the changes
+                filteredSkills = new List<Skill>(availableSkills);
+            }
+
+            // If professor exists, update departments based on their school
+            if (!string.IsNullOrEmpty(newProfessor.ProfSchool) &&
+                schoolDepartments.ContainsKey(newProfessor.ProfSchool))
+            {
+                departments = schoolDepartments[newProfessor.ProfSchool];
+            }
+
+        }
+        else
+        {
+            userAlreadyRegistered = false;
+        }
+   }
+
+
+
+    private async Task ShowUserAgreementModal(MouseEventArgs e)
+	{
+		await JSRuntime.InvokeVoidAsync("showModal1", "#userAgreementModal");
+	}
+
+    private void AgreeToTerms()
+    {
+        // Programmatically set the checkbox value
+        customCheckbox?.SetValue(true);
+        agreeTerms = true;
+        showMessage = false;
+        StateHasChanged(); // Re-render the component to reflect changes
+    }
+
+    private void DeclineTerms()
+    {
+        // Programmatically unset the checkbox value
+        customCheckbox?.SetValue(false);
+        agreeTerms = false;
+        showMessage = true;
+        StateHasChanged(); // Re-render the component to reflect changes
+    }
+
+
+    private void ToggleCourseSelection(string course)
+    {
+        // Split the ProfCourses string into individual courses
+        var courses = newProfessor.ProfCourses.Split(", ");
+
+        // Convert to a list to facilitate modification
+        var courseList = new List<string>(courses);
+
+        // Toggle course selection
+        if (courseList.Contains(course))
+        {
+            courseList.Remove(course);
+        }
+        else
+        {
+            courseList.Add(course);
+        }
+
+        // Join the list back into a comma-separated string
+        newProfessor.ProfCourses = string.Join(", ", courseList);
+    }
+
+    private void InitializeSelectedCourses()
+    {
+        selectedCoursesDictionary.Clear();
+        foreach (var course in courses)
+        {
+            selectedCoursesDictionary[course] = false;
+        }
+    }
+
+    private string ConvertSelectedCoursesToString()
+    {
+        return string.Join(", ", selectedCoursesDictionary
+            .Where(kv => kv.Value)
+            .Select(kv => kv.Key));
+    }
+
+    private void NavigateToUploadThesis()
+    {
+        NavigationManager.NavigateTo("/uploadthesis"); // Adjust the URL to match your new component's route
+    }
+
+    private async Task HandleFileChange(InputFileChangeEventArgs e)
+    {
+        var selectedFiles = e.GetMultipleFiles();
+        file = selectedFiles.FirstOrDefault();
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            newProfessor.ProfImage = buffer;
+        }
+    }
+
+    private async Task UpdateProfessorRegistration()
+    {
+        error = false;
+        updated = false;
+        showValidationError = false;
+
+        // Reset all input classes
+        ResetValidationClasses();
+
+        // List to track missing mandatory fields
+        var missingFields = new List<string>();
+
+        // Validate ONLY mandatory fields (same validation as SubmitForm)
+        if (string.IsNullOrEmpty(newProfessor.ProfEmail))
+        {
+            profEmailInputClass = "shake shake-input";
+            missingFields.Add("Email Επικοινωνίας");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfName))
+        {
+            profNameInputClass = "shake shake-input";
+            missingFields.Add("Όνομα");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfSurname))
+        {
+            profSurnameInputClass = "shake shake-input";
+            missingFields.Add("Επώνυμο");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfSchool))
+        {
+            profSchoolInputClass = "shake shake-input";
+            missingFields.Add("Σχολή");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfDepartment))
+        {
+            profDepartmentInputClass = "shake shake-input";
+            missingFields.Add("Τμήμα");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfVahmidaDEP))
+        {
+            profVathmidaInputClass = "shake shake-input";
+            missingFields.Add("Βαθμίδα ΔΕΠ");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfGnostikoAntikeimeno))
+        {
+            profGnostikoInputClass = "shake shake-input";
+            missingFields.Add("Γνωστικό Αντικείμενο");
+        }
+        if ((newProfessor.ProfFEK == null || newProfessor.ProfFEK.Length == 0) && string.IsNullOrEmpty(fekFileName))
+        {
+            profFEKInputClass = "shake shake-input";
+            missingFields.Add("ΦΕΚ");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfWorkTelephone))
+        {
+            profWorkTelephoneInputClass = "shake shake-input";
+            missingFields.Add("Τηλέφωνο Εργασίας");
+        }
+        if (string.IsNullOrEmpty(newProfessor.ProfPersonalDescription))
+        {
+            profPersonalDescriptionInputClass = "shake shake-input";
+            missingFields.Add("Σύντομο Βιογραφικό");
+        }
+        if (selectedFieldsOfWork.Count == 0)
+        {
+            profFieldsOfWorkInputClass = "shake shake-input";
+            missingFields.Add("Πεδία Ενδιαφέροντος");
+        }
+
+        // Validate phone number format
+        if (!string.IsNullOrEmpty(newProfessor.ProfWorkTelephone) &&
+            (newProfessor.ProfWorkTelephone.Length != 10 || !Regex.IsMatch(newProfessor.ProfWorkTelephone, @"^\d{10}$")))
+        {
+            profWorkTelephoneInputClass = "shake shake-input";
+            if (!missingFields.Contains("Τηλέφωνο Εργασίας"))
+            {
+                missingFields.Add("Τηλέφωνο Εργασίας (πρέπει να είναι 10 ψηφία)");
+            }
+        }
+
+        // Lab FEK validation
+        if (!string.IsNullOrEmpty(newProfessor.ProfLabFEK) &&
+            (newProfessor.ProfLabFEK_AttachmentFile == null || newProfessor.ProfLabFEK_AttachmentFile.Length == 0))
+        {
+            missingFields.Add("Αρχείο ΦΕΚ Εργαστηρίου (απαιτείται όταν συμπληρώνεται ο αριθμός ΦΕΚ)");
+        }
+
+        // Check if any mandatory field is empty
+        if (missingFields.Count > 0)
+        {
+            error = true;
+            showValidationError = true;
+            errorMessage = $"Συμπληρώστε τα ακόλουθα υποχρεωτικά πεδία: {string.Join(", ", missingFields)}";
+            return;
+        }
+
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+        string originalName = null;
+        string originalSurname = null;
+        string originalDepartment = null;
+        string originalUniversity = null;
+        string professorEmail = null;
+
+        try
+        {
+            if (userAlreadyRegistered)
+            {
+                // Update existing professor
+                var existingProfessor = await dbContext.Professors
+                    .FirstOrDefaultAsync(p => p.Professor_UniqueID == newProfessor.Professor_UniqueID);
+
+                if (existingProfessor != null)
+                {
+                    // Store original values before updating
+                    originalName = existingProfessor.ProfName;
+                    originalSurname = existingProfessor.ProfSurname;
+                    originalDepartment = existingProfessor.ProfDepartment;
+                    originalUniversity = existingProfessor.ProfUniversity;
+                    professorEmail = existingProfessor.ProfEmail;
+
+                    // Update all fields
+                    existingProfessor.ProfImage = newProfessor.ProfImage;
+                    existingProfessor.ProfName = newProfessor.ProfName;
+                    existingProfessor.ProfSurname = newProfessor.ProfSurname;
+                    existingProfessor.ProfUniversity = newProfessor.ProfUniversity;
+                    existingProfessor.ProfSchool = newProfessor.ProfSchool;
+                    existingProfessor.ProfDepartment = newProfessor.ProfDepartment;
+                    existingProfessor.ProfVahmidaDEP = newProfessor.ProfVahmidaDEP;
+                    existingProfessor.ProfGnostikoAntikeimeno = newProfessor.ProfGnostikoAntikeimeno;
+                    existingProfessor.ProfFEK = newProfessor.ProfFEK;
+                    existingProfessor.ProfResearchGroup = newProfessor.ProfResearchGroup;
+                    existingProfessor.ProfLab = newProfessor.ProfLab;
+                    existingProfessor.ProfLabFEK = newProfessor.ProfLabFEK;
+                    existingProfessor.ProfLabFEK_AttachmentFile = newProfessor.ProfLabFEK_AttachmentFile;
+                    existingProfessor.ProfWorkTelephone = newProfessor.ProfWorkTelephone;
+                    existingProfessor.ProfPersonalTelephone = newProfessor.ProfPersonalTelephone;
+                    existingProfessor.ProfPersonalTelephoneVisibility = newProfessor.ProfPersonalTelephoneVisibility;
+                    existingProfessor.ProfPersonalWebsite = newProfessor.ProfPersonalWebsite;
+                    existingProfessor.ProfLinkedInSite = newProfessor.ProfLinkedInSite;
+                    existingProfessor.ProfScholarProfile = newProfessor.ProfScholarProfile;
+                    existingProfessor.ProfOrchidProfile = newProfessor.ProfOrchidProfile;
+                    existingProfessor.ProfPersonalDescription = newProfessor.ProfPersonalDescription;
+                    existingProfessor.ProfCVAttachment = newProfessor.ProfCVAttachment;
+
+                    // Update areas and skills
+                    existingProfessor.ProfGeneralFieldOfWork = string.Join(", ", selectedFieldsOfWork.Select(a => a.AreaName));
+                    existingProfessor.ProfGeneralSkills = string.Join(", ", selectedSkills.Select(s => s.SkillName));
+
+                    dbContext.Professors.Update(existingProfessor);
+                }
+            }
+            else
+            {
+                // Register new professor
+                newProfessor.ProfGeneralFieldOfWork = string.Join(", ", selectedFieldsOfWork.Select(a => a.AreaName));
+                newProfessor.ProfGeneralSkills = string.Join(", ", selectedSkills.Select(s => s.SkillName));
+
+                if (string.IsNullOrEmpty(newProfessor.Professor_UniqueID))
+                {
+                    newProfessor.Professor_UniqueID = "PROF_" + HashingHelper.HashString(newProfessor.ProfEmail);
+                }
+
+                dbContext.Professors.Add(newProfessor);
+            }
+
+            // Save all changes to the professor first
+            await dbContext.SaveChangesAsync();
+            updated = true;
+
+            // If this was an update and relevant fields changed, update related records
+            if (userAlreadyRegistered && !string.IsNullOrEmpty(professorEmail))
+            {
+                bool nameChanged = originalName != newProfessor.ProfName;
+                bool surnameChanged = originalSurname != newProfessor.ProfSurname;
+                bool departmentChanged = originalDepartment != newProfessor.ProfDepartment;
+                bool universityChanged = originalUniversity != newProfessor.ProfUniversity;
+
+                if (nameChanged || surnameChanged || departmentChanged || universityChanged)
+                {
+                    await UpdateProfessorInternships(dbContext, professorEmail,
+                        nameChanged ? newProfessor.ProfName : null,
+                        surnameChanged ? newProfessor.ProfSurname : null,
+                        departmentChanged ? newProfessor.ProfDepartment : null,
+                        universityChanged ? newProfessor.ProfUniversity : null);
+
+                    await UpdateProfessorTheses(dbContext, professorEmail,
+                        nameChanged ? newProfessor.ProfName : null,
+                        surnameChanged ? newProfessor.ProfSurname : null);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            error = true;
+            showValidationError = true;
+            errorMessage = "Σφάλμα κατά την ενημέρωση. Παρακαλώ δοκιμάστε ξανά.";
+            Console.WriteLine($"Error updating professor: {ex.Message}");
+            return;
+        }
+
+        // Reset validation after success
+        await Task.Delay(3000);
+        ResetValidationClasses();
+
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+    private async Task UpdateProfessorInternships(AppDbContext dbContext,
+    string professorEmail,
+    string newName,
+    string newSurname,
+    string newDepartment,
+    string newUniversity)
+    {
+        // Get internships with professor information
+        var internships = await dbContext.ProfessorInternships
+            .Include(i => i.Professor) // Include professor navigation property
+            .Where(i => i.ProfessorEmailUsedToUploadInternship == professorEmail) // Updated property
+            .ToListAsync();
+
+        if (!internships.Any()) return;
+
+        foreach (var internship in internships)
+        {
+            // Only update if professor exists and new values are provided
+            if (internship.Professor != null)
+            {
+                if (newName != null)
+                    internship.Professor.ProfName = newName;
+
+                if (newSurname != null)
+                    internship.Professor.ProfSurname = newSurname;
+
+                if (newDepartment != null)
+                    internship.Professor.ProfDepartment = newDepartment;
+
+                if (newUniversity != null)
+                    internship.Professor.ProfUniversity = newUniversity;
+            }
+
+            internship.ProfessorInternshipLastUpdate = DateTime.Now;
+        }
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task UpdateProfessorTheses(AppDbContext dbContext,
+    string professorEmail,
+    string newName,
+    string newSurname)
+    {
+        // Get all theses uploaded by this professor
+        var theses = await dbContext.ProfessorTheses
+            .Where(t => t.ProfessorEmailUsedToUploadThesis == professorEmail)
+            .Include(t => t.Professor) // Include the Professor navigation property
+            .ToListAsync();
+
+        if (!theses.Any()) return;
+
+        foreach (var thesis in theses)
+        {
+            // Update the related Professor entity if it exists
+            if (thesis.Professor != null)
+            {
+                if (newName != null)
+                    thesis.Professor.ProfName = newName;
+
+                if (newSurname != null)
+                    thesis.Professor.ProfSurname = newSurname;
+            }
+
+            thesis.ThesisUpdateDateTime = DateTime.Now;
+            thesis.ThesisTimesUpdated += 1;
+        }
+
+        await dbContext.SaveChangesAsync();
+    }
+
+
+
+    private async Task SingleUploadCV(InputFileChangeEventArgs e)
+    {
+        if (e.File == null)
+        {
+            newProfessor.ProfCVAttachment = null; // Ensure LastCVUpdate is null if no CV is attached
+            return;
+        }
+
+        MemoryStream ms = new MemoryStream();
+        await e.File.OpenReadStream().CopyToAsync(ms);
+        newProfessor.ProfCVAttachment = ms.ToArray();
+    }
+
+    private void FilterAvailableFieldsOfWork(ChangeEventArgs e)
+    {
+        fieldOfWorkSearchTerm = e.Value?.ToString() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(fieldOfWorkSearchTerm))
+        {
+            filteredFieldsOfWork = availableFieldsOfWork
+                .Where(f => !selectedFieldsOfWork.Any(sf => sf.AreaName == f.AreaName))
+                .ToList();
+        }
+        else
+        {
+            filteredFieldsOfWork = availableFieldsOfWork
+                .Where(f => f.AreaName.Contains(fieldOfWorkSearchTerm, StringComparison.OrdinalIgnoreCase) &&
+                           !selectedFieldsOfWork.Any(sf => sf.AreaName == f.AreaName))
+                .ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnFieldOfWorkSelect(ChangeEventArgs e)
+    {
+        var selectedField = e.Value?.ToString();
+        if (selectedField != null)
+        {
+            ToggleFieldOfWorkExpansion(selectedField);
+        }
+    }
+
+
+    private void ToggleFieldOfWorkExpansion(string fieldName)
+    {
+        if (expandedFieldsOfWork.Contains(fieldName))
+        {
+            expandedFieldsOfWork.Remove(fieldName);
+        }
+        else
+        {
+            expandedFieldsOfWork.Add(fieldName);
+        }
+        StateHasChanged();
+    }
+
+    private async Task MoveSelectedFieldOfWorkToRight()
+    {
+        var newlySelectedFields = await GetSelectedItemsFromDOM("availableFieldsOfWork");
+
+        foreach (var fieldName in newlySelectedFields)
+        {
+            var field = availableFieldsOfWork.FirstOrDefault(f => f.AreaName == fieldName);
+            if (field != null)
+            {
+                selectedFieldsOfWork.Add(new Area
+                    {
+                        AreaName = field.AreaName,
+                        AreaSubFields = field.AreaSubFields
+                    });
+                availableFieldsOfWork.Remove(field);
+            }
+        }
+
+        // Process custom field from search term
+        if (!string.IsNullOrWhiteSpace(fieldOfWorkSearchTerm) &&
+            !selectedFieldsOfWork.Any(f => f.AreaName.Equals(fieldOfWorkSearchTerm, StringComparison.OrdinalIgnoreCase)))
+        {
+            selectedFieldsOfWork.Add(new Area
+                {
+                    AreaName = fieldOfWorkSearchTerm,
+                });
+            fieldOfWorkSearchTerm = string.Empty;
+        }
+
+        FilterAvailableFieldsOfWork(new ChangeEventArgs { Value = fieldOfWorkSearchTerm });
+        StateHasChanged();
+    }
+
+    private async Task MoveSelectedFieldOfWorkToLeft()
+    {
+        var newlySelectedFields = await GetSelectedItemsFromDOM("selectedFieldsOfWork");
+
+        foreach (var fieldName in newlySelectedFields)
+        {
+            var field = selectedFieldsOfWork.FirstOrDefault(f => f.AreaName == fieldName);
+            if (field != null)
+            {
+                selectedFieldsOfWork.Remove(field);
+
+                // Only add back if it's a predefined field (exists in original DB)
+                var originalField = await dbContext.Areas.FirstOrDefaultAsync(a => a.AreaName == fieldName);
+                if (originalField != null)
+                {
+                    availableFieldsOfWork.Add(originalField);
+                }
+            }
+        }
+
+        FilterAvailableFieldsOfWork(new ChangeEventArgs { Value = fieldOfWorkSearchTerm });
+        StateHasChanged();
+    }
+
+
+
+    private string GetValidationClassForEmptyFieldsWhenSaveProfessorSearch(int fieldsCount)
+    {
+        return fieldsCount == 0 && showValidationError ? "shake error" : "";
+    }
+
+    private async Task<List<string>> GetSelectedItemsFromDOM(string selectElementId)
+    {
+        return await JSRuntime.InvokeAsync<List<string>>("getSelectedValues", selectElementId);
+    }
+
+    private void FilterAvailableSkills(ChangeEventArgs e)
+    {
+        skillSearchTerm = e.Value?.ToString() ?? string.Empty;
+        UpdateFilteredSkills();
+    }
+
+    private void UpdateFilteredSkills()
+    {
+        if (string.IsNullOrWhiteSpace(skillSearchTerm))
+        {
+            filteredSkills = new List<Skill>(availableSkills);
+        }
+        else
+        {
+            filteredSkills = availableSkills
+                .Where(s => s.SkillName.Contains(skillSearchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    // Handle skill expansion for subfields
+    private void ToggleSkillExpansion(string skillName)
+    {
+        if (expandedSkills.Contains(skillName))
+        {
+            expandedSkills.Remove(skillName);
+        }
+        else
+        {
+            expandedSkills.Add(skillName);
+        }
+    }
+
+    private async Task MoveSelectedToRight()
+    {
+        var newlySelectedSkills = await GetSelectedSkillsFromDOM("availableSkills");
+
+        foreach (var skill in newlySelectedSkills)
+        {
+            availableSkills.RemoveAll(s => s.SkillName == skill);
+            if (!selectedSkills.Any(s => s.SkillName == skill))
+            {
+                selectedSkills.Add(new Skill { SkillName = skill });
+            }
+        }
+
+        // Add custom skill if it doesn't exist in selected skills
+        if (!string.IsNullOrWhiteSpace(skillSearchTerm) &&
+            !selectedSkills.Any(s => s.SkillName.Equals(skillSearchTerm, StringComparison.OrdinalIgnoreCase)))
+        {
+            selectedSkills.Add(new Skill { SkillName = skillSearchTerm });
+            skillSearchTerm = string.Empty;
+        }
+
+        UpdateFilteredSkills(); // Use the helper method instead
+        StateHasChanged();
+    }
+
+    private async Task MoveSelectedToLeft()
+    {
+        var newlySelectedSkills = await GetSelectedSkillsFromDOM("selectedSkills");
+
+        foreach (var skill in newlySelectedSkills)
+        {
+            selectedSkills.RemoveAll(s => s.SkillName == skill);
+            if (!availableSkills.Any(s => s.SkillName == skill))
+            {
+                availableSkills.Add(new Skill { SkillName = skill });
+            }
+        }
+
+        UpdateFilteredSkills(); 
+        StateHasChanged();
+    }
+
+    // Helper method to get selected skills from DOM
+    private async Task<List<string>> GetSelectedSkillsFromDOM(string elementId)
+    {
+        var selectedOptions = await JSRuntime.InvokeAsync<string[]>($"getSelectedValues", elementId);
+        return selectedOptions.ToList();
+    }
+
+    private void ShowMessage()
+	{
+		if (!agreeTerms)
+		{
+			showMessage = true;
+		}
+		else
+		{
+			showMessage = false;
+		}
+	}
+
+
+    private void ValidatePhoneNumber(ChangeEventArgs e)
+    {
+        var phoneNumber = e.Value.ToString();
+
+        // Check if the phone number contains only digits
+        if (!string.IsNullOrEmpty(phoneNumber) && !phoneNumber.All(char.IsDigit))
+        {
+            phoneError = true;
+            phoneErrorMessage = "Επιτρέπονται μόνο Αριθμοί!";
+        }
+        // Check if the phone number has exactly 10 digits
+        else if (phoneNumber.Length != 10)
+        {
+            phoneError = true;
+            phoneErrorMessage = "Ο Αριθμός δεν είναι ολοκληρωμένος. Ελέγξτε ξανά";
+        }
+        else
+        {
+            phoneError = false;
+            phoneErrorMessage = "";
+        }
+    }
+
+    private async Task HandleFEKUpload(InputFileChangeEventArgs e)
+    {
+        fekFile = e.File;
+        if (fekFile != null && fekFile.ContentType == "application/pdf")
+        {
+            fekFileName = fekFile.Name;
+            
+            using var memoryStream = new MemoryStream();
+            await fekFile.OpenReadStream().CopyToAsync(memoryStream);
+            newProfessor.ProfFEK = memoryStream.ToArray();
+            
+            StateHasChanged();
+        }
+        else
+        {
+            // Show error for non-PDF files
+            fekFileName = "Μη έγκυρο αρχείο. Παρακαλώ επιλέξτε PDF.";
+            newProfessor.ProfFEK = null;
+        }
+    }
+
+    private async Task HandleLabFEKUpload(InputFileChangeEventArgs e)
+    {
+        labFekFile = e.File;
+        if (labFekFile != null && labFekFile.ContentType == "application/pdf")
+        {
+            labFekFileName = labFekFile.Name;
+
+            using var memoryStream = new MemoryStream();
+            await labFekFile.OpenReadStream().CopyToAsync(memoryStream);
+            newProfessor.ProfLabFEK_AttachmentFile = memoryStream.ToArray();
+
+            StateHasChanged();
+        }
+        else if (labFekFile != null)
+        {
+            // Show error for non-PDF files
+            labFekFileName = "Μη έγκυρο αρχείο. Παρακαλώ επιλέξτε PDF.";
+            newProfessor.ProfLabFEK_AttachmentFile = null;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CheckResearchGroupMembership()
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userEmail = user.Identity.Name;
+
+        // First, check if professor exists in any research group
+        var researchGroupMembership = await dbContext.ResearchGroup_Professors
+            .FirstOrDefaultAsync(rgp => rgp.PK_ProfessorEmail == userEmail);
+
+        if (researchGroupMembership != null)
+        {
+            // If found, get the research group details
+            var researchGroup = await dbContext.ResearchGroups
+                .FirstOrDefaultAsync(rg => rg.ResearchGroupEmail == researchGroupMembership.PK_ResearchGroupEmail);
+
+            newProfessor.ProfResearchGroup = researchGroup?.ResearchGroupName;
+            researchGroupMessage = "Είστε μέλος της ερευνητικής ομάδας";
+        }
+        else
+        {
+            newProfessor.ProfResearchGroup = "Δεν είστε μέλος σε κάποια Ερευνητική Ομάδα ακόμη";
+            researchGroupMessage = "Δεν βρέθηκε συμμετοχή σε ερευνητική ομάδα.";
+        }
+
+        StateHasChanged();
+    }
+
+    private void ClearLabFEKFile()
+    {
+        newProfessor.ProfLabFEK_AttachmentFile = null;
+        labFekFileName = string.Empty;
+        labFekFile = null;
+        StateHasChanged();
+    }
+
+    private void OnSchoolChange(ChangeEventArgs e)
+    {
+        newProfessor.ProfSchool = e.Value?.ToString();
+        UpdateDepartments();
+    }
+
+    private void UpdateDepartments()
+    {
+        if (!string.IsNullOrEmpty(newProfessor.ProfSchool) &&
+            schoolDepartments.ContainsKey(newProfessor.ProfSchool))
+        {
+            departments = schoolDepartments[newProfessor.ProfSchool];
+            // Reset department selection when school changes
+            newProfessor.ProfDepartment = string.Empty;
+        }
+        else
+        {
+            departments = new List<string>();
+            newProfessor.ProfDepartment = string.Empty;
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnDepartmentChange(ChangeEventArgs e)
+    {
+        newProfessor.ProfDepartment = e.Value?.ToString();
+    }
+
+    private void ResetValidationClasses()
+    {
+        profEmailInputClass = "";
+        profNameInputClass = "";
+        profSurnameInputClass = "";
+        profSchoolInputClass = "";
+        profDepartmentInputClass = "";
+        profVathmidaInputClass = "";
+        profGnostikoInputClass = "";
+        profFEKInputClass = "";
+        profWorkTelephoneInputClass = "";
+        profPersonalDescriptionInputClass = "";
+        profFieldsOfWorkInputClass = "";
+        profSkillsInputClass = "";
+        profProfilePhotoInputClass = "";
+        errorMessage = "";
+        showValidationError = false;
+    }
+
+
+}
+

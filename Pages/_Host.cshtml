@@ -1,0 +1,1687 @@
+﻿@page "/"
+@namespace QuizManager.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+
+    Layout = "_Layout";
+}
+
+<component type="typeof(App)" render-mode="ServerPrerendered" />
+
+
+
+
+@*
+<script src="js/autocomplete.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVv4cBN_UGZgCxBMfBGeN5uqOdbukdlB8&libraries=places" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/customAlerts.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+<script src="_framework/blazor.webassembly.js"></script>
+<script src="js/chart.js"></script>
+<script src="/css/bootstrap/"></script>
+*@
+
+    <!-- CSS files (no conflicts here) -->
+<script src="_framework/blazor.webassembly.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+
+
+<!-- jQuery (required by Bootstrap and other plugins) -->
+
+<!-- Bootstrap JavaScript (requires jQuery) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Google Maps (asynchronous, can be loaded after jQuery and Bootstrap) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVv4cBN_UGZgCxBMfBGeN5uqOdbukdlB8&libraries=places" async defer></script>
+
+<!-- Input mask and other custom scripts -->
+<script src="js/autocomplete.js"></script>
+<script src="js/customAlerts.js"></script>
+
+<!-- Blazor WebAssembly (should be loaded last) -->
+
+<!-- Additional chart or custom scripts -->
+<script src="js/chart.js"></script>
+
+
+<script>
+    window.currentCharts = {};
+
+    // Function to generate random colors
+    function generateColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            const r = Math.floor(Math.random() * 255);
+            const g = Math.floor(Math.random() * 255);
+            const b = Math.floor(Math.random() * 255);
+            colors.push(`rgba(${r}, ${g}, ${b}, 0.7)`);
+        }
+        return colors;
+    }
+
+    window.renderCharts = function (areaData, skillData) {
+        // Only update areas chart if areaData is provided
+        if (areaData) {
+            if (window.currentCharts?.areasChart) window.currentCharts.areasChart.destroy();
+            const ctxAreas = document.getElementById("areasChart").getContext("2d");
+            window.currentCharts.areasChart = new Chart(ctxAreas, {
+                type: 'pie',
+                data: {
+                    labels: areaData.labels,
+                    datasets: [{
+                        data: areaData.values,
+                        backgroundColor: generateColors(areaData.labels.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function () {
+                                    return ''; // Remove the title
+                                },
+                                label: function (context) {
+                                    return context.label + ': ' + context.raw + ' Φοιτητές';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Only update skills chart if skillData is provided
+        if (skillData) {
+            if (window.currentCharts?.skillsChart) window.currentCharts.skillsChart.destroy();
+            const ctxSkills = document.getElementById("skillsChart").getContext("2d");
+            window.currentCharts.skillsChart = new Chart(ctxSkills, {
+                type: 'pie',
+                data: {
+                    labels: skillData.labels,
+                    datasets: [{
+                        data: skillData.values,
+                        backgroundColor: generateColors(skillData.labels.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function () {
+                                    return ''; // Remove the title
+                                },
+                                label: function (context) {
+                                    return context.label + ': ' + context.raw + ' Φοιτητές';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    };
+
+    // Keep your separate update function for skills only
+    window.updateSkillsChart = function (skillData) {
+        if (window.currentCharts?.skillsChart) window.currentCharts.skillsChart.destroy();
+
+        if (skillData) {
+            const ctxSkills = document.getElementById("skillsChart").getContext("2d");
+            window.currentCharts.skillsChart = new Chart(ctxSkills, {
+                type: 'pie',
+                data: {
+                    labels: skillData.labels,
+                    datasets: [{
+                        data: skillData.values,
+                        backgroundColor: generateColors(skillData.labels.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function () {
+                                    return ''; // Remove the title
+                                },
+                                label: function (context) {
+                                    return context.label + ': ' + context.raw + ' Φοιτητές';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    };
+</script>
+
+
+<script>
+    window.BlazorDownloadFile = function (fileName, fileContent) {
+        const blob = new Blob([fileContent], { type: 'application/octet-stream' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        window.open(url);
+    };
+</script>
+
+<script>
+    window.BlazorPreviewFile = function (content) {
+        const blob = new Blob([atob(content)], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        window.URL.revokeObjectURL(url);
+    };
+</script>
+
+
+
+
+
+<script>
+    window.bootstrapDropdown = {
+        toggleDropdown: function (elementId) {
+            var dropdown = document.getElementById(elementId);
+            if (dropdown) {
+                var bootstrapDropdown = new bootstrap.Dropdown(dropdown);
+                bootstrapDropdown.toggle();
+            }
+        }
+    };
+</script>
+
+<script>
+    function moveSelectedItems(sourceId, targetId) {
+        var source = document.getElementById(sourceId);
+        var target = document.getElementById(targetId);
+
+        var selectedOptions = Array.from(source.selectedOptions);
+        selectedOptions.forEach(option => {
+            target.appendChild(option);
+        });
+    }
+</script>
+
+<script>
+$config = new SdkConfiguration(
+  strategy: SdkConfiguration::STRATEGY_API,
+  domain: 'https://dev-75kcw8hj0pzojdod.us.auth0.com',
+  audience: ['https://permissionsendpoint']
+);
+
+$auth0 = new Auth0($config);
+$token = $auth0->decode($token);
+</script>
+
+<script>
+window.getSelectedValues = (selectId) => {
+    const selectElement = document.getElementById(selectId);
+    const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
+    return selectedOptions;
+};
+</script>
+
+@*
+<script>
+    function reloadPage() {
+        setTimeout(function () {
+            window.location.reload(); // Reload the current page without redirecting
+        }, 3000); // 3000 milliseconds = 3 seconds delay before the page reloads
+    }
+</script>
+*@
+
+
+
+
+<script>
+window.QuizManager = {
+    handleFileChange: function (dotNetObjectRef) {
+        var input = document.getElementById("imageInput");
+        input.addEventListener("change", function (event) {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (readerEvent) {
+                var arrayBuffer = readerEvent.target.result;
+                var byteArray = new Uint8Array(arrayBuffer);
+                var fileObject = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    content: byteArray
+                };
+                dotNetObjectRef.invokeMethodAsync("SetFile", fileObject);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+};
+</script>
+
+<script>
+    window.redirectToAuth0 = function (uri) {
+        window.location.href = uri;
+    };
+</script>
+
+
+<!-- Include necessary scripts in Host.cshtml -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    window.charts = {};
+
+    window.showDoughnutChart = function (canvasId) {
+        var canvas = document.getElementById(canvasId);
+        if (canvas) {
+            canvas.style.display = "block"; // Show the canvas
+        }
+    };
+
+    window.hideDoughnutChart = function (canvasId) {
+        var canvas = document.getElementById(canvasId);
+        if (canvas) {
+            canvas.style.display = "none"; // Hide the canvas
+        }
+    };
+
+    window.createDoughnutChart = (canvasId, data) => {
+        var ctx = document.getElementById(canvasId).getContext('2d');
+        if (!window.charts[canvasId]) {
+            window.charts[canvasId] = new Chart(ctx, {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    var label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.raw !== null) {
+                                        label += context.raw + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    };
+</script>
+
+
+
+<script>
+    function downloadFile(fileName, content) {
+        const link = document.createElement('a');
+        link.href = 'data:application/pdf;base64,' + content;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+<script>
+    window.BlazorDownloadAttachmentPositionFile = (fileName, mimeType, content) => {
+        const byteArray = new Uint8Array(content); // Convert content to Uint8Array
+        const blob = new Blob([byteArray], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    };
+</script>
+
+
+<script>
+    function filterTable() {
+        var dropdown = document.getElementById("positionFilter");
+        var filter = dropdown.value;
+        var table = document.getElementById("jobApplicationsTable");
+        var rows = table.getElementsByTagName("tr");
+
+        for (var i = 0; i < rows.length; i++) {
+            var jobTypeCell = rows[i].getElementsByClassName("job-type")[0];
+            if (jobTypeCell) {
+                var jobType = jobTypeCell.textContent || jobTypeCell.innerText;
+                if (filter === "All" || jobType === filter) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>
+
+<script>
+    window.initializeInputMask = () => {
+        const inputMaskOptions = {
+            mask: '9999-9999-99999',
+            placeholder: 'XXXX-YYYY-ZZZZZ',
+            clearMaskOnLostFocus: false,
+            oncomplete: function () {
+                validateRegistryNumber();
+            },
+            onincomplete: function () {
+                validateRegistryNumber();
+            }
+        };
+
+        // Apply input mask to registryNumber input field
+        $("#registryNumber").inputmask(inputMaskOptions);
+
+        // Optional: Handle validation on blur
+        $("#registryNumber").on("blur", function () {
+            validateRegistryNumber();
+        });
+    };
+
+    function validateRegistryNumber() {
+        const value = $("#registryNumber").val();
+        const regex = /^\d{4}-\d{4}-\d{5}$/;
+
+        if (regex.test(value)) {
+            const parts = value.split("-");
+            const xxxx = parseInt(parts[0]);
+            const yyyy = parseInt(parts[1]);
+            const zzzzz = parseInt(parts[2]);
+
+            // Validate specific rules for each part if needed
+            let isValid = true;
+
+            if (![1115, 1116, 1117].includes(xxxx)) {
+                isValid = false;
+                $("#xxxxValidationMessage").show();
+            } else {
+                $("#xxxxValidationMessage").hide();
+            }
+
+            const currentYear = new Date().getFullYear();
+            if (yyyy < 2010 || yyyy > currentYear) {
+                isValid = false;
+                $("#yyyyValidationMessage").show();
+            } else {
+                $("#yyyyValidationMessage").hide();
+            }
+
+            const zStr = zzzzz.toString().padStart(5, '0');
+            const zPart = parseInt(zStr.slice(2));
+            if (!zStr.startsWith("00") || zPart <= 0 || zPart > 300) {
+                isValid = false;
+                $("#zzzzzValidationMessage").show();
+            } else {
+                $("#zzzzzValidationMessage").hide();
+            }
+
+            if (isValid) {
+                $("#registryNumber").removeClass("invalid").addClass("valid");
+                $("#registryNumberValidationMessage").hide();
+                return;
+            }
+        }
+
+        $("#registryNumber").removeClass("valid").addClass("invalid");
+        $("#registryNumberValidationMessage").show();
+    }
+
+    // Invoke initializeInputMask after Blazor has loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeInputMask();
+    });
+</script>
+
+<script>
+    window.addEventListener('click', function (event) {
+        DotNet.invokeMethodAsync('YourAssemblyName', 'OnDocumentClick');
+    });
+
+    function addClickListener(dotNetHelper) {
+        window.dotNetHelper = dotNetHelper;
+        document.addEventListener('click', handleDocumentClick);
+    }
+
+    function removeClickListener() {
+        document.removeEventListener('click', handleDocumentClick);
+    }
+
+    function handleDocumentClick(event) {
+        if (!event.target.closest('.dropdown-combo')) {
+            window.dotNetHelper.invokeMethodAsync('OnDocumentClick');
+        }
+    }
+</script>
+
+<script>
+    // customAlerts.js
+    window.showCustomAlert = (message) => {
+        // Create a custom alert box
+        let alertBox = document.createElement('div');
+        alertBox.style.position = 'fixed';
+        alertBox.style.top = '60px';
+        alertBox.style.right = '20px';
+        alertBox.style.padding = '10px 20px';
+        alertBox.style.backgroundColor = '#f8d7da';
+        alertBox.style.color = '#721c24';
+        alertBox.style.border = '1px solid #f5c6cb';
+        alertBox.style.borderRadius = '5px';
+        alertBox.style.zIndex = '1000';
+        alertBox.innerText = message;
+
+        // Append the alert box to the body
+        document.body.appendChild(alertBox);
+
+        // Remove the alert box after 3 seconds
+        setTimeout(() => {
+            document.body.removeChild(alertBox);
+        }, 3000);
+    };
+
+</script>
+
+<script>
+    document.addEventListener('click', function (event) {
+        var tooltipContainer = document.querySelector('.tooltip-container');
+        var tooltipText = document.getElementById('tooltip-text');
+        var inputField = document.querySelector('.tooltip-container input');
+
+        // Check if the clicked element is inside the tooltip container
+        if (tooltipContainer.contains(event.target)) {
+            tooltipContainer.classList.add('show-tooltip');
+        } else {
+            tooltipContainer.classList.remove('show-tooltip');
+        }
+    });
+</script>
+
+<script>
+    function showMessage(elementId, message) {
+        var messageElement = document.getElementById(elementId);
+        messageElement.textContent = message;
+        messageElement.style.display = 'block';
+    }
+
+    function hideMessage(elementId) {
+        var messageElement = document.getElementById(elementId);
+        messageElement.style.display = 'none';
+    }
+</script>
+
+
+<script>
+    window.showUserAgreementModal = () => {
+        var modal = document.getElementById("userAgreementModal");
+        var mainContent = document.getElementById("mainContent"); // Ensure mainContent exists if used
+
+        if (modal) {
+            modal.classList.add("show");
+            modal.style.display = "block";
+            modal.removeAttribute("aria-hidden");
+            if (mainContent) mainContent.setAttribute("inert", ""); // Disable main content for focus
+            document.body.classList.add("modal-open");
+        } else {
+            console.error("Modal element with id 'userAgreementModal' not found.");
+        }
+    };
+
+    window.hideUserAgreementModal = () => {
+        var modal = document.getElementById("userAgreementModal");
+        var mainContent = document.getElementById("mainContent");
+
+        if (modal) {
+            // Remove Bootstrap modal classes
+            modal.classList.remove("show");
+            modal.style.display = "none";
+            modal.setAttribute("aria-hidden", "true");
+
+            // Remove modal-open class from body
+            document.body.classList.remove("modal-open");
+
+            // Reset body scroll position if needed
+            document.body.style.overflow = "auto";
+
+            // Remove backdrop if still present (fallback for Bootstrap modals)
+            let backdrop = document.querySelector(".modal-backdrop");
+            if (backdrop) {
+                backdrop.parentNode.removeChild(backdrop);
+            }
+
+            // Re-enable main content if used
+            if (mainContent) mainContent.removeAttribute("inert");
+        } else {
+            console.error("Modal element with id 'userAgreementModal' not found.");
+        }
+    };
+
+
+</script>
+
+
+
+
+<script>
+    // Initialize Bootstrap modal instance
+    window.showModal = (modalId) => {
+        var modalElement = document.getElementById(modalId);
+        var modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    };
+
+    window.hideModal = (modalId) => {
+        var modalElement = document.getElementById(modalId);
+        var modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+    };
+</script>
+
+<script>
+    window.BlazorDownloadAttachmentThesisFile = (fileName, mimeType, base64Content) => {
+        const byteCharacters = atob(base64Content);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.href = url;
+        link.download = fileName;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    };
+</script>
+
+
+@*THA FTIAKSW AYTO GIA TA ATTACHMENTS NA DOULEUEI SWSTA WSTE META NA TO KANW ADOPT KAI STA IPOLOIPA ATTACHMENTS POU DEN KATEVAZOYN SWSTA TA PDFs*@
+<script>
+    window.BlazorDownloadAttachmentProfessorThesisFile = (fileName, mimeType, base64Content) => {
+        try {
+            // Decode base64 string into raw byte characters
+            const byteCharacters = atob(base64Content);
+
+            // Convert raw byte characters to byte numbers
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+
+            // Convert byte numbers to a typed array (Uint8Array)
+            const byteArray = new Uint8Array(byteNumbers);
+
+            // Create a Blob object using the byte array and the correct MIME type
+            const blob = new Blob([byteArray], { type: mimeType });
+
+            // Create a link to download the Blob as a file
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = fileName;
+
+            // Trigger the download by clicking the link
+            link.click();
+
+            // Revoke the object URL to free up memory
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading file:', error);
+        }
+    };
+</script>
+
+
+
+
+<script>
+    var selectedRegion = '';
+    var selectedTown = '';
+
+    document.getElementById('internshipPerifereiaLocation').addEventListener('change', function () {
+        selectedRegion = this.value;
+        var townsDropdown = document.getElementById('internshipDimosLocation');
+        townsDropdown.innerHTML = '<option value="">-- Επιλέξτε Δήμο --</option>';
+
+        if (selectedRegion && selectedRegion in regionToTownsMap) {
+            regionToTownsMap[selectedRegion].forEach(function (town) {
+                var option = document.createElement('option');
+                option.value = town;
+                option.text = town;
+                townsDropdown.appendChild(option);
+            });
+        }
+    });
+</script>
+
+<script>
+    function toggleSection(contentId) {
+        var content = document.getElementById(contentId);
+        if (content.style.display === "none") {
+            content.style.display = "block";
+        } else {
+            content.style.display = "none";
+        }
+    }
+</script>
+
+<script>
+function showModal(modalId) {
+    var modalElement = document.getElementById(modalId);
+    var modal = new bootstrap.Modal(modalElement);
+    modal.show();
+}
+</script>
+
+<script>
+    function showModal1(modalId) {
+        var modalElement = document.querySelector(modalId);
+        if (modalElement) {
+            var modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else {
+            console.error("Modal element not found: " + modalId);
+        }
+    }
+</script>
+
+
+
+<script>
+function ShowBootstrapModal(modalId) {
+    var modalElement = document.querySelector(modalId);
+    var modal = new bootstrap.Modal(modalElement);
+    modal.show();
+}
+</script>
+
+<script>
+    function toggleCompanyInternshipCheckboxes() {
+        var checkboxes = document.querySelector('.checkbox-container');
+        if (checkboxes.style.display === 'none' || checkboxes.style.display === '') {
+            checkboxes.style.display = 'block'; // Show checkboxes
+        } else {
+            checkboxes.style.display = 'none'; // Hide checkboxes
+        }
+    }
+</script>
+
+<script>
+    function toggleProfessorInternshipCheckboxes() {
+        var checkboxes = document.querySelector('.checkbox-container');
+        if (checkboxes.style.display === 'none' || checkboxes.style.display === '') {
+            checkboxes.style.display = 'block'; // Show checkboxes
+        } else {
+            checkboxes.style.display = 'none'; // Hide checkboxes
+        }
+    }
+</script>
+
+<script>
+    function toggleCompanyJobCheckboxes() {
+        var checkboxes = document.querySelector('.checkbox-container');
+        if (checkboxes.style.display === 'none' || checkboxes.style.display === '') {
+            checkboxes.style.display = 'block'; // Show checkboxes
+        } else {
+            checkboxes.style.display = 'none'; // Hide checkboxes
+        }
+    }
+</script>
+
+<script>
+    function toggleCompanyThesisAreasCheckboxes() {
+        var checkboxes = document.querySelector('.checkbox-containerThesisAreas');
+        if (checkboxes.style.display === 'none' || checkboxes.style.display === '') {
+            checkboxes.style.display = 'block'; // Show checkboxes
+        } else {
+            checkboxes.style.display = 'none'; // Hide checkboxes
+        }
+    }
+
+    function toggleCompanyThesisSkillsCheckboxes() {
+        var checkboxes = document.querySelector('.checkbox-containerThesisSkills');
+        if (checkboxes.style.display === 'none' || checkboxes.style.display === '') {
+            checkboxes.style.display = 'block'; // Show checkboxes
+        } else {
+            checkboxes.style.display = 'none'; // Hide checkboxes
+        }
+    }
+</script>
+
+<script>
+    function toggleCompanyEventAreasCheckboxes() {
+        var checkboxes = document.getElementById('toggleCheckboxesForAreasOfInterest'); // Use getElementById for the ID
+        if (checkboxes.style.display === 'none' || checkboxes.style.display === '') {
+            checkboxes.style.display = 'block'; // Show checkboxes
+        }
+        else {
+            checkboxes.style.display = 'none'; // Hide checkboxes
+        }
+    }
+</script>
+
+<script>
+    function toggleProfessorEventAreasCheckboxes() {
+        var checkboxes = document.getElementById('toggleCheckboxesForAreasOfInterest'); // Use getElementById for the ID
+        if (checkboxes.style.display === 'none' || checkboxes.style.display === '') {
+            checkboxes.style.display = 'block'; // Show checkboxes
+        }
+        else {
+            checkboxes.style.display = 'none'; // Hide checkboxes
+        }
+    }
+</script>
+
+
+
+<script>
+    function activateTab(tabId) {
+        var tab = document.getElementById(tabId);
+        if (tab) {
+            var tabInstance = new bootstrap.Tab(tab);
+            tabInstance.show();
+        }
+    }
+</script>
+
+<script>
+    function confirmActionToAcceptOrRejectInternshipAppliedByStudentAsACompany(message) {
+        return confirm(message);
+    }
+</script>
+
+<script>
+    function confirmActionToAcceptOrRejectJobAppliedByStudentAsACompany(message) {
+        return confirm(message);
+    }
+</script>
+
+<script>
+    function confirmActionToAcceptOrRejectThesisAppliedByStudentAsACompany(message) {
+        return confirm(message);
+    }
+</script>
+
+<script>
+    function confirmActionToAcceptOrRejectThesisAppliedByStudentAsAProfessor(message) {
+        return confirm(message);
+    }
+</script>
+
+
+<script>
+    var companyDetailsModal = new bootstrap.Modal(document.getElementById('companyDetailsModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+</script>
+
+<script>
+    var studentDetailsModal = new bootstrap.Modal(document.getElementById('studentDetailsModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+</script>
+
+<script>
+    function downloadStudentCVFromCompanyInternships(fileName, base64Data) {
+        const link = document.createElement('a');
+        link.href = 'data:application/pdf;base64,' + base64Data;
+        link.download = fileName;
+        link.click();
+    }
+</script>
+
+<script>
+    function showCompanyDetailsModal() {
+        console.log("JavaScript: Opening Modal...");
+        $('#companyDetailsModal').modal('show');
+    }
+
+    function hideCompanyDetailsModal() {
+        console.log("JavaScript: Hiding Modal...");
+        $('#companyDetailsModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showCompanyDetailsAsAHyperlinkInJobSearchAsStudent() {
+        console.log("JavaScript: Opening Modal...");
+        $('#companyDetailsModal3').modal('show');
+    }
+
+    function hideCompanyDetailsAsAHyperlinkInJobSearchAsStudent() {
+        console.log("JavaScript: Hiding Modal...");
+        $('#companyDetailsModal3').modal('hide');
+    }
+</script>
+
+
+
+<script>
+    function showCompanyDetailsModal2() {
+        $('#companyDetailsModal2').modal('show');
+    }
+</script>
+
+<script>
+    function showInternshipDetailsModal2() {
+        $('#internshipDetailsModal').modal('show');
+    }
+</script>
+
+<script>
+    function showInternshipDetailsModal2() {
+        $('#internshipDetailsModal3').modal('show');
+    }
+</script>
+
+<script>
+    function showInternshipDetailsModal2() {
+        $('#internshipDetailsModal4').modal('show');
+    }
+</script>
+
+<script>
+    function showJobDetailsModal() {
+        $('#jobDetailsModal2').modal('show');
+    }
+</script>
+
+<script>
+    function showProfessorThesisDetailsModal() {
+        $('#professorthesisDetailsModal').modal('show');
+    }
+
+    function hideProfessorThesisDetailsModal() {
+        $('#professorthesisDetailsModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showCompanyThesisDetailsModal() {
+        $('#companythesisDetailsModal').modal('show');
+    }
+
+    function hideCompanyThesisDetailsModal() {
+        $('#companythesisDetailsModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showCompanyInternshipDetailsModal() {
+        $('#companyinternshipDetailsModal').modal('show');
+    }
+
+    function hideCompanyInternshipDetailsModal() {
+        $('#companyinternshipDetailsModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showProfessorInternshipDetailsModal() {
+        $('#professorinternshipDetailsModal').modal('show');
+    }
+
+    function hideProfessorInternshipDetailsModal() {
+        $('#professorinternshipDetailsModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showProfessorInternshipDetailsModalAsStudent() {
+        $('#professorinternshipDetailsModalAsStudent').modal('show');
+    }
+
+    function hideProfessorInternshipDetailsModalAsStudent() {
+        $('#professorinternshipDetailsModalAsStudent').modal('hide');
+    }
+</script>
+
+<script>
+    function showCompanyInternshipDetailsModalAsStudent() {
+        $('#companyinternshipDetailsModalAsStudent').modal('show');
+    }
+
+    function hideCompanyInternshipDetailsModalAsStudent() {
+        $('#companyinternshipDetailsModalAsStudent').modal('hide');
+    }
+</script>
+
+<script>
+    function showProfessorThesisDetailsModalAsProfessor() {
+        $('#professorthesisDetailsModalAsProfessor').modal('show');
+    }
+
+    function hideProfessorThesisDetailsModalAsProfessor() {
+        $('#professorthesisDetailsModalAsProfessor').modal('hide');
+    }
+</script>
+
+
+
+
+<script>
+    function downloadInternshipAttachmentAsStudent(fileName, base64Data) {
+        // Create a blob from the base64 data
+        const byteCharacters = atob(base64Data); // Convert from base64
+        const byteNumbers = new Array(byteCharacters.length);
+
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' }); // Specify MIME type for PDF
+
+        // Create a link and trigger download
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link); // Cleanup
+    }
+
+</script>
+
+<script>
+    function confirmSaveForInternshipsAsCompany(message) {
+        return confirm(message);
+    }
+</script>
+
+<script>
+    function confirmSaveForCompanyEvent(message) {
+        return confirm(message);
+    }
+</script>
+
+<script>
+    function confirmSaveForProfessorEvent(message) {
+        return confirm(message);
+    }
+</script>
+
+<script>
+    function confirmAction(message) {
+        return confirm(message);
+    }
+</script>
+
+<script>
+    function confirmSaveForJobsAsCompany(message) {
+        return confirm(message);
+    }
+</script>
+
+<script>
+    function confirmSaveForThesesAsCompany(message) {
+        return confirm(message);
+    }
+</script>
+
+<script>
+    const announcementsContainer = document.getElementById('announcements');
+
+
+    // Render announcements
+    announcements.forEach(announcement => {
+        const announcementDiv = document.createElement('div');
+        announcementDiv.className = 'announcement';
+        announcementDiv.innerHTML = `<h3>${announcement.companyName} - ${announcement.title}</h3>
+                                             <p>${announcement.description}</p>`;
+        announcementsContainer.appendChild(announcementDiv);
+    });
+</script>
+
+
+<script>
+    let isHidden = false;
+
+function ToggleContainer() {
+    const mainContainer = document.getElementById("main-container");
+    const arrowIcon = document.getElementById("arrow-icon");
+
+    if (isHidden) {
+        mainContainer.classList.remove("hidden");
+        arrowIcon.classList.remove("fa-arrow-left");
+        arrowIcon.classList.add("fa-arrow-right");
+    } else {
+        mainContainer.classList.add("hidden");
+        arrowIcon.classList.remove("fa-arrow-right");
+        arrowIcon.classList.add("fa-arrow-left");
+    }
+    isHidden = !isHidden;
+}
+</script>
+
+<script>
+    window.triggerDownload = (fileUrl, fileName) => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName; // Specify the file name
+    document.body.appendChild(link); // Append to the body
+    link.click(); // Trigger the click
+    document.body.removeChild(link); // Remove the link after download
+};
+</script>
+
+<script>
+        function toggleProfessorThesisAreasCheckboxes() {
+    const container = document.getElementById('toggleCheckboxesForThesisAreasAsProfessor');
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+    }
+}
+</script>
+
+<script>
+    function toggleProfessorThesisSkillsCheckboxes() {
+        const container = document.getElementById('toggleCheckboxesForThesisSkillsAsProfessor');
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    }
+</script>
+
+<script>
+        function showProfessorDetailsModal() {
+        $('#professorDetailsModal').modal('show');
+        }
+
+        function hideProfessorDetailsModal() {
+            $('#professorDetailsModal').modal('hide');
+        }
+</script>
+
+<script>
+    function showProfessorDetailsModalForThesisInterest() {
+        $('#ProfessorDetailsModalForThesisInterest').modal('show');
+    }
+
+    function hideProfessorDetailsModalForThesisInterest() {
+        $('#ProfessorDetailsModalForThesisInterest').modal('hide');
+    }
+</script>
+
+<script>
+    function ShowCompanyEventDetails() {
+        $('#CompanyDetailsModalForThesisInterest').modal('show');
+    }
+
+    function hideCompanyDetailsModalForThesisInterest() {
+        $('#CompanyDetailsModalForThesisInterest').modal('hide');
+    }
+</script>
+
+<script>
+    function showCompanyEventDetailsModalForEventsAsStudent() {
+        $('#companyEventDetailsModal').modal('show');
+    }
+
+    function hideCompanyEventDetailsModalForEventsAsStudent() {
+        $('#companyEventDetailsModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showProfessorEventDetailsModalForEventsAsStudent() {
+        $('#professorEventDetailsModal').modal('show');
+    }
+
+    function hideProfessorEventDetailsModalForEventsAsStudent() {
+        $('#professorEventDetailsModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showCompanyDetailsModalForEventsAsStudent() {
+        $('#companyTitleDetailsModal').modal('show');
+    }
+
+    function hideCompanyDetailsModalForEventsAsStudent() {
+        $('#companyTitleDetailsModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showProfessorDetailsModalForEventsAsStudent() {
+        $('#professorTitleDetailsModal').modal('show');
+    }
+
+    function hideProfessorDetailsModalForEventsAsStudent() {
+        $('#professorTitleDetailsModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showCompanyDetailsModalForEventsAsStudent() {
+        $('#companyDetailsFromHyperlinkNameModal').modal('show');
+    }
+
+    function hideCompanyDetailsModalForEventsAsStudent() {
+        $('#companyDetailsFromHyperlinkNameModal').modal('hide');
+    }
+</script>
+
+<script>
+    function showProfessorDetailsModalFromHypelinkName() {
+        $('#professorDetailsModalFromHyperlinkName').modal('show');
+    }
+
+    function hideProfessorDetailsModalFromHypelinkName() {
+        $('#professorDetailsModalFromHyperlinkName').modal('hide');
+    }
+</script>
+
+
+
+
+<script>
+        function showCompanyDetailsModal() {
+            $('#companyDetailsModal').modal('show');
+        }
+
+        function hideCompanyDetailsModal() {
+            $('#companyDetailsModal').modal('hide');
+            // Make sure the backdrop is also removed
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+        }
+</script>
+
+
+
+
+
+
+
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+            initializeAutocomplete();
+        });
+
+    function initializeAutocomplete() {
+        const inputField = document.getElementById("autocomplete");
+        if (inputField) {
+            const autocomplete = new google.maps.places.Autocomplete(inputField);
+            autocomplete.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete.addListener('place_changed', function () {
+                const place = autocomplete.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAutocomplete2();
+    });
+
+    function initializeAutocomplete2() {
+        const inputField = document.getElementById("autocomplete2");
+        if (inputField) {
+            const autocomplete2 = new google.maps.places.Autocomplete(inputField);
+            autocomplete2.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete2.addListener('place_changed', function () {
+                const place = autocomplete2.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAutocomplete3();
+    });
+
+    function initializeAutocomplete3() {
+        const inputField = document.getElementById("autocomplete3");
+        if (inputField) {
+            const autocomplete3 = new google.maps.places.Autocomplete(inputField);
+            autocomplete3.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete3.addListener('place_changed', function () {
+                const place = autocomplete3.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAutocomplete4();
+    });
+
+    function initializeAutocomplete4() {
+        const inputField = document.getElementById("autocomplete4");
+        if (inputField) {
+            const autocomplete4 = new google.maps.places.Autocomplete(inputField);
+            autocomplete4.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete4.addListener('place_changed', function () {
+                const place = autocomplete4.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAutocomplete6();
+    });
+
+    function initializeAutocomplete6() {
+        const inputField = document.getElementById("autocomplete4");
+        if (inputField) {
+            const autocomplete6 = new google.maps.places.Autocomplete(inputField);
+            autocomplete6.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete6.addListener('place_changed', function () {
+                const place = autocomplete6.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAutocomplete7();
+    });
+
+    function initializeAutocomplete7() {
+        const inputField = document.getElementById("autocomplete4");
+        if (inputField) {
+            const autocomplete7 = new google.maps.places.Autocomplete(inputField);
+            autocomplete7.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete7.addListener('place_changed', function () {
+                const place = autocomplete6.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAutocomplete8();
+    });
+
+    function initializeAutocomplete8() {
+        const inputField = document.getElementById("autocomplete4");
+        if (inputField) {
+            const autocomplete8 = new google.maps.places.Autocomplete(inputField);
+            autocomplete8.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete8.addListener('place_changed', function () {
+                const place = autocomplete6.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+
+
+<script>
+    function downloadFile(fileName, contentType, base64Data) {
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = `data:${contentType};base64,${base64Data}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+<script>
+window.getSelectedAreas = () => {
+    let selectedAreas = [];
+    let checkboxes = document.querySelectorAll("input[name='area']:checked");
+    checkboxes.forEach(checkbox => {
+        selectedAreas.push(checkbox.value);  // Assuming the value is the area ID
+    });
+    return selectedAreas;
+};
+</script>
+
+<script>
+    function saveStudentShownInterestForCompanyEventAsExcelListFile(filename, bytesBase64) {
+        var link = document.createElement('a');
+        link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + bytesBase64;
+        link.download = filename;
+        link.click();
+    }
+</script>
+
+<script>
+    function saveStudentShownInterestForProfessorEventAsExcelListFile(filename, bytesBase64) {
+        var link = document.createElement('a');
+        link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + bytesBase64;
+        link.download = filename;
+        link.click();
+    }
+</script>
+
+<script>
+    function saveProfessorShownInterestForCompanyEventAsExcelListFile(filename, bytesBase64) {
+        var link = document.createElement('a');
+        link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + bytesBase64;
+        link.download = filename;
+        link.click();
+    }
+</script>
+
+<script>
+    function saveCompanyShownInterestForProfessorEventAsExcelListFile(filename, bytesBase64) {
+        var link = document.createElement('a');
+        link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + bytesBase64;
+        link.download = filename;
+        link.click();
+    }
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmActionWithHTML(message) {
+        return new Promise((resolve) => {
+            Swal.fire({
+                title: "Επιβεβαίωση",
+                html: message, // Accepts HTML content
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Ναι, συνεχίστε",
+                cancelButtonText: "Ακύρωση"
+            }).then((result) => {
+                resolve(result.isConfirmed);
+            });
+        });
+    }
+</script>
+
+<script>
+    function confirmActionWithHTML2(message) {
+        return new Promise((resolve) => {
+            Swal.fire({
+                title: "Ειδοποίηση",
+                html: message, // Accepts HTML content
+                icon: "warning",
+                showCancelButton: false, // Remove the Cancel button
+                confirmButtonText: "Εντάξει!", // Only the OK button
+            }).then((result) => {
+                resolve(result.isConfirmed);
+            });
+        });
+    }
+</script>
+
+<script>
+    window.scrollToElementById = (id) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.focus();
+        }
+    };
+</script>
+
+<script>
+    function scrollToElement(id) {
+        const element = document.getElementById(id);
+        if (element) {
+            // Scroll to alert with smooth animation
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            // Optional highlight effect
+            element.style.transition = 'box-shadow 0.5s';
+            element.style.boxShadow = '0 0 10px gold';
+            setTimeout(() => {
+                element.style.boxShadow = 'none';
+            }, 1000);
+        }
+    }
+</script>
+
+<script>
+function showCompanyDetailsAsProfessorModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        // Bootstrap 5 way to show modal
+        var bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    }
+}
+
+    function hideCompanyDetailsAsProfessorModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        // Bootstrap 5 way to hide modal
+        var bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+            bsModal.hide();
+        }
+    }
+}
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAutocomplete6();
+    });
+
+    function initializeAutocomplete6() {
+        const inputField = document.getElementById("autocomplete6");
+        if (inputField) {
+            const autocomplete6 = new google.maps.places.Autocomplete(inputField);
+            autocomplete6.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete6.addListener('place_changed', function () {
+                const place = autocomplete6.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAutocomplete7();
+    });
+
+    function initializeAutocomplete7() {
+        const inputField = document.getElementById("autocomplete7");
+        if (inputField) {
+            const autocomplete7 = new google.maps.places.Autocomplete(inputField);
+            autocomplete7.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete7.addListener('place_changed', function () {
+                const place = autocomplete7.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAutocomplete8();
+    });
+
+    function initializeAutocomplete8() {
+        const inputField = document.getElementById("autocomplete8");
+        if (inputField) {
+            const autocomplete8 = new google.maps.places.Autocomplete(inputField);
+            autocomplete8.setFields(['address_components', 'geometry', 'name']);
+
+            autocomplete8.addListener('place_changed', function () {
+                const place = autocomplete8.getPlace();
+                if (place) {
+                    const addressComponents = place.address_components || [];
+                    DotNet.invokeMethodAsync('JobFinder', 'UpdatePlaceDetails', addressComponents);
+                }
+            });
+            console.log("Autocomplete initialized successfully.");
+        } else {
+            console.error("Autocomplete input field not found: autocomplete");
+        }
+    }
+</script>
+
+<script>
+    function searchProject() {
+        const projectId = document.getElementById('projectIdInput').value.trim();
+        if (!projectId) {
+            alert("Please enter a Project ID");
+            return;
+        }
+
+        // Show loading state
+        const resultsDiv = document.getElementById('projectResults');
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = '<p>Loading project information...</p>';
+
+        // Fetch project data (in a real implementation, you would call your backend API)
+        fetchProjectData(projectId)
+            .then(projectInfo => {
+                if (projectInfo.error) {
+                    resultsDiv.innerHTML = `<p class="text-danger">${projectInfo.error}</p>`;
+                    return;
+                }
+
+                // Display the project information
+                document.getElementById('projectTitle').textContent = projectInfo.title;
+                document.getElementById('projectAcronym').textContent = projectInfo.acronym;
+                document.getElementById('projectGrantId').textContent = projectInfo.grant_id;
+                document.getElementById('projectStatus').textContent = projectInfo.status;
+                document.getElementById('projectDuration').textContent = `${projectInfo.start_date} to ${projectInfo.end_date}`;
+                document.getElementById('projectTotalCost').textContent = projectInfo.total_cost;
+                document.getElementById('projectEuContribution').textContent = projectInfo.eu_contribution;
+                document.getElementById('projectCoordinator').textContent = projectInfo.coordinator;
+                document.getElementById('projectDescription').textContent = projectInfo.description;
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = `<p class="text-danger">Error fetching project data: ${error.message}</p>`;
+            });
+    }
+
+
+    function fetchProjectData(projectId) {
+        return Promise.resolve({
+            title: "OPTIMised video content delivery chains leveraging data analysis over joint multI-accesS edge computing and 5G radio network infrasTructures",
+            acronym: "OPTIMIST",
+            grant_id: "872866",
+            status: "Project closed",
+            start_date: "1 May 2020",
+            end_date: "30 April 2025",
+            total_cost: "€ 1,490,400.00",
+            eu_contribution: "€ 1,490,400.00",
+            coordinator: "ETHNIKO KAI KAPODISTRIAKO PANEPISTIMIO ATHINON, Greece",
+            description: "The OPTIMIST programme sets the ambitious aim to develop a modular end-to-end service platform tailored to the optimized delivery of personalised video content in 5G mobile networks..."
+        });
+
+
+    }
+</script>

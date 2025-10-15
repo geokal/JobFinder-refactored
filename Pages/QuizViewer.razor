@@ -1,0 +1,3327 @@
+﻿@page "/studentRegistration"
+
+@attribute [Authorize]
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.Logging
+@using QuizManager.Data
+@using QuizManager.Models
+@using System.IO
+@using System.Reflection.Metadata
+@using static System.Net.FileWebRequest
+@using System.Security.Claims
+@using System.Linq
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Text;
+@using System.Text.RegularExpressions
+
+@inject ILogger<QuizViewer> Logger
+@inject IDbContextFactory<AppDbContext> DbContextFactory
+@inject FileUploadService FileUploadService;
+@inject IJSRuntime JSRuntime;
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+
+<style>
+    /* Base styles */
+    body {
+        background-color: #f0f0f0;
+        color: #000000;
+        padding: 0;
+        margin: 0;
+        min-width: 320px;
+    }
+
+    /* Message boxes */
+    .error-message, .empty-message, 
+    .good-message, .refresh-message {
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Headings */
+    h3 {
+        font-size: 24px;
+        color: #FF5733;
+        margin-top: 0;
+    }
+
+    h4 {
+        font-size: 24px;
+        color: darkblue;
+        margin-top: 0;
+    }
+
+    /* Ultra-wide form container */
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin: 20px auto;
+        width: 98%;
+        max-width: 2400px; /* Extremely wide maximum */
+        padding: 0 10px;
+        box-sizing: border-box;
+    }
+
+    /* Massive grouped sections */
+    .grouped-section {
+        background-color: #d0eaff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 2px solid black;
+        width: 100%;
+        min-width: 600px; /* Very wide minimum */
+        box-sizing: border-box;
+    }
+
+    /* Form groups - original sizing */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+    .form-group label {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    /* Input fields - original height but wider */
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group input[type="date"],
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        max-width: 550px; /* Extra wide inputs */
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    /* Original button sizing */
+    .btn, .btn-submit, .btn-submit1, .searchjobs-button {
+        padding: 10px 20px;
+        font-size: 16px;
+        width: auto;
+    }
+
+    /* Wide select elements */
+    .select-with-arrow {
+        position: relative;
+        width: 100%;
+        max-width: 550px; /* Matches input width */
+    }
+
+    /* Responsive behavior */
+    @@media (min-width: 1280px) {
+        .form-container {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        
+        .grouped-section {
+            flex: 1 1 calc(50% - 20px); /* Two very wide columns */
+            min-width: 600px;
+        }
+    }
+
+   @@media (min-width: 1920px) {
+        .form-container {
+            flex-wrap: nowrap; /* Three ultra-wide columns */
+        }
+        
+        .grouped-section {
+            flex: 1 1 calc(33.33% - 20px);
+            min-width: 600px;
+        }
+    }
+
+    /* Immediate stacking below 1280px */
+    @@media (max-width: 1279px) {
+        .form-container {
+            flex-direction: column;
+        }
+        .grouped-section {
+            width: 100%;
+            min-width: 100%;
+        }
+    }
+
+    .input-with-suffix {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+    .input-with-suffix-field {
+        padding-right: 40px; /* Give space for the suffix */
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .input-with-suffix .suffix {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #777;
+        pointer-events: none;
+    }
+
+    .shake {
+        animation: shake 0.5s;
+        border: 2px solid red !important;
+    }
+
+    @@keyframes shake {
+        0% { transform: translateX(0); }
+        20% { transform: translateX(-10px); }
+        40% { transform: translateX(10px); }
+        60% { transform: translateX(-10px); }
+        80% { transform: translateX(10px); }
+        100% { transform: translateX(0); }
+    }
+
+    .shake-input {
+        background-color: #fff0f0 !important;
+    }
+
+    .error-message {
+        color: red;
+        font-weight: bold;
+        padding: 10px;
+        background-color: #fff0f0;
+        border: 1px solid red;
+        border-radius: 5px;
+        margin: 10px 0;
+    }
+
+</style>
+
+
+@if (!hasReadAsStudentPermission)
+{
+    @*
+    <div class="error-message">
+        <p><strong>You are Not a Student</strong></p>
+        <p><strong>Please Login as Student!</strong></p>
+    </div>
+    *@
+}
+else
+{
+<h3 style="color: #000000;"><strong>★ Πληροφορίες Φοιτητή ★</strong></h3>
+    <EditForm Model="@newStudent" OnValidSubmit="SubmitForm">
+        <div class="form-container">
+            <div class="grouped-section">
+                <h4><strong>1) Προσωπικές Πληροφορίες</strong></h4>
+                <!-- Fields in * are mandatory -->
+                <br />
+                <div class="form-group">
+                    <label><strong>Φωτογραφία</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-image"></i></span>
+                        <InputFile OnChange="HandleFileChangeStudentImage" accept="image/*" class="form-control" />
+                    </div>
+                    @if (!string.IsNullOrEmpty(FileErrorMessage))
+                    {
+                        <div class="text-danger mt-2">@FileErrorMessage</div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Email</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <InputText @bind-Value="Username" readonly class="readonly-input form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Μοναδικό ID Μέλους</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                        <InputText @bind-Value="newStudent.Student_UniqueID"
+                                   readonly
+                                   class="readonly-input form-control"
+                                   style="color: blue;"
+                                   placeholder="Δημιουργείται αυτόματα μετά την πρώτη σας Εγγραφή" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Ερευνητική Ομάδα</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-users"></i></span>
+                        <InputText @bind-Value="newStudent.NameOfResearchGroupHeIsMember" readonly class="form-control readonly-input" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Όνομα</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <InputText @bind-Value="newStudent.Name" class="@($"{nameInputClass} form-control")" />
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label><strong>Επώνυμο</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <InputText @bind-Value="newStudent.Surname" class="@($"{surnameInputClass} form-control")" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Τηλέφωνο</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                        <InputText @bind-Value="newStudent.Telephone"
+                                   class="@($"{telephoneInputClass} form-control")"
+                                   placeholder="69********"
+                                   maxlength="10" />
+                    </div>
+                </div>
+
+                <label><strong>Εμφάνιση Τηλεφώνου</strong></label>
+                <div>
+                    <InputRadioGroup @bind-Value="newStudent.PhoneVisibility">
+                        <InputRadio Value="true" /> Ναι
+                        <InputRadio Value="false" /> Όχι
+                    </InputRadioGroup>
+                </div>
+                <br />
+
+                <div class="form-group">
+                    <label><strong>Διεύθυνση</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <InputText id="autocomplete"
+                               @bind-Value="newStudent.PermanentAddress"
+                               class="@($"{addressInputClass} form-control")" />
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Τ.Κ</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <input type="text"
+                           @bind="newStudent.PermanentPC"
+                           @oninput="HandlePermanentPCNumberInput"
+                           class="@($"{pcInputClass} form-control")"
+                           maxlength="5" />
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Περιφέρεια</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <select @bind="newStudent.PermanentRegion" class="@($"{regionInputClass} select-with-arrow")">
+                        <option value="">-- Επιλέξτε Περιφέρεια --</option>
+                        @foreach (var region in Regions)
+                        {
+                            <option value="@region">@region</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Πόλη</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <select @bind="newStudent.PermanentTown" class="@($"{townInputClass} select-with-arrow")">
+                        <option value="">-- Επιλέξτε Πόλη --</option>
+                        @if (!string.IsNullOrEmpty(newStudent.PermanentRegion) && RegionToTownsMap.ContainsKey(newStudent.PermanentRegion))
+                        {
+                            foreach (var town in RegionToTownsMap[newStudent.PermanentRegion])
+                            {
+                                <option value="@town">@town</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <br />
+                <label><strong>Εμφάνιση Κατοικίας</strong></label>
+                <div>
+                    <InputRadioGroup @bind-Value="newStudent.HomeVisibility">
+                        <InputRadio Value="true" /> Ναι
+                        <InputRadio Value="false" /> Όχι
+                    </InputRadioGroup>
+                </div>
+                <br />
+                <br />
+                <label><strong>Επισύναψη Βιογραφικού</strong></label>
+                <br />
+                <InputFile OnChange="SingleUploadCV" />
+                @if (showCVAlert)
+                {
+                    <div class="alert alert-warning" role="alert">
+                        You have not attached a CV.
+                    </div>
+                }
+                <br />
+                <br />
+                <div class="form-group">
+                    <label><strong>Προφίλ LinkedIn</strong></label> 
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fab fa-linkedin"></i></span>
+                        <InputText @bind-Value="newStudent.LinkedInProfile"
+                                   class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Προσωπική Ιστοσελίδα </strong></label> 
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-link"></i></span>
+                        <InputText @bind-Value="newStudent.PersonalWebsite" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Προφίλ Google Scholar</strong></label> 
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-brands fa-google"></i></span>
+                        <InputText @bind-Value="newStudent.StudentGoogleScholarProfile"
+                                   class="form-control" />
+                    </div>
+                </div>
+
+                <label><strong>Διαθέτετε Μεταφορικό Μέσο;</strong></label>
+                <div>
+                    <InputRadioGroup @bind-Value="newStudent.Transport">
+                        <InputRadio Value="true" /> Ναι
+                        <InputRadio Value="false" /> Όχι
+                    </InputRadioGroup>
+                </div>
+                <br />
+                <br />
+            </div>
+
+            <div class="grouped-section">
+                <h4><strong>2) Πληροφορίες Φοίτησης</strong></h4>
+
+                <div class="form-group">
+                    <label><strong>Πανεπιστημιακό Ίδρυμα</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-university"></i></span>
+                        <InputText @bind-Value="newStudent.University" readonly class="readonly-input form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Ιδιότητα Μέλους</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <select @bind="newStudent.LevelOfDegree" @bind:event="onchange" class="@($"{levelOfDegreeInputClass} select-with-arrow")">
+                        <option value="">-- Επιλέξτε Ιδιότητα --</option>
+                        <option value="Προπτυχιακός Φοιτητής">Προπτυχιακός Φοιτητής</option>
+                        @foreach (var degreelevel in DegreeLevel.Where(d => d != "Προπτυχιακός Φοιτητής"))
+                        {
+                            <option value="@degreelevel">@degreelevel</option>
+                        }
+                    </select>
+                </div>
+
+                @if (ShouldShowResearchFields())
+                {
+                    <div class="form-group">
+                        <label><strong> • Τίτλος Έρευνας • </strong></label> <!-- NO * -->
+                        <input type="text" class="form-control"
+                               @bind="newStudent.WhenStudentIsPostDocOrPhD_ResearchTitle"
+                               placeholder="Εισάγετε τον τίτλο της έρευνας" />
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong> • Περιγραφή Έρευνας • </strong> (μέχρι 300 λέξεις)</label> <!-- NO * -->
+                        <textarea class="form-control"
+                                  @bind="newStudent.WhenStudentIsPostDocOrPhD_ResearchDescription"
+                                  placeholder="Περιγράψτε την έρευνά σας..."
+                                  rows="4"
+                                  maxlength="2000"></textarea>
+                        <small class="text-muted">@GetWordCount()/300 λέξεις</small>
+                    </div>
+                }
+
+                <label><strong>Έχετε Ολοκληρώσει τις Σπουδές σας</strong></label>
+                <div>
+                    <InputRadioGroup @bind-Value="newStudent.HasFinishedStudies">
+                        <InputRadio Value="true" /> Ναι
+                        <InputRadio Value="false" /> Όχι
+                    </InputRadioGroup>
+                </div>
+                <br />
+
+                <div class="form-group">
+                    <label><strong>Αριθμός Μητρώου</strong></label> <!-- REMOVED * -->
+                    <input id="registryNumber"
+                           @bind="FormattedRegNumber"
+                           type="text"
+                           class="form-control"
+                           placeholder="XXXX-YYYY-ZZZZZ"
+                           @oninput="HandleRegistryNumberInput"
+                           @onblur="ValidateRegistryNumber" />
+                    <div id="registryNumberValidationMessage" class="invalid-feedback" style="display: none;">Λανθασμένος Αριθμός Μητρώου</div>
+                    <div id="xxxxValidationMessage" class="invalid-feedback" style="display: none;">Λανθασμένο XXXX: Πρέπει να είναι: 1115, 1116, 1117, 1118 ή 1119</div>
+                    <div id="yyyyValidationMessage" class="invalid-feedback" style="display: none;">Λανθασμένο YYYY: Πρέπει να είναι μεταξύ: 2010 και Σημερινής Χρονιάς</div>
+                    <div id="zzzzzValidationMessage" class="invalid-feedback" style="display: none;">Λανθασμένο ZZZZZ: Πρέπει να είναι: 00xxx με xxx μεταξύ 1 και 300</div>
+                </div>
+
+                <!-- Add School dropdown before Department -->
+                <div class="form-group">
+                    <label><strong>Σχολή</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <select value="@newStudent.School"
+                            @onchange="OnSchoolChange"
+                            class="@($"{schoolInputClass} select-with-arrow")">
+                        <option value="">-- Επιλογή Σχολής --</option>
+                        @foreach (var school in schools)
+                        {
+                            <option value="@school">@school</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Τμήμα</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <select value="@newStudent.Department"
+                            @onchange="OnDepartmentChange"
+                            class="@($"{departmentInputClass} select-with-arrow")"
+                            disabled="@(string.IsNullOrEmpty(newStudent.School))">
+                        <option value="">-- Επιλογή Τμήματος --</option>
+                        @if (!string.IsNullOrEmpty(newStudent.School))
+                        {
+                            @foreach (var department in departments)
+                            {
+                                <option value="@department">@department</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Έτος Εγγραφής</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                        <InputText @bind-Value="newStudent.EnrollmentDate"
+                                   class="@($"{enrollmentDateInputClass} form-control")"
+                                   placeholder="π.χ 2025" />
+                    </div>
+                    <small style="font-style: italic; color: gray;">Συμπληρώνεται αυτόματα από το Α.Μ</small>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Έτος Φοίτησης</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                        <InputText @bind-Value="newStudent.StudyYear"
+                                   class="@($"{studyYearInputClass} form-control")"
+                                   placeholder="π.χ 6"
+                                   maxlength="4" />
+                    </div>
+                    <small style="font-style: italic; color: gray;">Συμπληρώνεται αυτόματα από το Α.Μ</small>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Αναμενόμενη Ημερομηνία Αποφοίτησης</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-group">
+                        <InputDate @bind-Value="newStudent.ExpectedGraduationDate" class="@($"{graduationDateInputClass} form-control")" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Συμπληρωμένες Διδακτικές Μονάδες</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="input-with-suffix">
+                        <input id="completedEctsInput" @bind="newStudent.CompletedECTS" type="text" class="@($"{ectsInputClass} input-with-suffix-field")" @oninput="HandleCompletedEctsInput" @onblur="ValidateCompletedEcts" />
+                        <span class="suffix">/240</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label><strong>Επισύναψη Αναλυτικής Βαθμολογίας</strong></label>
+                    <InputFile OnChange="SingleUploadTranscripts" />
+                </div>
+                <br />
+                <div class="form-group">
+                    <label><strong>Κατάσταση Πρακτικής Άσκησης</strong></label> <!-- REMOVED * -->
+                    <InputSelect @bind-Value="newStudent.InternshipStatus" class="form-control">
+                        <option value="Ενδιαφέρομαι για θέση Πρακτικής Άσκησης">Ενδιαφέρομαι για θέση Πρακτικής Άσκησης</option>
+                        <option value="Έχω ήδη αναλάβει Πρακτική Άσκηση">Έχω ήδη αναλάβει Πρακτική Άσκηση</option>
+                        <option value="Δεν ενδιαφέρομαι για ανάληψη Πρακτικής Άσκησης προς το παρόν">Δεν ενδιαφέρομαι για ανάληψη Πρακτικής Άσκησης προς το παρόν</option>
+                    </InputSelect>
+                </div>
+                <br />
+                <div class="form-group">
+                    <label><strong>Κατάσταση Πτυχιακής Εργασίας</strong></label> <!-- REMOVED * -->
+                    <InputSelect @bind-Value="newStudent.ThesisStatus" class="form-control">
+                        <option value="Ενδιαφέρομαι για ανάληψη Πτυχιακής Εργασίας">Ενδιαφέρομαι για ανάληψη Πτυχιακής Εργασίας</option>
+                        <option value="Έχω ήδη αναλάβει Πτυχιακή Εργασία">Έχω ήδη αναλάβει Πτυχιακή Εργασία</option>
+                        <option value="Δεν ενδιαφέρομαι για ανάληψη Πτυχιακής Εργασίας προς το παρόν">Δεν ενδιαφέρομαι για ανάληψη Πτυχιακής Εργασίας προς το παρόν</option>
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="grouped-section">
+                <h4><strong>3) Δεξιότητες & Εξειδίκευση</strong></h4>
+
+                <!-- Areas of Expertise Validation Message -->
+                @if (!string.IsNullOrEmpty(areasValidationMessage))
+                {
+                    <div class="alert alert-danger">@areasValidationMessage</div>
+                }
+
+                <div class="form-group">
+                    <label><strong>Περιοχές Εξειδίκευσης</strong><span style="color: red; font-weight: bold;"> *</span></label>
+
+                    <!-- Search field with icon -->
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Αναζήτηση/Προσθήκη Περιοχής"
+                               @bind="areassearchTerm" @oninput="FilterAvailableAreas" />
+                        <div class="input-group-append">
+                            <span class="input-group-text"><i class="fas fa-search" style="color: #4682b4;"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <!-- Available areas box -->
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-list-alt" style="color: #4682b4; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="availableAreas" class="form-control" size="10" multiple @onchange="OnAreaChange" style="height: 200px;">
+                                @foreach (var area in filteredAreas)
+                                {
+                                    <option @key="area.AreaName" value="@area.AreaName" @onclick="() => ToggleExpansion(area.AreaName)">
+                                        @area.AreaName
+                                    </option>
+                                    @if (expandedAreas.Contains(area.AreaName))
+                                    {
+                                        var subFields = area.AreaSubFields?.Split(',');
+                                        if (subFields != null)
+                                        {
+                                            foreach (var subField in subFields)
+                                            {
+                                                <option @key="subField" value="@subField" style="padding-left: 20px;">• @subField</option>
+                                            }
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Move buttons -->
+                        <div class="d-flex flex-column mx-1">
+                            <button type="button" class="btn btn-outline-primary mb-1 px-2" @onclick="MoveSelectedAreaToRight">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary px-2" @onclick="MoveSelectedAreaToLeft">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+
+                        <!-- Selected areas box -->
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="selectedAreas" class="form-control @areasValidationClass"
+                                    size="10" multiple style="height: 200px;">
+                                @foreach (var selectedArea in selectedAreasForAssessment)
+                                {
+                                    <option @key="selectedArea.AreaName">@selectedArea.AreaName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="assessment-container mt-3">
+                        @if (selectedAreasForAssessment.Any())
+                        {
+                            <label><strong>Αυτοαξιολόγηση Περιοχών Εξειδίκευσης</strong></label>
+                            @foreach (var selectedArea in selectedAreasForAssessment)
+                            {
+                                <div class="d-flex align-items-center mt-2">
+                                    <label class="mr-2" style="color: darkred; text-decoration: underline;">@selectedArea.AreaName:</label>
+                                    <select @bind="selectedArea.Assessment" class="form-control" style="width: 60px;">
+                                        @for (int i = 1; i <= 10; i++)
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Target Areas Validation Message -->
+                @if (!string.IsNullOrEmpty(targetAreasValidationMessage))
+                {
+                    <div class="alert alert-danger">@targetAreasValidationMessage</div>
+                }
+
+                <div class="form-group">
+                    <label><strong>Περιοχές Ενδιαφέροντος</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="d-flex align-items-center">
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-list-alt" style="color: #4682b4; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="availableTargetAreas" class="form-control" size="10" multiple style="height: 200px;" @onchange="OnTargetAreaChange">
+                                @foreach (var area in availableTargetAreas)
+                                {
+                                    <option @key="area.AreaName" value="@area.AreaName">@area.AreaName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Move buttons -->
+                        <div class="d-flex flex-column mx-1">
+                            <button type="button" class="btn btn-outline-primary mb-1 px-2" @onclick="MoveSelectedTargetAreaToRight">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary px-2" @onclick="MoveSelectedTargetAreaToLeft">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+
+                        <!-- Selected target areas -->
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="selectedTargetAreas" class="form-control @targetAreasValidationClass" size="10" multiple style="height: 200px;">
+                                @foreach (var selectedTargetArea in selectedTargetAreasForAssessment)
+                                {
+                                    <option @key="selectedTargetArea.AreaName">@selectedTargetArea.AreaName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills Validation Message -->
+                @if (!string.IsNullOrEmpty(skillsValidationMessage))
+                {
+                    <div class="alert alert-danger">@skillsValidationMessage</div>
+                }
+
+                <div class="form-group">
+                    <label><strong>Τεχνικές Ικανότητες</strong><span style="color: red; font-weight: bold;"> *</span></label>
+
+                    <!-- Search field with icon -->
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Αναζήτηση/Προσθήκη Τεχνικής Ικανότητας"
+                               @bind="skillsSearchTerm" @oninput="FilterAvailableSkills" />
+                        <div class="input-group-append">
+                            <span class="input-group-text"><i class="fas fa-search" style="color: #4682b4;"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <!-- Available skills box -->
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-list-alt" style="color: #4682b4; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="availableSkills" class="form-control" size="10" multiple @onchange="OnSkillChange" style="height: 200px;">
+                                @foreach (var skill in filteredSkills)
+                                {
+                                    <option @key="skill.SkillName" value="@skill.SkillName">@skill.SkillName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Move buttons -->
+                        <div class="d-flex flex-column mx-1">
+                            <button type="button" class="btn btn-outline-primary mb-1 px-2" @onclick="MoveSelectedSkillToRight">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary px-2" @onclick="MoveSelectedSkillToLeft">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+
+                        <!-- Selected skills box -->
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="selectedSkills" class="form-control @skillsValidationClass" size="10" multiple style="height: 200px;">
+                                @foreach (var selectedSkill in selectedSkillsForAssessment)
+                                {
+                                    <option @key="selectedSkill.SkillName">@selectedSkill.SkillName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    @*
+                    <div class="@(string.IsNullOrEmpty(errorMessage) ? "" : "empty-message")" style="@(string.IsNullOrEmpty(errorMessage) ? "display: none;" : "")">
+                        @errorMessage
+                    </div>
+                    *@
+                    <div class="assessment-container mt-3">
+                        @if (selectedSkillsForAssessment.Any())
+                        {
+                            <label><strong>Αυτοαξιολόγηση Τεχνικών Ικανοτήτων</strong></label>
+                            @foreach (var selectedSkill in selectedSkillsForAssessment)
+                            {
+                                <div class="d-flex align-items-center mt-2">
+                                    <label class="mr-2" style="color: darkred; text-decoration: underline;">@selectedSkill.SkillName:</label>
+                                    <select @bind="selectedSkill.Assessment" class="form-control" style="width: 60px;">
+                                        @for (int i = 1; i <= 10; i++)
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                @*
+                <!-- Target Skills Validation Message -->
+                @if (!string.IsNullOrEmpty(targetSkillsValidationMessage))
+                {
+                    <div class="alert alert-danger">@targetSkillsValidationMessage</div>
+                }
+            *@
+                <div class="form-group">
+                    <label><strong>Τeχνικές Ικανότητες Ενδιαφέροντος</strong><span style="color: red; font-weight: bold;"> *</span></label>
+                    <div class="d-flex align-items-center">
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-cogs" style="color: #4682b4; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="availableTargetSkills" class="form-control" size="10" multiple style="height: 200px;" @onchange="OnTargetSkillChange">
+                                @foreach (var skill in availableTargetSkills)
+                                {
+                                    <option @key="skill.SkillName" value="@skill.SkillName">@skill.SkillName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Move buttons -->
+                        <div class="d-flex flex-column mx-1">
+                            <button type="button" class="btn btn-outline-primary mb-1 px-2" @onclick="MoveSelectedTargetSkillToRight">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary px-2" @onclick="MoveSelectedTargetSkillToLeft">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+
+                        <!-- Selected skills box -->
+                        <div style="width: 45%;">
+                            <div class="text-center mb-1">
+                                <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
+                            </div>
+                            <select id="selectedTargetSkills" class="form-control @targetSkillsValidationClass" size="10" multiple style="height: 200px;">
+                                @foreach (var selectedTargetSkill in selectedTargetSkillsForAssessment)
+                                {
+                                    <option @key="selectedTargetSkill.SkillName">@selectedTargetSkill.SkillName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <br />
+                <label><strong>Επισύναψη Συνοδευτικής Επιστολής</strong></label>
+                <InputFile OnChange="SingleUploadCoverLetter" />
+                <br />
+                <br />
+
+                <div class="form-group">
+                    <label><strong>Προτιμώμενες Περιοχές/Περιφέρειες</strong></label>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tbody>
+                                @for (var rowIndex = 0; rowIndex < Math.Ceiling((double)(Regions.Count + 1) / 3); rowIndex++)
+                                {
+                                    <tr>
+                                        @for (var colIndex = 0; colIndex < 3; colIndex++)
+                                        {
+                                            var index = rowIndex * 3 + colIndex;
+                                            if (index < Regions.Count)
+                                            {
+                                                var region = Regions[index];
+                                                <td style="padding: 5px; border: none; width: 33%;">
+                                                    <div class="custom-control custom-checkbox d-flex align-items-center">
+                                                        <input type="checkbox" class="custom-control-input" id="@($"region_{region.Replace(" ", "_")}")"
+                                                               checked="@(selectedRegionsDictionary.ContainsKey(region) && selectedRegionsDictionary[region])"
+                                                               @onchange="@(e => UpdateRegionSelection(region, (bool)e.Value))"
+                                                               style="width: 14px; height: 14px; margin-right: 5px;" />
+                                                        <label class="custom-control-label small mb-0" for="@($"region_{region.Replace(" ", "_")}")" style="font-size: 12px;">@region</label>
+                                                    </div>
+                                                </td>
+                                            }
+                                            else if (index == Regions.Count)
+                                            {
+                                                <td style="padding: 5px; border: none; width: 33%;">
+                                                    <div class="custom-control custom-checkbox d-flex align-items-center">
+                                                        <input type="checkbox" class="custom-control-input" id="selectAllRegions"
+                                                               @onchange="SelectAllRegions" style="width: 14px; height: 14px; margin-right: 5px;" />
+                                                        <label class="custom-control-label small mb-0" for="selectAllRegions" style="font-size: 12px;">Κλείσμο Όλων</label>
+                                                    </div>
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                <td style="padding: 5px; border: none;"></td>
+                                            }
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Προτιμώμενες Πόλεις</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-city"></i></span>
+                        <div class="form-control">
+                            <InputRadioGroup @bind-Value="newStudent.PreferredTownsBoolean">
+                                <InputRadio Value="true" /> Ναι
+                                <InputRadio Value="false" /> Όχι
+                            </InputRadioGroup>
+                        </div>
+                    </div>
+                </div>
+
+                @if (newStudent.PreferredTownsBoolean)
+                {
+                    <div class="form-group mt-3">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    @foreach (var region in Regions.Where(r => selectedRegionsDictionary.ContainsKey(r) && selectedRegionsDictionary[r]))
+                                    {
+                                        <tr>
+                                            <td style="font-weight: bold; width: 150px;">@region:</td>
+                                            <td>
+                                                <div class="row">
+                                                    @if (RegionToTownsMap.TryGetValue(region, out var towns))
+                                                    {
+                                                        @foreach (var town in towns)
+                                                        {
+                                                            <div class="col-md-4">
+                                                                <div class="custom-control custom-checkbox d-flex align-items-center">
+                                                                    <input type="checkbox"
+                                                                           checked="@(selectedTownsDictionary.TryGetValue(town, out var isSelected) && isSelected)"
+                                                                           @onchange="@(e => UpdateTownSelection(town, (bool)e.Value))"
+                                                                           id="@($"town_{town.Replace(" ", "_")}")"
+                                                                           style="width: 14px; height: 14px; margin-right: 5px;" />
+                                                                    <label class="custom-control-label small mb-0"
+                                                                           for="@($"town_{town.Replace(" ", "_")}")"
+                                                                           style="font-size: 12px;">@town</label>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        <br />
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Σφάλμα:</strong> @errorMessage
+            </div>
+        }
+        @* SUBMIT FORM BUTTON AND AGREEMENT *@
+        <div class="form-check">
+            <CustomCheckbox @bind-Value="agreeTerms" @ref="customCheckbox" />
+            <label class="form-check-label" for="customCheckboxId">
+                Έχω διαβάσει και αποδέχομαι τους
+                <a @onclick="ShowUserAgreementModal" style="text-decoration: underline; color: blue;">όρους συμμετοχής</a>
+                στην πλατφόρμα
+            </label>
+        </div>
+        <br />
+        @if (!isRegistered)
+        {
+            <button type="submit" class="btn btn-submit1" disabled="@(!agreeTerms)">Αποθήκευση</button>
+        }
+        else
+        {
+            <button type="submit" class="btn btn-submit1" disabled="@(!agreeTerms)" @onclick="UpdateStudentRegistration">Ανανέωση</button>
+            <br />
+        }
+        <UserAgreementModal OnAgree="AgreeToTermsAsync" OnDecline="DeclineTermsAsync" />
+
+        @if (updated)
+        {
+            <br />
+            <p class="good-message"><strong>Η Ανανέωση των στοιχείων σας πραγματοποιήθηκε με Επιτυχία!</strong></p>
+        }
+        @if (saved)
+        {
+            <br />
+            <p class="good-message"><strong>Η Εγγραφή Σας Ολοκληρώθηκε Με Επιτυχία!</strong></p>
+        }
+        @if (error)
+        {
+            <br />
+            <div class="alert alert-danger" role="alert">
+                <p>Η Εγγραφή Σας Απέτυχε - Ανανεώστε Την Σελίδα Και Προσπάθήστε ξανά</p>
+            </div>
+        }
+        <br />
+        <br />
+    </EditForm>
+}
+
+
+
+
+@code {
+
+    private Dictionary<string, List<string>> schoolDepartments = new()
+        {
+            ["ΑΓΡΟΤΙΚΗΣ ΑΝΑΠΤΥΞΗΣ, ΔΙΑΤΡΟΦΗΣ ΚΑΙ ΑΕΙΦΟΡΙΑΣ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΑΓΡΟΤΙΚΗΣ ΑΝΑΠΤΥΞΗΣ, ΑΓΡΟΔΙΑΤΡΟΦΗΣ ΚΑΙ ΔΙΑΧΕΙΡΙΣΗΣ ΦΥΣΙΚΩΝ ΠΟΡΩΝ"
+    },
+            ["ΕΠΙΣΤΗΜΩΝ ΑΓΩΓΗΣ"] = new List<string>
+    {
+        "ΠΑΙΔΑΓΩΓΙΚΟ ΤΜΗΜΑ ΔΗΜΟΤΙΚΗΣ ΕΚΠΑΙΔΕΥΣΗΣ",
+        "ΤΜΗΜΑ ΕΚΠΑΙΔΕΥΣΗΣ ΚΑΙ ΑΓΩΓΗΣ ΣΤΗΝ ΠΡΟΣΧΟΛΙΚΗ ΗΛΙΚΙΑ"
+    },
+            ["ΕΠΙΣΤΗΜΩΝ ΥΓΕΙΑΣ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΙΑΤΡΙΚΗΣ",
+        "ΤΜΗΜΑ ΝΟΣΗΛΕΥΤΙΚΗΣ",
+        "ΤΜΗΜΑ ΟΔΟΝΤΙΑΤΡΙΚΗΣ",
+        "ΤΜΗΜΑ ΦΑΡΜΑΚΕΥΤΙΚΗΣ"
+    },
+            ["ΕΠΙΣΤΗΜΗΣ ΦΥΣΙΚΗΣ ΑΓΩΓΗΣ ΚΑΙ ΑΘΛΗΤΙΣΜΟΥ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΕΠΙΣΤΗΜΗΣ ΦΥΣΙΚΗΣ ΑΓΩΓΗΣ ΚΑΙ ΑΘΛΗΤΙΣΜΟΥ"
+    },
+            ["ΘΕΟΛΟΓΙΚΗ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΘΕΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΚΟΙΝΩΝΙΚΗΣ ΘΕΟΛΟΓΙΑΣ ΚΑΙ ΘΡΗΣΚΕΙΟΛΟΓΙΑΣ"
+    },
+            ["ΘΕΤΙΚΩΝ ΕΠΙΣΤΗΜΩΝ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΑΕΡΟΔΙΑΣΤΗΜΙΚΗΣ ΕΠΙΣΤΗΜΗΣ ΚΑΙ ΤΕΧΝΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΒΙΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΓΕΩΛΟΓΙΑΣ ΚΑΙ ΓΕΩΠΕΡΙΒΑΛΛΟΝΤΟΣ",
+        "ΤΜΗΜΑ ΙΣΤΟΡΙΑΣ ΚΑΙ ΦΙΛΟΣΟΦΙΑΣ ΤΗΣ ΕΠΙΣΤΗΜΗΣ",
+        "ΤΜΗΜΑ ΜΑΘΗΜΑΤΙΚΩΝ",
+        "ΤΜΗΜΑ ΠΛΗΡΟΦΟΡΙΚΗΣ ΚΑΙ ΤΗΛΕΠΙΚΟΙΝΩΝΙΩΝ",
+        "ΤΜΗΜΑ ΤΕΧΝΟΛΟΓΙΩΝ ΨΗΦΙΑΚΗΣ ΒΙΟΜΗΧΑΝΙΑΣ",
+        "ΤΜΗΜΑ ΦΥΣΙΚΗΣ",
+        "ΤΜΗΜΑ ΧΗΜΕΙΑΣ"
+    },
+            ["ΝΟΜΙΚΗ"] = new List<string>
+    {
+        "ΝΟΜΙΚΗ ΣΧΟΛΗ"
+    },
+            ["ΟΙΚΟΝΟΜΙΚΩΝ ΚΑΙ ΠΟΛΙΤΙΚΩΝ ΕΠΙΣΤΗΜΩΝ"] = new List<string>
+    {
+        "ΤΜΗΜΑ ΔΙΑΧΕΙΡΙΣΗΣ ΛΙΜΕΝΩΝ ΚΑΙ ΝΑΥΤΙΛΙΑΣ",
+        "ΤΜΗΜΑ ΕΠΙΚΟΙΝΩΝΙΑΣ ΚΑΙ ΜΕΣΩΝ ΜΑΖΙΚΗΣ ΕΝΗΜΕΡΩΣΗΣ",
+        "ΤΜΗΜΑ ΟΙΚΟΝΟΜΙΚΩΝ ΕΠΙΣΤΗΜΩΝ",
+        "ΤΜΗΜΑ ΠΟΛΙΤΙΚΗΣ ΕΠΙΣΤΗΜΗΣ ΚΑΙ ΔΗΜΟΣΙΑΣ ΔΙΟΙΚΗΣΗΣ",
+        "ΤΜΗΜΑ ΤΟΥΡΚΙΚΩΝ ΣΠΟΥΔΩΝ ΚΑΙ ΣΥΓΧΡΟΝΩΝ ΑΣΙΑΤΙΚΩΝ ΣΠΟΥΔΩΝ",
+        "ΤΜΗΜΑ ΔΙΟΙΚΗΣΗΣ ΕΠΙΧΕΙΡΗΣΕΩΝ ΚΑΙ ΟΡΓΑΝΙΣΜΩΝ",
+        "ΤΜΗΜΑ ΚΟΙΝΩΝΙΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΨΗΦΙΑΚΩΝ ΤΕΧΝΩΝ ΚΑΙ ΚΙΝΗΜΑΤΟΓΡΑΦΟΥ"
+    },
+            ["ΦΙΛΟΣΟΦΙΚΗ"] = new List<string>
+    {
+        "ΠΑΙΔΑΓΩΓΙΚΟ ΤΜΗΜΑ ΔΕΥΤΕΡΟΒΑΘΜΙΑΣ ΕΚΠΑΙΔΕΥΣΗΣ",
+        "ΤΜΗΜΑ ΑΓΓΛΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΓΑΛΛΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΓΕΡΜΑΝΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟGFIAΣ",
+        "ΤΜΗΜΑ ΘΕΑΤΡΙΚΩΝ ΣΠΟΥΔΩΝ",
+        "ΤΜΗΜΑ ΙΣΠΑΝΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΙΣΤΟΡΙΑΣ ΚΑΙ ΑΡΧΑΙΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΙΤΑΛΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΜΟΥΣΙΚΩΝ ΣΠΟΥΔΩΝ",
+        "ΤΜΗΜΑ ΡΩΣΙΚΗΣ ΓΛΩΣΣΑΣ ΚΑΙ ΦΙΛΟΛΟΓΙΑΣ ΚΑΙ ΣΛΑΒΙΚΩΝ ΣΠΟΥΔΩΝ",
+        "ΤΜΗΜΑ ΦΙΛΟΛΟΓΙΑΣ",
+        "ΤΜΗΜΑ ΦΙΛΟΣΟΦΙΑΣ",
+        "ΤΜΗΜΑ ΨΥΧΟΛΟΓΙΑΣ"
+    }
+        };
+
+    private bool ShouldShowResearchFields()
+    {
+        return newStudent.LevelOfDegree == "Υποψήφιος Διδάκτορας" || 
+               newStudent.LevelOfDegree == "Μεταδιδακτορικός";
+    }
+
+    // Add this method to display word count
+    private int GetWordCount()
+    {
+        if (string.IsNullOrEmpty(newStudent.WhenStudentIsPostDocOrPhD_ResearchDescription))
+            return 0;
+
+        return newStudent.WhenStudentIsPostDocOrPhD_ResearchDescription
+            .Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+            .Length;
+    }
+
+    private List<string> schools = new();
+    private List<string> departments = new();
+
+    private string googleScholarInputClass = "";
+    private string areassearchTerm = string.Empty;
+    private List<Area> filteredAreas = new List<Area>();
+
+    private string skillsSearchTerm = string.Empty;
+    private List<Skill> filteredSkills = new List<Skill>();
+
+    private Student userData;
+    private bool showStudentsWithProgrammingSkills = false;
+    private bool showStudentsWithMachineLearningSkills = false;
+    private bool showStudentsWithDatabaseSkills = false;
+    private bool showStudentsWithNetworkAndTelecomSkills = false;
+    private List<Student> students = new List<Student>();
+    private List<Student> filteredStudents = new List<Student>();
+
+    private List<string> selectedSkills = new List<string>();
+    private List<Skill> availableSkills = new List<Skill> { }; //Skills to be moved between Left-Right Boxes - AYTA KAI 2 PREPEI NA GEMIZOUN APO DATABASE OXI HARD INPUT (DONE)
+
+    private List<string> temporarilySelectedSkills = new List<string>();
+    private bool hasReadAsStudentPermission = false;
+    private List<string> finalSelectedSkills = new List<string>();
+    private string Username = "Anonymous User";
+    private string StudentUniqueID = "Δημιουργείται αυτόματα μετά την πρώτη σας Εγγραφή";
+    private bool userAlreadyRegistered = false;
+
+    public Student newStudent = new Student { Department = "Πληροφορικής & Τηλεπικοινωνιών" }; //was like that: () Drop Down Initialisation (Otherwise NULL EXCEPTION IF NOT CHOOSE FROM DROPDOWN)
+    public bool updated = false;
+    public bool saved = false;
+    public bool error = false;
+    public bool downloadByRegistryIsOk = false;
+    public bool downloadByRegistryIsNotOk = false;
+
+    private string nameInputClass = "";
+    private string surnameInputClass = "";
+    private string departmentInputClass = "";
+    private string regNumberInputClass = "";
+    public string permanentPCInputClass = "";
+    private string errorMessage = "";
+    private string telephoneInputClass = "";
+    private string addressInputClass = "";
+    private string pcInputClass = "";
+    private string regionInputClass = "";
+    private string townInputClass = "";
+    private string studyYearInputClass = "";
+    private string graduationDateInputClass = "";
+    private string ectsInputClass = "";
+    private string internshipInputClass = "";
+    private string thesisInputClass = "";
+    private string universityInputClass = "";
+    private string schoolInputClass = "";
+    private string enrollmentDateInputClass = "";
+    private string levelOfDegreeInputClass = "";
+    private string areasValidationClass = "";
+    private string targetAreasValidationClass = "";
+    private string skillsValidationClass = "";
+    private string targetSkillsValidationClass = "";
+    private string areasValidationMessage = "";
+    private string targetAreasValidationMessage = "";
+    private string skillsValidationMessage = "";
+    private string targetSkillsValidationMessage = "";
+    private string nameValidationMessage = "";
+    private string surnameValidationMessage = "";
+    private string telephoneValidationMessage = "";
+
+    private bool isCvUploaded = false;
+    private string cvErrorMessage = string.Empty;
+
+    private bool showDropdown = false;
+
+
+    private List<Area> availableAreas = new List<Area>();
+    private List<string> selectedAreas = new List<string>();
+    private List<string> expandedAreas = new List<string>();
+    private List<string> temporarilySelectedAreas = new List<string>();
+    private List<string> finalSelectedAreas = new List<string>();
+
+    private List<SelectedArea> selectedAreasForAssessment = new List<SelectedArea>();
+
+    private List<Area> availableTargetAreas = new List<Area>();
+    private List<string> selectedTargetAreas = new List<string>();
+    private List<string> temporarilySelectedTargetAreas = new List<string>();
+    private List<string> finalSelectedTargetAreas = new List<string>();
+
+    private List<SelectedArea> selectedTargetAreasForAssessment = new List<SelectedArea>();
+
+
+    private List<SelectedSkill> selectedSkillsForAssessment = new List<SelectedSkill>(); 
+
+    private List<SelectedSkill> availableTargetSkills = new List<SelectedSkill>(); // List of available target skills
+    private List<string> selectedTargetSkills = new List<string>(); // List of selected target skills
+    private List<SelectedSkill> selectedTargetSkillsForAssessment = new List<SelectedSkill>(); // List of selected target skills for assessment
+    private List<string> expandedSkills = new List<string>();
+
+    private HashSet<string> selectedRegions = new HashSet<string>();
+    private Dictionary<string, bool> selectedRegionsDictionary = new Dictionary<string, bool>();
+    private Dictionary<string, bool> selectedTownsDictionary = new Dictionary<string, bool>();
+
+
+    private string UniversityName = "Εθνικό & Καποδιστριακό Πανεπιστήμιο Αθηνών";
+    private string completedEctsDisplay = "0/300";
+    private string completedEctsNumericPart = "0";
+
+    private bool showCVAlert = false; // Flag to control alert visibility
+
+    private bool agreeTerms = false;
+    private CustomCheckbox customCheckbox;
+
+    private int studentId;
+    private Student studentData;
+
+    [Parameter] public int StudentId { get; set; }
+    [Parameter] public bool IsEditing { get; set; }
+
+    private string formattedRegistryNumber; // To store formatted registry number ΑΚΟΜΑ ΔΕΝ ΔΟΥΛΕΥΕΙ!!!
+
+
+    private bool isRegistered;
+    private IBrowserFile file;
+
+    [Parameter]
+    public EventCallback OnAgree { get; set; }
+
+    [Parameter]
+    public EventCallback OnDecline { get; set; }
+
+    private bool isManualInput = false;
+
+    private string FileErrorMessage { get; set; }
+
+    private async Task HandleFileChangeStudentImage(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var selectedFiles = e.GetMultipleFiles();
+            var file = selectedFiles.FirstOrDefault();
+
+            if (file != null)
+            {
+                // Check file type
+                var allowedTypes = new[] { "image/jpeg", "image/png" };
+                if (!allowedTypes.Contains(file.ContentType))
+                {
+                    FileErrorMessage = "Λάθος τύπος αρχείου. Επιλέξτε .jpg ή .png";
+                    newStudent.Image = null;
+                    return;
+                }
+
+                using (var memoryStream = new MemoryStream())
+                {
+                    await file.OpenReadStream().CopyToAsync(memoryStream);
+                    newStudent.Image = memoryStream.ToArray();
+                }
+
+                // Clear any previous error message
+                FileErrorMessage = null;
+            }
+            else
+            {
+                newStudent.Image = null;
+                FileErrorMessage = "Παρακαλώ επιλέξτε ένα αρχείο.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading file: {ex.Message}");
+            newStudent.Image = null;
+            FileErrorMessage = "Προέκυψε ένα σφάλμα κατά την μεταφόρτωση του αρχείου.";
+        }
+    }
+
+    private bool showValidationError = false;
+
+
+    private List<string> Regions = new List<string>
+    {
+        "Ανατολική Μακεδονία και Θράκη",
+        "Κεντρική Μακεδονία",
+        "Δυτική Μακεδονία",
+        "Ήπειρος",
+        "Θεσσαλία",
+        "Ιόνια Νησιά",
+        "Δυτική Ελλάδα",
+        "Κεντρική Ελλάδα",
+        "Αττική",
+        "Πελοπόννησος",
+        "Βόρειο Αιγαίο",
+        "Νότιο Αιγαίο",
+        "Κρήτη"
+    };
+
+    private Dictionary<string, List<string>> RegionToTownsMap = new Dictionary<string, List<string>>
+    {
+        {"Ανατολική Μακεδονία και Θράκη", new List<string> {"Κομοτηνή", "Αλεξανδρούπολη", "Καβάλα", "Ξάνθη", "Δράμα", "Ορεστιάδα", "Διδυμότειχο", "Ίασμος", "Νέα Βύσσα", "Φέρες"}},
+        {"Κεντρική Μακεδονία", new List<string> {"Θεσσαλονίκη", "Κατερίνη", "Σέρρες", "Κιλκίς", "Πολύγυρος", "Ναούσα", "Έδεσσα", "Γιαννιτσά", "Καβάλα", "Άμφισσα"}},
+        {"Δυτική Μακεδονία", new List<string> {"Κοζάνη", "Φλώρινα", "Καστοριά", "Γρεβενά"}},
+        {"Ήπειρος", new List<string> {"Ιωάννινα", "Άρτα", "Πρέβεζα", "Ηγουμενίτσα"}},
+        {"Θεσσαλία", new List<string> {"Λάρισα", "Βόλος", "Τρίκαλα", "Καρδίτσα"}},
+        {"Ιόνια Νησιά", new List<string> {"Κέρκυρα", "Λευκάδα", "Κεφαλονιά", "Ζάκυνθος", "Ιθάκη", "Παξοί", "Κυθήρα"}},
+        {"Δυτική Ελλάδα", new List<string> {"Πάτρα", "Μεσολόγγι", "Αμφιλοχία", "Πύργος", "Αιγίο", "Ναύπακτος"}},
+        {"Κεντρική Ελλάδα", new List<string> {"Λαμία", "Χαλκίδα", "Λιβαδειά", "Θήβα", "Αλιάρτος", "Αμφίκλεια"}},
+        {"Αττική", new List<string> {"Αθήνα", "Πειραιάς", "Κηφισιά", "Παλλήνη", "Αγία Παρασκευή", "Χαλάνδρι", "Καλλιθέα", "Γλυφάδα", "Περιστέρι", "Αιγάλεω"}},
+        {"Πελοπόννησος", new List<string> {"Πάτρα", "Τρίπολη", "Καλαμάτα", "Κορίνθος", "Άργος", "Ναύπλιο", "Σπάρτη", "Κυπαρισσία", "Πύργος", "Μεσσήνη"}},
+        {"Βόρειο Αιγαίο", new List<string> {"Μυτιλήνη", "Χίος", "Λήμνος", "Σάμος", "Ίκαρος", "Λέσβος", "Θάσος", "Σκύρος", "Ψαρά"}},
+        {"Νότιο Αιγαίο", new List<string> {"Ρόδος", "Κως", "Κρήτη", "Κάρπαθος", "Σαντορίνη", "Μύκονος", "Νάξος", "Πάρος", "Σύρος", "Άνδρος"}},
+        {"Κρήτη", new List<string> {"Ηράκλειο", "Χανιά", "Ρέθυμνο", "Αγία Νικόλαος", "Ιεράπετρα", "Σητεία", "Κίσαμος", "Παλαιόχωρα", "Αρχάνες", "Ανώγεια"}},
+    };
+
+
+    private List<string> DegreeLevel = new List<string>
+    {
+        "Προπτυχιακός Φοιτητής",
+        "Μεταπτυχιακός Φοιτητής",
+        "Υποψήφιος Διδάκτορας",
+        "Μεταδιδακτορικός",
+        "Άλλο",
+    };
+
+    private bool IsRegionSelected(string region)
+    {
+        return selectedRegions.Contains(region);
+    }
+
+    private void ToggleRegionSelection(string region)
+    {
+        if (selectedRegions.Contains(region))
+        {
+            selectedRegions.Remove(region);
+        }
+        else
+        {
+            selectedRegions.Add(region);
+        }
+    }
+
+    private void SelectAllRegions(ChangeEventArgs e)
+    {
+        bool isChecked = (bool)e.Value;
+        foreach (var region in Regions)
+        {
+            selectedRegionsDictionary[region] = isChecked;
+        }
+    }
+
+    private void HandleRegionChange(ChangeEventArgs args)
+    {
+        newStudent.PermanentRegion = args.Value?.ToString();
+        // Reset town selection when region changes
+        newStudent.PermanentTown = string.Empty;
+    }
+
+    private List<string> GetTownsForRegion(string region)
+    {
+        if (RegionToTownsMap.ContainsKey(region))
+        {
+            return RegionToTownsMap[region];
+        }
+        return new List<string>();
+    }
+
+
+
+    private void HandleCompletedEctsInput(ChangeEventArgs e)
+    {
+        string inputValue = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(inputValue))
+        {
+            completedEctsNumericPart = "0"; // Handle empty input
+            newStudent.CompletedECTS = 0;
+        }
+        else
+        {
+            if (!int.TryParse(inputValue, out int ectsValue) || ectsValue < 0 || ectsValue > 300)
+            {
+                completedEctsNumericPart = "0"; // Handle invalid format or value
+                newStudent.CompletedECTS = 0;
+            }
+            else
+            {
+                completedEctsNumericPart = ectsValue.ToString();
+                newStudent.CompletedECTS = ectsValue;
+            }
+        }
+    }
+
+    private void ValidateCompletedEcts()
+    {
+        // Additional validation logic if needed
+        if (!int.TryParse(completedEctsNumericPart, out int ectsValue))
+        {
+            completedEctsNumericPart = "0"; // Default invalid input
+            newStudent.CompletedECTS = 0;
+        }
+        else
+        {
+            newStudent.CompletedECTS = ectsValue;
+        }
+    }
+
+
+    private async Task ShowFilteredStudents()
+    {
+        filteredStudents.Clear();
+
+        if (showStudentsWithProgrammingSkills || showStudentsWithMachineLearningSkills ||
+            showStudentsWithDatabaseSkills || showStudentsWithNetworkAndTelecomSkills)
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            filteredStudents = dbContext.Students.Where(s =>
+                (showStudentsWithProgrammingSkills && s.Programming) ||
+                (showStudentsWithMachineLearningSkills && s.MachineLearning) ||
+                (showStudentsWithDatabaseSkills && s.Databases) ||
+                (showStudentsWithNetworkAndTelecomSkills && s.NetworksAndTelecom)
+            ).ToList();
+        }
+    }
+
+    private async Task SingleUploadCV(InputFileChangeEventArgs e)
+    {
+        if (e.File == null)
+        {
+            showCVAlert = true; // Set flag to show alert message
+            newStudent.LastCVUpdate = null; // Ensure LastCVUpdate is null if no CV is attached
+            return;
+        }
+
+        MemoryStream ms = new MemoryStream();
+        await e.File.OpenReadStream().CopyToAsync(ms);
+        newStudent.Attachment = ms.ToArray();
+
+        // Proceed with setting LastCVUpdate to current date and time
+        newStudent.LastCVUpdate = DateTime.Now;
+
+        // Optionally, perform other operations like saving to database
+    }
+
+    private async Task SingleUploadTranscripts(InputFileChangeEventArgs e) //prepei na kanw elegxo an einai null prin paw sto epomeno pedio. mporei kai na fortwnetai argotera px eidopoiisi kata to submit i kata to apply gia job position
+    {
+        MemoryStream ms = new MemoryStream();
+        await e.File.OpenReadStream().CopyToAsync(ms);
+        newStudent.Grades = ms.ToArray();
+
+        //eleghos edw gia null episis!!!!!!!
+    }
+
+    private async Task SingleUploadCoverLetter(InputFileChangeEventArgs e) //prepei na kanw elegxo an einai null prin paw sto epomeno pedio. mporei kai na fortwnetai argotera px eidopoiisi kata to submit i kata to apply gia job position
+    {
+        MemoryStream ms = new MemoryStream();
+        await e.File.OpenReadStream().CopyToAsync(ms);
+        newStudent.CoverLetter = ms.ToArray();
+
+        //eleghos edw gia null episis!!!!!!!
+    }
+
+    private async Task DownloadFile()
+    {
+        try
+        {
+            var student = await FileUploadService.GetStudentByName(newStudent.Name);
+            if (student == null)
+            {
+                throw new Exception("Student not found.");
+            }
+
+            if (student.Attachment != null)
+            {
+                var fileContent = student.Attachment;
+                var fileName = $"{student.Name}_CV.pdf";
+                await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, fileContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error downloading file: {ex.Message}");
+        }
+    }
+
+    private async Task DownloadFileByRegNumber()
+    {
+        try
+        {
+            var student = await FileUploadService.GetStudentByRegNumber(newStudent.RegNumber);
+            if (student == null)
+            {
+                downloadByRegistryIsOk = true;
+                throw new Exception("Registry Number not found.");
+            }
+
+            if (student.Attachment != null)
+            {
+                downloadByRegistryIsOk = true;
+                var fileContent = student.Attachment;
+                var fileName = $"{student.Name}_CV.pdf";
+                await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, fileContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error downloading file: {ex.Message}");
+        }
+    }
+
+    private async Task PreviewFile()
+    {
+        try
+        {
+            var student = await FileUploadService.GetStudentByName(newStudent.Name);
+            if (student == null)
+            {
+                throw new Exception("Student not found.");
+            }
+
+            if (student.Attachment != null)
+            {
+                var fileContent = student.Attachment;
+                await JSRuntime.InvokeVoidAsync("BlazorPreviewFile", fileContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error previewing file: {ex.Message}");
+        }
+    }
+
+    private List<Student> FilterStudents(IEnumerable<Student> students)
+    {
+        var filteredStudents = students.ToList();
+
+        if (showStudentsWithProgrammingSkills)
+        {
+            filteredStudents = filteredStudents.Where(s => s.Programming).ToList();
+        }
+
+        if (showStudentsWithMachineLearningSkills)
+        {
+            filteredStudents = filteredStudents.Where(s => s.MachineLearning).ToList();
+        }
+
+        if (showStudentsWithDatabaseSkills)
+        {
+            filteredStudents = filteredStudents.Where(s => s.Databases).ToList();
+        }
+
+        if (showStudentsWithNetworkAndTelecomSkills)
+        {
+            filteredStudents = filteredStudents.Where(s => s.NetworksAndTelecom).ToList();
+        }
+        return filteredStudents;
+    }
+
+    private async Task DownloadAttachment(byte[] attachment, string studentName)
+    {
+        try
+        {
+            if (attachment != null)
+            {
+                var fileName = $"{studentName}_CV.pdf";
+                await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, attachment);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error downloading attachment: {ex.Message}");
+        }
+    }
+
+    private string? registryNumberInput;
+    private string? permenentPCNumberInput;
+    private long combinedRegNumber;
+
+
+    private void HandleRegistryNumberInput(ChangeEventArgs e)
+    {
+        string inputValue = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(inputValue))
+        {
+            regNumberInputClass = "shake shake-input"; // Handle empty input
+        }
+        else
+        {
+            string[] parts = inputValue.Split('-');
+            if (parts.Length != 3 ||
+                !IsValidXxxx(parts[0]) ||
+                !IsValidYyyy(parts[1]) ||
+                !IsValidZzzzz(parts[2]))
+            {
+                regNumberInputClass = "shake shake-input"; // Handle invalid format
+            }
+            else
+            {
+                regNumberInputClass = "";
+
+                // Update the formatted value
+                FormattedRegNumber = inputValue;
+
+                // Remove hyphens for storage
+                string numericValue = inputValue.Replace("-", "");
+                if (long.TryParse(numericValue, out long combinedRegNumber))
+                {
+                    newStudent.RegNumber = combinedRegNumber;
+
+                    // Extract the XXXX part and set the department accordingly
+                    string xxxxPart = parts[0];
+                    string yyyyPart = parts[1];
+                    if (xxxxPart == "1115")
+                    {
+                        newStudent.Department = "Τεχνολογιών Ψηφιακής Βιομηχανίας";
+                    }
+                    if (xxxxPart == "1116")
+                    {
+                        newStudent.Department = "Αγροτικής Ανάπτυξης, Αγροδιατροφής & Διαχείρισης Φυσικών Πόρων";
+                    }
+                    if (xxxxPart == "1117")
+                    {
+                        newStudent.Department = "Αεροδιαστημικής Επιστήμης & Τεχνολογίας";
+                    }
+                    if (xxxxPart == "1118")
+                    {
+                        newStudent.Department = "Διαχείρισης Λιμένων & Ναυτιλίας";
+                    }
+                    if (xxxxPart == "1119")
+                    {
+                        newStudent.Department = "Ψηφιακών Τεχνών & Κινηματογράφου";
+                    }
+                    if (int.TryParse(yyyyPart, out int enrollmentYear))
+                    {
+                        newStudent.EnrollmentDate = enrollmentYear.ToString();
+                        int currentYear = DateTime.Now.Year;
+                        newStudent.StudyYear = (currentYear - enrollmentYear).ToString();
+                    }
+                }
+                else
+                {
+                    regNumberInputClass = "shake shake-input"; // Handle parsing error
+                }
+            }
+        }
+    }
+
+    // Example validation methods (you should replace them with your actual validation logic)
+    private bool IsValidXxxx(string xxxx)
+    {
+        return xxxx == "1115" || xxxx == "1116" || xxxx == "1117" || xxxx == "1118" || xxxx == "1119";
+    }
+
+    private bool IsValidYyyy(string yyyy)
+    {
+        if (int.TryParse(yyyy, out int year))
+        {
+            int currentYear = DateTime.Now.Year;
+            return year >= 2010 && year <= currentYear;
+        }
+        return false;
+    }
+
+    private bool IsValidZzzzz(string zzzzz)
+    {
+        if (zzzzz.StartsWith("00") && int.TryParse(zzzzz.Substring(2), out int number))
+        {
+            return number >= 1 && number <= 300;
+        }
+        return false;
+    }
+
+
+    private void ValidateRegistryNumber()
+    {
+        string value = registryNumberInput?.Replace("-", "");
+        if (value == null || value.Length != 13 || !long.TryParse(value, out _))
+        {
+            regNumberInputClass = "shake shake-input";
+            JSRuntime.InvokeVoidAsync("validateRegistryNumber");
+        }
+        else
+        {
+            regNumberInputClass = "";
+            JSRuntime.InvokeVoidAsync("validateRegistryNumber");
+        }
+    }
+
+
+
+
+
+
+    private void HandlePermanentPCNumberInput(ChangeEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(e.Value?.ToString()))
+        {
+            permanentPCInputClass = "shake shake-input";
+        }
+        else if (!long.TryParse(e.Value.ToString(), out long result))
+        {
+            permanentPCInputClass = "shake shake-input";
+        }
+        else
+        {
+            permanentPCInputClass = "";
+            newStudent.PermanentPC = result; // Update the bound property
+            permenentPCNumberInput = result.ToString();
+        }
+    }
+
+
+
+    private async Task<List<string>> GetSelectedSkillsFromDOM(string selectId)
+    {
+        var selectedSkills = await JSRuntime.InvokeAsync<List<string>>("getSelectedValues", selectId);
+        return selectedSkills;
+    }
+
+    private void SelectSkill(string skill)
+    {
+        if (!temporarilySelectedSkills.Contains(skill))
+        {
+            temporarilySelectedSkills.Add(skill);
+            Console.WriteLine($"Skill {skill} added to temporarilySelectedSkills.");
+        }
+        else
+        {
+            Console.WriteLine($"Skill {skill} is already in temporarilySelectedSkills.");
+            temporarilySelectedSkills.Remove(skill);
+            Console.WriteLine($"Skill {skill} removed from temporarilySelectedSkills.");
+        }
+
+        newStudent.Keywords = string.Join(",", temporarilySelectedSkills);
+        Console.WriteLine("Temporarily Selected Skills: " + string.Join(",", temporarilySelectedSkills));
+    }
+
+    private void UpdateTemporarilySelectedSkills()
+    {
+        temporarilySelectedSkills.Clear();
+        temporarilySelectedSkills.AddRange(selectedSkills);
+        newStudent.Keywords = string.Join(",", temporarilySelectedSkills);
+        Console.WriteLine("Temporarily Selected Skills: " + string.Join(",", temporarilySelectedSkills));
+        StateHasChanged();
+    }
+
+    private void UpdateSelectedSkills()
+    {
+        temporarilySelectedSkills.Clear();
+        temporarilySelectedSkills.AddRange(selectedSkills);
+        newStudent.Keywords = string.Join(",", temporarilySelectedSkills);
+        Console.WriteLine("Temporarily Selected Skills: " + string.Join(",", temporarilySelectedSkills));
+        StateHasChanged();
+    }
+
+    private async Task SubmitForm()
+    {
+        errorMessage = "";
+        nameInputClass = "";
+        surnameInputClass = "";
+        telephoneInputClass = "";
+        addressInputClass = "";
+        pcInputClass = "";
+        regionInputClass = "";
+        townInputClass = "";
+        studyYearInputClass = "";
+        graduationDateInputClass = "";
+        ectsInputClass = "";
+        internshipInputClass = "";
+        thesisInputClass = "";
+        universityInputClass = "";
+        schoolInputClass = "";
+        departmentInputClass = "";
+        enrollmentDateInputClass = "";
+        levelOfDegreeInputClass = "";
+
+        // List to track missing mandatory fields
+        var missingFields = new List<string>();
+
+        // Validate MANDATORY fields
+        if (string.IsNullOrEmpty(newStudent.Name))
+        {
+            nameInputClass = "shake shake-input";
+            missingFields.Add("Όνομα");
+        }
+        if (string.IsNullOrEmpty(newStudent.Surname))
+        {
+            surnameInputClass = "shake shake-input";
+            missingFields.Add("Επώνυμο");
+        }
+        if (string.IsNullOrEmpty(newStudent.Telephone))
+        {
+            telephoneInputClass = "shake shake-input";
+            missingFields.Add("Τηλέφωνο");
+        }
+        if (string.IsNullOrEmpty(newStudent.PermanentAddress))
+        {
+            addressInputClass = "shake shake-input";
+            missingFields.Add("Διεύθυνση");
+        }
+        if (newStudent.PermanentPC == 0)
+        {
+            pcInputClass = "shake shake-input";
+            missingFields.Add("Ταχυδρομικός Κώδικας");
+        }
+        if (string.IsNullOrEmpty(newStudent.PermanentRegion))
+        {
+            regionInputClass = "shake shake-input";
+            missingFields.Add("Περιφέρεια");
+        }
+        if (string.IsNullOrEmpty(newStudent.PermanentTown))
+        {
+            townInputClass = "shake shake-input";
+            missingFields.Add("Πόλη");
+        }
+        if (string.IsNullOrEmpty(newStudent.StudyYear))
+        {
+            studyYearInputClass = "shake shake-input";
+            missingFields.Add("Έτος Φοίτησης");
+        }
+        if (newStudent.ExpectedGraduationDate == default)
+        {
+            graduationDateInputClass = "shake shake-input";
+            missingFields.Add("Αναμενόμενη Ημερομηνία Αποφοίτησης");
+        }
+        if (newStudent.CompletedECTS == 0)
+        {
+            ectsInputClass = "shake shake-input";
+            missingFields.Add("Συμπληρωμένες Διδακτικές Μονάδες");
+        }
+        if (string.IsNullOrEmpty(newStudent.University))
+        {
+            universityInputClass = "shake shake-input";
+            missingFields.Add("Πανεπιστημιακό Ίδρυμα");
+        }
+        if (string.IsNullOrEmpty(newStudent.School))
+        {
+            schoolInputClass = "shake shake-input";
+            missingFields.Add("Σχολή");
+        }
+        if (string.IsNullOrEmpty(newStudent.Department))
+        {
+            departmentInputClass = "shake shake-input";
+            missingFields.Add("Τμήμα");
+        }
+        if (string.IsNullOrEmpty(newStudent.EnrollmentDate))
+        {
+            enrollmentDateInputClass = "shake shake-input";
+            missingFields.Add("Έτος Εγγραφής");
+        }
+        if (string.IsNullOrEmpty(newStudent.LevelOfDegree))
+        {
+            levelOfDegreeInputClass = "shake shake-input";
+            missingFields.Add("Ιδιότητα Μέλους");
+        }
+        // Validate right-side boxes (selected items)
+        var missingRightSideFields = new List<string>();
+
+        if (selectedAreasForAssessment.Count == 0)
+        {
+            areasValidationClass = "shake shake-input";
+            missingFields.Add("Περιοχές Εξειδίκευσης");
+        }
+
+        if (selectedTargetAreasForAssessment.Count == 0)
+        {
+            targetAreasValidationClass = "shake shake-input";
+            missingFields.Add("Περιοχές Ενδιαφέροντος");
+        }
+
+        if (selectedSkillsForAssessment.Count == 0)
+        {
+            skillsValidationClass = "shake shake-input";
+            missingFields.Add("Τεχνικές Ικανότητες");
+        }
+
+        if (selectedTargetSkillsForAssessment.Count == 0)
+        {
+            targetSkillsValidationClass = "shake shake-input";
+            missingFields.Add("Τεχνικές Ικανότητες Ενδιαφέροντος");
+        }
+
+        if (missingFields.Count > 0)
+        {
+            errorMessage = $"Συμπληρώστε τα ακόλουθα πεδία: {string.Join(", ", missingFields)}";
+            return;
+        }
+
+        // Check if any mandatory field is empty
+        if (missingFields.Count > 0)
+        {
+            errorMessage = $"Συμπληρώστε τα ακόλουθα υποχρεωτικά πεδία: {string.Join(", ", missingFields)}";
+            return;
+        }
+
+        // Clear research fields if not applicable
+        if (!ShouldShowResearchFields())
+        {
+            newStudent.WhenStudentIsPostDocOrPhD_ResearchTitle = "";
+            newStudent.WhenStudentIsPostDocOrPhD_ResearchDescription = "";
+        }
+        if (string.IsNullOrEmpty(newStudent.LinkedInProfile))
+        {
+            newStudent.LinkedInProfile = "";
+        }
+
+        if (string.IsNullOrEmpty(newStudent.PersonalWebsite))
+        {
+            newStudent.PersonalWebsite = "";
+        }
+
+        if (string.IsNullOrEmpty(newStudent.StudentGoogleScholarProfile))
+        {
+            newStudent.StudentGoogleScholarProfile = "";
+        }
+
+        try
+        {
+            var preferredTownsList = new List<string>();
+            // Build PreferredTowns
+            foreach (var region in Regions)
+            {
+                if (selectedRegionsDictionary.ContainsKey(region) && selectedRegionsDictionary[region])
+                {
+                    var towns = RegionToTownsMap[region]
+                        .Where(town => selectedTownsDictionary.ContainsKey(town) && selectedTownsDictionary[town])
+                        .ToList();
+
+                    if (towns.Any())
+                    {
+                        var formattedRegionTowns = $"[{region}: {string.Join(", ", towns)}]";
+                        preferredTownsList.Add(formattedRegionTowns);
+                    }
+                }
+            }
+
+            // Set common student attributes
+            newStudent.PreferredTowns = string.Join(", ", preferredTownsList);
+            newStudent.PreferedRegions = string.Join(",", selectedRegionsDictionary.Where(kv => kv.Value).Select(kv => kv.Key));
+            newStudent.TargetSkills = string.Join(",", selectedTargetSkillsForAssessment.Select(sa => $"{sa.SkillName}"));
+            newStudent.TargetAreas = string.Join(",", selectedTargetAreasForAssessment.Select(sa => $"{sa.AreaName}"));
+            newStudent.AreasOfExpertise = string.Join(", ", selectedAreasForAssessment.Select(sa => $"{sa.AreaName}"));
+            newStudent.SelfAssesmentAreas = string.Join(", ", selectedAreasForAssessment.Select(sa => $"{sa.AreaName}:{sa.Assessment}"));
+            newStudent.Keywords = string.Join(",", selectedSkills);
+            newStudent.SelfAssesmentSkills = string.Join(", ", selectedSkillsForAssessment.Select(sa => $"{sa.SkillName}:{sa.Assessment}"));
+            newStudent.LastCVUpdate = DateTime.Now;
+            newStudent.LastProfileUpdate = DateTime.Now;
+            newStudent.Student_UniqueID = "STU_" + HashingHelper.HashString(newStudent.Email);
+
+            // Check if student already exists
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            var existingStudent = await dbContext.Students.FirstOrDefaultAsync(s => s.Email == newStudent.Email);
+            if (existingStudent != null)
+            {
+                userAlreadyRegistered = true;
+                saved = false;
+                error = false;
+                return;
+            }
+
+            if (newStudent.Attachment != null)
+            {
+                dbContext.Students.Add(newStudent);
+                await dbContext.SaveChangesAsync();
+                saved = true;
+                error = false;
+                selectedSkills.Clear();
+            }
+            else
+            {
+                // Handle case where no attachment is provided
+                showCVAlert = true;
+                newStudent.LastCVUpdate = null;
+                dbContext.Students.Add(newStudent);
+                await dbContext.SaveChangesAsync();
+                saved = true;
+                error = false;
+                selectedSkills.Clear();
+            }
+        }
+        catch (Exception ex)
+        {
+            error = true;
+            errorMessage = "Σφάλμα κατά την αποθήκευση. Παρακαλώ δοκιμάστε ξανά.";
+            Console.Error.WriteLine($"Full error: {ex}");
+            Console.Error.WriteLine($"Inner exception: {ex.InnerException}");
+            // Log stack trace for better debugging
+            Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+        finally
+        {
+            // Reset input classes and state after delay
+            await Task.Delay(3000); // Keep the shake effect for 3 seconds
+            nameInputClass = "";
+            surnameInputClass = "";
+            telephoneInputClass = "";
+            addressInputClass = "";
+            pcInputClass = "";
+            regionInputClass = "";
+            townInputClass = "";
+            studyYearInputClass = "";
+            graduationDateInputClass = "";
+            ectsInputClass = "";
+            internshipInputClass = "";
+            thesisInputClass = "";
+            universityInputClass = "";
+            schoolInputClass = "";
+            departmentInputClass = "";
+            enrollmentDateInputClass = "";
+            levelOfDegreeInputClass = "";
+            errorMessage = "";
+            areasValidationClass = "";
+            targetAreasValidationClass = "";
+            skillsValidationClass = "";
+            targetSkillsValidationClass = "";
+            areasValidationMessage = "";
+            targetAreasValidationMessage = "";
+            skillsValidationMessage = "";
+            targetSkillsValidationMessage = "";
+            nameValidationMessage = "";
+            surnameValidationMessage = "";
+            telephoneValidationMessage = "";
+
+    }
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        // Load skills and areas from the database
+        var skillsFromDb = await dbContext.Skills.ToListAsync();
+        availableTargetSkills = skillsFromDb.Select(s => new SelectedSkill { SkillName = s.SkillName, Assessment = 1 }).ToList();
+        availableTargetAreas = await dbContext.Areas.ToListAsync();
+        availableAreas = await dbContext.Areas.ToListAsync();
+        availableSkills = await dbContext.Skills.ToListAsync();
+
+        // Initially show all areas and skills except those already selected
+        filteredAreas = availableAreas;
+        filteredSkills = availableSkills;
+
+        // Initialize schools and departments
+        schools = schoolDepartments.Keys.ToList();
+        departments = new List<string>();
+
+        // Initialize school and department to empty values
+        newStudent.School = string.Empty;
+        newStudent.Department = string.Empty;
+
+        newStudent.PhoneVisibility = false;
+        newStudent.HomeVisibility = false;
+        newStudent.Transport = false;
+        newStudent.HasFinishedStudies = false;
+
+        // Get the authenticated user's email
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userEmail = user.Identity.Name;
+
+        await CheckResearchGroupMembership();
+
+        // Load the student's data from the database
+        var studentFromDb = await dbContext.Students.FirstOrDefaultAsync(s => s.Email == userEmail);
+
+        if (studentFromDb != null)
+        {
+            newStudent = studentFromDb;
+            newStudent.PermanentPC = newStudent.PermanentPC;
+            formattedRegistryNumber = FormatRegistryNumber(newStudent.RegNumber);
+
+            await CheckResearchGroupMembership();
+
+            // Log the student's data for debugging
+            Console.WriteLine($"Student Data: {System.Text.Json.JsonSerializer.Serialize(newStudent)}");
+
+            // Initialize regions
+            foreach (var region in Regions)
+            {
+                selectedRegionsDictionary[region] = !string.IsNullOrEmpty(newStudent.PreferedRegions) &&
+                                                  newStudent.PreferedRegions.Split(',').Contains(region);
+            }
+
+            // Initialize towns - single initialization
+            selectedTownsDictionary = new Dictionary<string, bool>();
+
+            if (!string.IsNullOrEmpty(newStudent.PreferredTowns))
+            {
+                selectedTownsDictionary = new Dictionary<string, bool>();
+
+                // Match each "[Region: Town1, Town2]" block
+                var matches = Regex.Matches(newStudent.PreferredTowns, @"\[(.*?)\]");
+
+                foreach (Match match in matches)
+                {
+                    var content = match.Groups[1].Value; // "Ανατολική Μακεδονία και Θράκη: Δράμα"
+                    var parts = content.Split(':');
+
+                    if (parts.Length == 2)
+                    {
+                        var region = parts[0].Trim();
+                        var towns = parts[1].Split(',')
+                                            .Select(t => t.Trim())
+                                            .Where(t => !string.IsNullOrWhiteSpace(t));
+
+                        foreach (var town in towns)
+                        {
+                            selectedTownsDictionary[town] = true;
+                            Console.WriteLine($"Initialized town as selected: {town}");
+                        }
+                    }
+                }
+            }
+
+            // If student exists, update departments based on their school
+            if (!string.IsNullOrEmpty(newStudent.School) &&
+                schoolDepartments.ContainsKey(newStudent.School))
+            {
+                departments = schoolDepartments[newStudent.School];
+            }
+
+
+            // Ensure all towns from selected regions exist in dictionary
+            foreach (var region in Regions.Where(r => selectedRegionsDictionary[r]))
+            {
+                if (RegionToTownsMap.TryGetValue(region, out var towns))
+                {
+                    foreach (var town in towns)
+                    {
+                        if (!selectedTownsDictionary.ContainsKey(town))
+                        {
+                            selectedTownsDictionary[town] = false;
+                            Console.WriteLine($"Initialized town as unselected: {town}");
+                        }
+                    }
+                }
+            }
+
+
+            // Log the selected regions and towns for debugging
+            Console.WriteLine($"Selected Regions: {string.Join(", ", selectedRegionsDictionary.Where(kvp => kvp.Value).Select(kvp => kvp.Key))}");
+            Console.WriteLine($"Selected Towns: {string.Join(", ", selectedTownsDictionary.Where(kvp => kvp.Value).Select(kvp => kvp.Key))}");
+
+            // Load the student's selected Areas of Expertise
+            if (!string.IsNullOrEmpty(newStudent.SelfAssesmentAreas))
+            {
+                // Split the SelfAssesmentAreas string into individual area:assessment pairs
+                var selectedAreaPairs = newStudent.SelfAssesmentAreas.Split(',');
+
+                foreach (var areaPair in selectedAreaPairs)
+                {
+                    // Split each pair into area name and assessment
+                    var areaParts = areaPair.Split(':');
+                    if (areaParts.Length == 2) // Ensure the format is correct
+                    {
+                        var areaName = areaParts[0].Trim(); // Extract and trim the area name
+                        var assessment = int.Parse(areaParts[1].Trim()); // Extract and parse the assessment
+
+                        // Check if the area exists in availableAreas (case-insensitive comparison)
+                        var area = availableAreas.FirstOrDefault(a => a.AreaName.Trim().Equals(areaName, StringComparison.OrdinalIgnoreCase));
+                        if (area != null)
+                        {
+                            // Add the area to selectedAreasForAssessment with the correct assessment
+                            selectedAreasForAssessment.Add(new SelectedArea { AreaName = area.AreaName, Assessment = assessment });
+
+                            // Remove the area from availableAreas to avoid duplication
+                            availableAreas.Remove(area);
+                            Console.WriteLine($"Area removed from availableAreas: {area.AreaName}");
+                        }
+                        else
+                        {
+                            // Handle custom areas (not in availableAreas)
+                            selectedAreasForAssessment.Add(new SelectedArea { AreaName = areaName, Assessment = assessment });
+                            Console.WriteLine($"Custom area added: {areaName}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Invalid area format: {areaPair}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("SelfAssesmentAreas is empty or null.");
+            }
+
+            // Log the selected Areas of Expertise for debugging
+            Console.WriteLine($"Selected Areas for Assessment: {string.Join(", ", selectedAreasForAssessment.Select(a => $"{a.AreaName}:{a.Assessment}"))}");
+
+            // Load the student's selected Target Areas
+            if (!string.IsNullOrEmpty(newStudent.TargetAreas))
+            {
+                // Split the TargetAreas string into individual area names
+                var selectedTargetAreaNames = newStudent.TargetAreas.Split(',');
+
+                foreach (var areaName in selectedTargetAreaNames)
+                {
+                    var normalizedAreaName = areaName.Trim(); // Normalize the area name
+
+                    // Check if the area exists in availableTargetAreas (case-insensitive comparison)
+                    var area = availableTargetAreas.FirstOrDefault(a => a.AreaName.Trim().Equals(normalizedAreaName, StringComparison.OrdinalIgnoreCase));
+                    if (area != null)
+                    {
+                        // Add the area to selectedTargetAreasForAssessment
+                        selectedTargetAreasForAssessment.Add(new SelectedArea { AreaName = area.AreaName });
+
+                        // Remove the area from availableTargetAreas to avoid duplication
+                        availableTargetAreas.Remove(area);
+                        Console.WriteLine($"Target Area removed from availableTargetAreas: {area.AreaName}");
+                    }
+                    else
+                    {
+                        // Handle custom areas (not in availableTargetAreas)
+                        selectedTargetAreasForAssessment.Add(new SelectedArea { AreaName = normalizedAreaName });
+                        Console.WriteLine($"Custom Target Area added: {normalizedAreaName}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("TargetAreas is empty or null.");
+            }
+
+            // Log the selected Target Areas for debugging
+            Console.WriteLine($"Selected Target Areas: {string.Join(", ", selectedTargetAreasForAssessment.Select(a => a.AreaName))}");
+
+            // Load the student's selected Skills
+            if (!string.IsNullOrEmpty(newStudent.SelfAssesmentSkills))
+            {
+                // Split the SelfAssesmentSkills string into individual skill:assessment pairs
+                var selectedSkillPairs = newStudent.SelfAssesmentSkills.Split(',');
+
+                foreach (var skillPair in selectedSkillPairs)
+                {
+                    // Split each pair into skill name and assessment
+                    var skillParts = skillPair.Split(':');
+                    if (skillParts.Length == 2) // Ensure the format is correct
+                    {
+                        var skillName = skillParts[0].Trim(); // Extract and trim the skill name
+                        var assessment = int.Parse(skillParts[1].Trim()); // Extract and parse the assessment
+
+                        // Check if the skill exists in availableSkills (case-insensitive comparison)
+                        var skill = availableSkills.FirstOrDefault(s => s.SkillName.Trim().Equals(skillName, StringComparison.OrdinalIgnoreCase));
+                        if (skill != null)
+                        {
+                            // Add the skill to selectedSkillsForAssessment with the correct assessment
+                            selectedSkillsForAssessment.Add(new SelectedSkill { SkillName = skill.SkillName, Assessment = assessment });
+
+                            // Remove the skill from availableSkills to avoid duplication
+                            availableSkills.Remove(skill);
+                            Console.WriteLine($"Skill removed from availableSkills: {skill.SkillName}");
+                        }
+                        else
+                        {
+                            // Handle custom skills (not in availableSkills)
+                            selectedSkillsForAssessment.Add(new SelectedSkill { SkillName = skillName, Assessment = assessment });
+                            Console.WriteLine($"Custom skill added: {skillName}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Invalid skill format: {skillPair}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("SelfAssesmentSkills is empty or null.");
+            }
+
+            // Log the selected Skills for debugging
+            Console.WriteLine($"Selected Skills for Assessment: {string.Join(", ", selectedSkillsForAssessment.Select(s => $"{s.SkillName}:{s.Assessment}"))}");
+
+            // Load the student's selected Target Skills
+            if (!string.IsNullOrEmpty(newStudent.TargetSkills))
+            {
+                // Split the TargetSkills string into individual skill names
+                var selectedTargetSkillNames = newStudent.TargetSkills.Split(',');
+
+                foreach (var skillName in selectedTargetSkillNames)
+                {
+                    var normalizedSkillName = skillName.Trim(); // Normalize the skill name
+
+                    // Check if the skill exists in availableTargetSkills (case-insensitive comparison)
+                    var skill = availableTargetSkills.FirstOrDefault(s => s.SkillName.Trim().Equals(normalizedSkillName, StringComparison.OrdinalIgnoreCase));
+                    if (skill != null)
+                    {
+                        // Add the skill to selectedTargetSkillsForAssessment
+                        selectedTargetSkillsForAssessment.Add(new SelectedSkill { SkillName = skill.SkillName });
+
+                        // Remove the skill from availableTargetSkills to avoid duplication
+                        availableTargetSkills.Remove(skill);
+                        Console.WriteLine($"Target Skill removed from availableTargetSkills: {skill.SkillName}");
+                    }
+                    else
+                    {
+                        // Handle custom skills (not in availableTargetSkills)
+                        selectedTargetSkillsForAssessment.Add(new SelectedSkill { SkillName = normalizedSkillName });
+                        Console.WriteLine($"Custom Target Skill added: {normalizedSkillName}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("TargetSkills is empty or null.");
+            }
+
+            // Log the selected Target Skills for debugging
+            Console.WriteLine($"Selected Target Skills: {string.Join(", ", selectedTargetSkillsForAssessment.Select(s => s.SkillName))}");
+        }
+        else
+        {
+            // Handle the case where the student is not found
+            Console.WriteLine($"Student with email {userEmail} not found.");
+        }
+
+        // Filter available areas and skills to exclude selected items
+        FilterAvailableAreas(new ChangeEventArgs { Value = "" }); // Pass an empty search term to initialize
+        FilterAvailableSkills(new ChangeEventArgs { Value = "" }); // Pass an empty search term to initialize
+
+        // Initialize other data
+        isRegistered = studentFromDb != null;
+
+        // Check user authentication and permissions
+        if (user.Identity.IsAuthenticated)
+        {
+            Console.WriteLine($"Authentication Type: {user.Identity.AuthenticationType}");
+
+            foreach (var claim in user.Claims)
+            {
+                Console.WriteLine($"Claim Type: {claim.Type}, Claim Value: {claim.Value}");
+            }
+
+            var roleClaim = user.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
+
+            if (roleClaim != null)
+            {
+                Username = user.Identity?.Name ?? "Anonymous User";
+                newStudent.Email = Username;
+                var userRole = roleClaim.Value;
+                Console.WriteLine($"User Role: {userRole}");
+                Console.WriteLine($"User Email: {Username}");
+
+                hasReadAsStudentPermission = userRole == "Student";
+            }
+            Console.WriteLine($"User Has Student Permission: {hasReadAsStudentPermission}");
+        }
+        else
+        {
+            Console.WriteLine("User is not authenticated.");
+            hasReadAsStudentPermission = false;
+        }
+
+        newStudent.University = UniversityName;
+        newStudent.ExpectedGraduationDate = DateTime.Now;
+        newStudent.WhenStudentIsPostDocOrPhD_ResearchTitle ??= string.Empty;
+        newStudent.WhenStudentIsPostDocOrPhD_ResearchDescription ??= string.Empty;
+
+
+        // Ensure UI updates
+        StateHasChanged();
+    }
+
+
+
+
+
+    private void NavigateToSearchJobs()
+    {
+        NavigationManager.NavigateTo("/searchjobs");
+    }
+
+    private void NavigateToSearchThesis()
+    {
+        NavigationManager.NavigateTo("/searchthesis");
+    }
+
+
+    private List<string> customAreas = new List<string>();
+
+    private async Task MoveSelectedAreaToLeft()
+    {
+        var newlySelectedAreas = await GetSelectedAreasFromDOM("selectedAreas");
+
+        foreach (var areaName in newlySelectedAreas)
+        {
+            // Trim and normalize the area name for comparison
+            var normalizedAreaName = areaName.Trim();
+
+            // Find the area in selectedAreasForAssessment (case-insensitive comparison)
+            var areaToAdd = selectedAreasForAssessment.FirstOrDefault(a => a.AreaName.Trim().Equals(normalizedAreaName, StringComparison.OrdinalIgnoreCase));
+            if (areaToAdd != null)
+            {
+                Console.WriteLine($"Moving area to left: {areaToAdd.AreaName}");
+
+                // Check if the area already exists in availableAreas
+                if (!availableAreas.Any(a => a.AreaName.Trim().Equals(normalizedAreaName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    // Add the area to availableAreas if it doesn't exist
+                    availableAreas.Add(new Area { AreaName = areaToAdd.AreaName });
+                    Console.WriteLine($"Added area to availableAreas: {areaToAdd.AreaName}");
+                }
+
+                // Remove the area from selectedAreasForAssessment
+                selectedAreasForAssessment.Remove(areaToAdd);
+                Console.WriteLine($"Removed area from selectedAreasForAssessment: {areaToAdd.AreaName}");
+            }
+            else
+            {
+                Console.WriteLine($"Area not found in selectedAreasForAssessment: {normalizedAreaName}");
+            }
+        }
+
+        // Refresh the filtered areas list
+        FilterAvailableAreas(new ChangeEventArgs { Value = areassearchTerm });
+
+        // Ensure UI updates
+        availableAreas = availableAreas.ToList();
+        selectedAreasForAssessment = selectedAreasForAssessment.ToList();
+        StateHasChanged();
+    }
+
+    private async Task MoveSelectedSkillToLeft()
+    {
+        var newlySelectedSkillNames = await GetSelectedSkillsFromDOM("selectedSkills");
+
+        foreach (var skillName in newlySelectedSkillNames)
+        {
+            var skillToAdd = selectedSkillsForAssessment.FirstOrDefault(s => s.SkillName == skillName);
+            if (skillToAdd != null)
+            {
+                availableSkills.Add(new Skill { SkillName = skillToAdd.SkillName });
+                selectedSkillsForAssessment.Remove(skillToAdd);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task MoveSelectedAreaToRight()
+    {
+        var newlySelectedAreas = await GetSelectedAreasFromDOM("availableAreas");
+
+        foreach (var areaName in newlySelectedAreas)
+        {
+            var areaToRemove = availableAreas.FirstOrDefault(a => a.AreaName == areaName);
+            if (areaToRemove != null)
+            {
+                availableAreas.Remove(areaToRemove);
+
+                if (!selectedAreasForAssessment.Any(a => a.AreaName == areaName))
+                {
+                    selectedAreasForAssessment.Add(new SelectedArea { AreaName = areaToRemove.AreaName });
+                }
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(areassearchTerm) &&
+            !selectedAreasForAssessment.Any(a => a.AreaName.Equals(areassearchTerm, StringComparison.OrdinalIgnoreCase)) &&
+            !availableAreas.Any(a => a.AreaName.Equals(areassearchTerm, StringComparison.OrdinalIgnoreCase)))
+        {
+            selectedAreasForAssessment.Add(new SelectedArea { AreaName = areassearchTerm });
+            Console.WriteLine($"Custom area {areassearchTerm} added to selectedAreasForAssessment (Right List Box)");
+            areassearchTerm = string.Empty;
+        }
+
+        FilterAvailableAreas(new ChangeEventArgs { Value = areassearchTerm });
+
+        availableAreas = availableAreas.ToList(); // Ensure UI updates
+        selectedAreasForAssessment = selectedAreasForAssessment.ToList();
+        StateHasChanged();
+    }
+
+    // Move selected skills to the right (selected list)
+    private async Task MoveSelectedSkillToRight()
+    {
+        var newlySelectedSkillNames = await GetSelectedSkillsFromDOM("availableSkills");
+
+        foreach (var skillName in newlySelectedSkillNames)
+        {
+            var skillToRemove = availableSkills.FirstOrDefault(s => s.SkillName == skillName);
+            if (skillToRemove != null)
+            {
+                availableSkills.Remove(skillToRemove);
+
+                if (!selectedSkillsForAssessment.Any(s => s.SkillName == skillName))
+                {
+                    selectedSkillsForAssessment.Add(new SelectedSkill { SkillName = skillToRemove.SkillName });
+                }
+            }
+        }
+
+        // Add a custom skill directly if it doesn't already exist
+        if (!string.IsNullOrWhiteSpace(skillsSearchTerm) &&
+            !selectedSkillsForAssessment.Any(s => s.SkillName.Equals(skillsSearchTerm, StringComparison.OrdinalIgnoreCase)))
+        {
+            selectedSkillsForAssessment.Add(new SelectedSkill { SkillName = skillsSearchTerm });
+
+            // Clear the search term after adding the custom skill
+            skillsSearchTerm = string.Empty;
+        }
+
+        StateHasChanged(); // Update the UI
+    }
+
+
+
+
+    private async Task MoveSelectedTargetAreaToLeft()
+    {
+        var newlySelectedTargetAreas = await GetSelectedAreasFromDOM("selectedTargetAreas");
+
+        foreach (var areaName in newlySelectedTargetAreas)
+        {
+            var selectedTargetArea = selectedTargetAreasForAssessment.FirstOrDefault(sa => sa.AreaName == areaName);
+            if (selectedTargetArea != null)
+            {
+                selectedTargetAreasForAssessment.Remove(selectedTargetArea);
+
+                if (!availableTargetAreas.Any(a => a.AreaName == areaName))
+                {
+                    using var dbContext = await DbContextFactory.CreateDbContextAsync();
+                    var areaToAdd = dbContext.Areas.FirstOrDefault(a => a.AreaName == areaName);
+                    if (areaToAdd != null)
+                    {
+                        availableTargetAreas.Add(areaToAdd);
+                        Console.WriteLine($"Area {areaName} added back to availableTargetAreas (Left List Box)");
+                    }
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+
+    private async Task MoveSelectedTargetAreaToRight()
+    {
+        var newlySelectedTargetAreas = await GetSelectedAreasFromDOM("availableTargetAreas");
+
+        foreach (var areaName in newlySelectedTargetAreas)
+        {
+            var targetareaToRemove = availableTargetAreas.FirstOrDefault(a => a.AreaName == areaName);
+            if (targetareaToRemove != null)
+            {
+                availableTargetAreas.Remove(targetareaToRemove);
+
+                if (!selectedTargetAreasForAssessment.Any(sa => sa.AreaName == targetareaToRemove.AreaName))
+                {
+                    selectedTargetAreasForAssessment.Add(new SelectedArea { AreaName = targetareaToRemove.AreaName });
+                    Console.WriteLine($"Target Area {areaName} added to selectedTargetAreas (Right List Box)");
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+
+
+    private async Task MoveSelectedTargetSkillToLeft()
+    {
+        var newlySelectedTargetSkills = await GetSelectedSkillsFromDOM("selectedTargetSkills");
+
+        foreach (var skillName in newlySelectedTargetSkills)
+        {
+            var selectedTargetSkill = selectedTargetSkillsForAssessment.FirstOrDefault(sa => sa.SkillName == skillName);
+            if (selectedTargetSkill != null)
+            {
+                selectedTargetSkillsForAssessment.Remove(selectedTargetSkill);
+
+                // Find the corresponding skill object from the database context
+                using var dbContext = await DbContextFactory.CreateDbContextAsync();
+                var skillToAdd = await dbContext.Skills.FirstOrDefaultAsync(a => a.SkillName == skillName);
+                if (skillToAdd != null && !availableTargetSkills.Any(a => a.SkillName == skillName))
+                {
+                    availableTargetSkills.Add(new SelectedSkill { SkillName = skillToAdd.SkillName, Assessment = 1 });
+                    Console.WriteLine($"Skill {skillName} added back to availableTargetSkills (Left List Box)");
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+
+    private async Task MoveSelectedTargetSkillToRight()
+    {
+        var newlySelectedTargetSkills = await GetSelectedSkillsFromDOM("availableTargetSkills");
+
+        foreach (var skillName in newlySelectedTargetSkills)
+        {
+            var targetSkillToRemove = availableTargetSkills.FirstOrDefault(a => a.SkillName == skillName);
+            if (targetSkillToRemove != null)
+            {
+                availableTargetSkills.Remove(targetSkillToRemove);
+
+                // Add the skill to selectedTargetSkillsForAssessment if it doesn't exist already
+                if (!selectedTargetSkillsForAssessment.Any(sa => sa.SkillName == targetSkillToRemove.SkillName))
+                {
+                    selectedTargetSkillsForAssessment.Add(new SelectedSkill { SkillName = targetSkillToRemove.SkillName, Assessment = 1 });
+                    Console.WriteLine($"Target Skill {skillName} added to selectedTargetSkills (Right List Box)");
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+
+
+
+
+    private async Task<List<string>> GetSelectedTargetAreasFromDOM(string selectId)
+    {
+        var selectedTargetAreas = await JSRuntime.InvokeAsync<List<string>>("getSelectedValues", selectId);
+        return selectedTargetAreas;
+    }
+
+    private async Task<List<string>> GetSelectedAreasFromDOM(string selectId)
+    {
+        var selectedAreas = await JSRuntime.InvokeAsync<List<string>>("getSelectedValues", selectId);
+        return selectedAreas;
+        StateHasChanged();
+    }
+
+    private void ToggleSubFields(Area area)
+    {
+        if (expandedAreas.Contains(area.AreaName))
+        {
+            expandedAreas.Remove(area.AreaName);
+        }
+        else
+        {
+            expandedAreas.Add(area.AreaName);
+        }
+        StateHasChanged();
+    }
+
+    private void ToggleSubFieldsSkill(Skill skill)
+    {
+        if (expandedSkills.Contains(skill.SkillName))
+        {
+            expandedSkills.Remove(skill.SkillName);
+        }
+        else
+        {
+            expandedSkills.Add(skill.SkillName);
+        }
+        StateHasChanged();
+    }
+
+    private void OnAreaChange(ChangeEventArgs e)
+    {
+        var selectedValue = e.Value.ToString();
+        var selectedArea = availableAreas.FirstOrDefault(a => a.AreaName == selectedValue);
+        if (selectedArea != null)
+        {
+            ToggleSubFields(selectedArea);
+        }
+    }
+
+    private void OnSkillChange(ChangeEventArgs e)
+    {
+        var selectedValue = e.Value.ToString();
+        var selectedSkill = availableSkills.FirstOrDefault(a => a.SkillName == selectedValue);
+    }
+
+    private void OnTargetAreaChange(ChangeEventArgs e)
+    {
+        var selectedTargetValue = e.Value.ToString();
+        var selectedTargetArea = availableTargetAreas.FirstOrDefault(a => a.AreaName == selectedTargetValue);
+        if (selectedTargetArea != null)
+        {
+            ToggleSubFields(selectedTargetArea);
+        }
+    }
+
+    private void OnTargetSkillChange(ChangeEventArgs e)
+    {
+        var selectedTargetValue = e.Value.ToString();
+        var selectedTargetSkill = availableTargetSkills.FirstOrDefault(a => a.SkillName == selectedTargetValue);
+    }
+
+
+    private void SelectArea(string area)
+    {
+        if (!temporarilySelectedAreas.Contains(area))
+        {
+            temporarilySelectedAreas.Add(area);
+            Console.WriteLine($"Area {area} added to temporarilySelectedAreas.");
+        }
+        else
+        {
+            temporarilySelectedAreas.Remove(area);
+            Console.WriteLine($"Area {area} removed from temporarilySelectedAreas.");
+        }
+
+        newStudent.AreasOfExpertise = string.Join(",", temporarilySelectedAreas);
+        Console.WriteLine("Temporarily Selected Areas: " + string.Join(",", temporarilySelectedAreas));
+    }
+
+    private void SelectTargetArea(string area)
+    {
+        if (!temporarilySelectedTargetAreas.Contains(area))
+        {
+            temporarilySelectedTargetAreas.Add(area);
+            Console.WriteLine($"Target Area {area} added to temporarilySelectedTargetAreas.");
+        }
+        else
+        {
+            temporarilySelectedTargetAreas.Remove(area);
+            Console.WriteLine($"Target Area {area} removed from temporarilySelectedTargetAreas.");
+        }
+
+        newStudent.TargetAreas = string.Join(",", temporarilySelectedTargetAreas);
+        Console.WriteLine("Temporarily Selected Target Areas: " + string.Join(",", temporarilySelectedTargetAreas));
+    }
+
+
+    private void UpdateTemporarilySelectedAreas()
+    {
+        temporarilySelectedAreas.Clear();
+        temporarilySelectedAreas.AddRange(selectedAreas);
+        newStudent.AreasOfExpertise = string.Join(",", temporarilySelectedAreas);
+        Console.WriteLine("Temporarily Selected Areas: " + string.Join(",", temporarilySelectedAreas));
+        StateHasChanged();
+    }
+
+    private void UpdateTemporarilySelecteTargetAreas()
+    {
+        temporarilySelectedTargetAreas.Clear();
+        temporarilySelectedTargetAreas.AddRange(selectedTargetAreas);
+        newStudent.TargetAreas = string.Join(",", temporarilySelectedTargetAreas);
+        Console.WriteLine("Temporarily Selected Target Areas: " + string.Join(",", temporarilySelectedTargetAreas));
+        StateHasChanged();
+    }
+
+    private void UpdateSelectedAreas()
+    {
+        temporarilySelectedAreas.Clear();
+        temporarilySelectedAreas.AddRange(selectedAreas);
+        newStudent.AreasOfExpertise = string.Join(",", temporarilySelectedAreas);
+        Console.WriteLine("Temporarily Selected Areas: " + string.Join(",", temporarilySelectedAreas));
+        StateHasChanged();
+    }
+
+
+    private void UpdateSelectedTargetAreas()
+    {
+        temporarilySelectedTargetAreas.Clear();
+        temporarilySelectedTargetAreas.AddRange(selectedTargetAreas);
+        newStudent.TargetAreas = string.Join(",", temporarilySelectedTargetAreas);
+        Console.WriteLine("Temporarily Selected Target Areas: " + string.Join(",", temporarilySelectedTargetAreas));
+        StateHasChanged();
+    }
+
+    public class SelectedArea
+    {
+        public string AreaName { get; set; }
+        public int Assessment { get; set; } = 1; // Default assessment value is 1
+    }
+
+    public class SelectedTargetArea
+    {
+        public string AreaName { get; set; }
+        public int Assessment { get; set; } = 1; // Default assessment value is 1
+    }
+
+
+    public class SelectedSkill
+    {
+        public string SkillName { get; set; }
+        public int Assessment { get; set; } = 1; // Default assessment value is 1
+    }
+
+    public class SelectedTargetSkill
+    {
+        public string SkillName { get; set; }
+        public int Assessment { get; set; } = 1; // Default assessment value is 1
+    }
+
+    private async Task ShowUserAgreementModal(MouseEventArgs e)
+    {
+        await JSRuntime.InvokeVoidAsync("showUserAgreementModal");
+    }
+
+
+    private async Task HandleAgreeAsync()
+    {
+        if (OnAgree.HasDelegate)
+        {
+            await OnAgree.InvokeAsync(null);
+        }
+    }
+
+    private async Task HandleDeclineAsync()
+    {
+        if (OnDecline.HasDelegate)
+        {
+            await OnDecline.InvokeAsync(null);
+        }
+    }
+
+
+    private async Task UpdateStudentRegistration()
+    {
+        errorMessage = "";
+        // Reset all input classes
+        nameInputClass = "";
+        surnameInputClass = "";
+        telephoneInputClass = "";
+        addressInputClass = "";
+        pcInputClass = "";
+        regionInputClass = "";
+        townInputClass = "";
+        studyYearInputClass = "";
+        graduationDateInputClass = "";
+        ectsInputClass = "";
+        internshipInputClass = "";
+        thesisInputClass = "";
+        universityInputClass = "";
+        schoolInputClass = "";
+        departmentInputClass = "";
+        enrollmentDateInputClass = "";
+        levelOfDegreeInputClass = "";
+
+        // List to track missing mandatory fields
+        var missingFields = new List<string>();
+
+        // Validate MANDATORY fields for update
+        if (string.IsNullOrEmpty(newStudent.Name))
+        {
+            nameInputClass = "shake shake-input";
+            missingFields.Add("Όνομα");
+        }
+        if (string.IsNullOrEmpty(newStudent.Surname))
+        {
+            surnameInputClass = "shake shake-input";
+            missingFields.Add("Επώνυμο");
+        }
+        if (string.IsNullOrEmpty(newStudent.Telephone))
+        {
+            telephoneInputClass = "shake shake-input";
+            missingFields.Add("Τηλέφωνο");
+        }
+        if (string.IsNullOrEmpty(newStudent.PermanentAddress))
+        {
+            addressInputClass = "shake shake-input";
+            missingFields.Add("Διεύθυνση");
+        }
+        if (newStudent.PermanentPC == 0)
+        {
+            pcInputClass = "shake shake-input";
+            missingFields.Add("Ταχυδρομικός Κώδικας");
+        }
+        if (string.IsNullOrEmpty(newStudent.PermanentRegion))
+        {
+            regionInputClass = "shake shake-input";
+            missingFields.Add("Περιφέρεια");
+        }
+        if (string.IsNullOrEmpty(newStudent.PermanentTown))
+        {
+            townInputClass = "shake shake-input";
+            missingFields.Add("Πόλη");
+        }
+        if (string.IsNullOrEmpty(newStudent.StudyYear))
+        {
+            studyYearInputClass = "shake shake-input";
+            missingFields.Add("Έτος Φοίτησης");
+        }
+        if (newStudent.ExpectedGraduationDate == default)
+        {
+            graduationDateInputClass = "shake shake-input";
+            missingFields.Add("Αναμενόμενη Ημερομηνία Αποφοίτησης");
+        }
+        if (newStudent.CompletedECTS == 0)
+        {
+            ectsInputClass = "shake shake-input";
+            missingFields.Add("Συμπληρωμένες Διδακτικές Μονάδες");
+        }
+        if (string.IsNullOrEmpty(newStudent.University))
+        {
+            universityInputClass = "shake shake-input";
+            missingFields.Add("Πανεπιστημιακό Ίδρυμα");
+        }
+        if (string.IsNullOrEmpty(newStudent.School))
+        {
+            schoolInputClass = "shake shake-input";
+            missingFields.Add("Σχολή");
+        }
+        if (string.IsNullOrEmpty(newStudent.Department))
+        {
+            departmentInputClass = "shake shake-input";
+            missingFields.Add("Τμήμα");
+        }
+        if (string.IsNullOrEmpty(newStudent.EnrollmentDate))
+        {
+            enrollmentDateInputClass = "shake shake-input";
+            missingFields.Add("Έτος Εγγραφής");
+        }
+        if (string.IsNullOrEmpty(newStudent.LevelOfDegree))
+        {
+            levelOfDegreeInputClass = "shake shake-input";
+            missingFields.Add("Ιδιότητα Μέλους");
+        }
+        // Validate right-side boxes (selected items)
+        var missingRightSideFields = new List<string>();
+
+        if (selectedAreasForAssessment.Count == 0)
+        {
+            areasValidationClass = "shake shake-input";
+            missingFields.Add("Περιοχές Εξειδίκευσης");
+        }
+
+        if (selectedTargetAreasForAssessment.Count == 0)
+        {
+            targetAreasValidationClass = "shake shake-input";
+            missingFields.Add("Περιοχές Ενδιαφέροντος");
+        }
+
+        if (selectedSkillsForAssessment.Count == 0)
+        {
+            skillsValidationClass = "shake shake-input";
+            missingFields.Add("Τεχνικές Ικανότητες");
+        }
+
+        if (selectedTargetSkillsForAssessment.Count == 0)
+        {
+            targetSkillsValidationClass = "shake shake-input";
+            missingFields.Add("Τεχνικές Ικανότητες Ενδιαφέροντος");
+        }
+
+        if (missingFields.Count > 0)
+        {
+            errorMessage = $"Συμπληρώστε τα ακόλουθα πεδία: {string.Join(", ", missingFields)}";
+            return;
+        }
+
+        // Check if any mandatory field is empty
+        if (missingFields.Count > 0)
+        {
+            errorMessage = $"Συμπληρώστε τα ακόλουθα υποχρεωτικά πεδία: {string.Join(", ", missingFields)}";
+            StateHasChanged(); // Force UI update to show validation
+            return;
+        }
+
+        // Clear research fields if not applicable
+        if (!ShouldShowResearchFields())
+        {
+            newStudent.WhenStudentIsPostDocOrPhD_ResearchTitle = "";
+            newStudent.WhenStudentIsPostDocOrPhD_ResearchDescription = "";
+        }
+        if (string.IsNullOrEmpty(newStudent.LinkedInProfile))
+        {
+            newStudent.LinkedInProfile = "";
+        }
+
+        if (string.IsNullOrEmpty(newStudent.PersonalWebsite))
+        {
+            newStudent.PersonalWebsite = "";
+        }
+
+        if (string.IsNullOrEmpty(newStudent.StudentGoogleScholarProfile))
+        {
+            newStudent.StudentGoogleScholarProfile = "";
+        }
+
+        try
+        {
+            using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            // Log selected areas for debugging
+            Console.WriteLine($"Selected Areas for Update: {string.Join(", ", selectedAreasForAssessment.Select(a => a.AreaName))}");
+            Console.WriteLine($"Selected Target Areas for Update: {string.Join(", ", selectedTargetAreasForAssessment.Select(a => a.AreaName))}");
+            Console.WriteLine($"Selected Skills for Update: {string.Join(", ", selectedSkillsForAssessment.Select(s => s.SkillName))}");
+
+            // Update AreasOfExpertise and SelfAssesmentAreas with the selected areas
+            newStudent.AreasOfExpertise = string.Join(",", selectedAreasForAssessment.Select(a => a.AreaName));
+            newStudent.SelfAssesmentAreas = string.Join(",", selectedAreasForAssessment.Select(sa => $"{sa.AreaName}:{sa.Assessment}"));
+            newStudent.TargetAreas = string.Join(",", selectedTargetAreasForAssessment.Select(a => a.AreaName));
+
+            // Update TargetSkills with the selected skills and their assessments
+            newStudent.Keywords = string.Join(",", selectedSkillsForAssessment.Select(s => $"{s.SkillName}"));
+            newStudent.SelfAssesmentSkills = string.Join(",", selectedSkillsForAssessment.Select(sa => $"{sa.SkillName}:{sa.Assessment}"));
+            newStudent.TargetSkills = string.Join(",", selectedTargetSkillsForAssessment.Select(a => a.SkillName));
+
+            newStudent.LastProfileUpdate = DateTime.Now;
+
+            // Update PreferredRegions with the selected regions
+            newStudent.PreferedRegions = string.Join(",", selectedRegionsDictionary
+                .Where(kvp => kvp.Value)
+                .Select(kvp => kvp.Key));
+
+            // Update PreferredTowns with the selected towns in the required format
+            var preferredTownsList = new List<string>();
+
+            foreach (var region in Regions)
+            {
+                if (selectedRegionsDictionary.TryGetValue(region, out bool isSelected) && isSelected)
+                {
+                    if (RegionToTownsMap.TryGetValue(region, out var towns))
+                    {
+                        var selectedTowns = towns
+                            .Where(town => selectedTownsDictionary.TryGetValue(town, out bool townSelected) && townSelected)
+                            .ToList();
+
+                        if (selectedTowns.Any())
+                        {
+                            preferredTownsList.Add($"[{region}: {string.Join(", ", selectedTowns)}]");
+                        }
+                    }
+                }
+            }
+
+            newStudent.PreferredTowns = string.Join(", ", preferredTownsList);
+
+            // Debug output
+            Console.WriteLine($"Regions to save: {newStudent.PreferedRegions}");
+            Console.WriteLine($"Towns to save: {newStudent.PreferredTowns}");
+
+            if (isRegistered)
+            {
+                dbContext.Students.Update(newStudent);
+            }
+            else
+            {
+                dbContext.Students.Add(newStudent);
+            }
+
+            await dbContext.SaveChangesAsync();
+            updated = true;
+
+            // Reset error message on success
+            errorMessage = "";
+        }
+        catch (Exception ex)
+        {
+            error = true;
+            errorMessage = "Σφάλμα κατά την ενημέρωση. Παρακαλώ δοκιμάστε ξανά.";
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            // Reset input classes and state after delay
+            await Task.Delay(3000); // Keep the shake effect for 3 seconds
+            nameInputClass = "";
+            surnameInputClass = "";
+            telephoneInputClass = "";
+            addressInputClass = "";
+            pcInputClass = "";
+            regionInputClass = "";
+            townInputClass = "";
+            studyYearInputClass = "";
+            graduationDateInputClass = "";
+            ectsInputClass = "";
+            internshipInputClass = "";
+            thesisInputClass = "";
+            universityInputClass = "";
+            schoolInputClass = "";
+            departmentInputClass = "";
+            enrollmentDateInputClass = "";
+            levelOfDegreeInputClass = "";
+            areasValidationClass = "";
+            targetAreasValidationClass = "";
+            skillsValidationClass = "";
+            targetSkillsValidationClass = "";
+            areasValidationMessage = "";
+            targetAreasValidationMessage = "";
+            skillsValidationMessage = "";
+            targetSkillsValidationMessage = "";
+            nameValidationMessage = "";
+            surnameValidationMessage = "";
+            telephoneValidationMessage = "";
+
+    StateHasChanged(); // Force UI update to clear validation
+        }
+
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+
+    private async Task HandleFileChange(InputFileChangeEventArgs e)
+    {
+        var selectedFiles = e.GetMultipleFiles();
+        file = selectedFiles.FirstOrDefault();
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            newStudent.Image = buffer;
+        }
+    }
+
+    private async Task AgreeToTermsAsync()
+    {
+        agreeTerms = true;  // Update the checkbox state
+        customCheckbox?.SetValue(true); // Ensure checkbox is checked visually
+        StateHasChanged();  // Refresh the component state if neededO
+    }
+
+    private async Task DeclineTermsAsync()
+    {
+        agreeTerms = false;  // Update the checkbox state
+        customCheckbox?.SetValue(false); // Ensure checkbox is unchecked visually
+        StateHasChanged();  // Refresh the component state if needed
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        // Call your logic when the component parameters are set (including when bound properties change)
+        HandleDegreeLevelChange();
+    }
+
+    private void HandleDegreeLevelChange()
+    {
+        // Check if "Προπτυχιακός Φοιτητής" is selected
+        if (newStudent.LevelOfDegree != "Προπτυχιακός Φοιτητής")
+        {
+            // Enable manual input for the user
+            isManualInput = true;
+        }
+        else
+        {
+            isManualInput = false;
+        }
+
+        // Call StateHasChanged to update the UI if research fields need to appear/disappear
+        StateHasChanged();
+    }
+
+    private string GetValidationClass(string fieldValue)
+    {
+        return string.IsNullOrEmpty(fieldValue) && showValidationError ? "shake error" : "";
+    }
+
+    private string GetValidationClassForEmptyAreasWhenSaveStudentRegistration(int areasCount)
+    {
+        return areasCount == 0 && showValidationError ? "shake error" : "";
+    }
+
+    private void FilterAvailableAreas(ChangeEventArgs e)
+    {
+        areassearchTerm = e.Value.ToString();
+
+        // Filter the available areas based on the search term and exclude selected areas
+        filteredAreas = availableAreas
+            .Where(a => a.AreaName.Contains(areassearchTerm, StringComparison.OrdinalIgnoreCase) &&
+                        !selectedAreasForAssessment.Any(sa => sa.AreaName == a.AreaName))
+            .ToList();
+
+        StateHasChanged(); // Refresh UI
+    }
+
+    // Filter available skills based on search term
+    private void FilterAvailableSkills(ChangeEventArgs e)
+    {
+        skillsSearchTerm = e.Value?.ToString() ?? string.Empty;
+
+        filteredSkills = availableSkills
+            .Where(s => s.SkillName.Contains(skillsSearchTerm, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        StateHasChanged(); // Refresh UI
+    }
+
+    private void OnAreaSelect(ChangeEventArgs e)
+    {
+        var selectedArea = e.Value.ToString();
+
+        // If the area is selected, add it to the expanded areas
+        if (expandedAreas.Contains(selectedArea))
+        {
+            expandedAreas.Remove(selectedArea); // Collapse the area
+        }
+        else
+        {
+            expandedAreas.Add(selectedArea); // Expand the area
+        }
+
+        // Re-trigger the UI to reflect changes
+        StateHasChanged(); // Notify the UI to refresh
+    }
+
+    // Method to toggle the expansion of the selected area
+    private void ToggleExpansion(string areaName)
+    {
+        if (expandedAreas.Contains(areaName))
+        {
+            expandedAreas.Remove(areaName); // Collapse the area
+        }
+        else
+        {
+            expandedAreas.Add(areaName); // Expand the area
+        }
+
+        StateHasChanged(); // Refresh UI
+    }
+
+    private string? formattedRegNumber;
+
+    public string FormattedRegNumber
+    {
+        get
+        {
+            return FormatRegistryNumber(newStudent.RegNumber);
+        }
+        set
+        {
+            if (TryParseRegistryNumber(value, out long regNumber))
+            {
+                newStudent.RegNumber = regNumber;
+            }
+        }
+    }
+
+    private string FormatRegistryNumber(long regNumber)
+    {
+        string regNumberStr = regNumber.ToString("D13"); 
+        string xxxx = regNumberStr.Substring(0, 4);     
+        string yyyy = regNumberStr.Substring(4, 4);     
+        string zzzzz = regNumberStr.Substring(8, 5);    
+        return $"{xxxx}-{yyyy}-{zzzzz}";
+    }
+
+    private bool TryParseRegistryNumber(string formattedRegNumber, out long regNumber)
+    {
+        regNumber = 0;
+        if (string.IsNullOrWhiteSpace(formattedRegNumber))
+            return false;
+
+        // Remove hyphens and parse the numeric value
+        string numericValue = formattedRegNumber.Replace("-", "");
+        return long.TryParse(numericValue, out regNumber);
+    }
+
+    private void UpdateRegionSelection(string region, bool isSelected)
+    {
+        selectedRegionsDictionary[region] = isSelected;
+
+        // Automatically show towns when any region is selected
+        newStudent.PreferredTownsBoolean = selectedRegionsDictionary.Any(kvp => kvp.Value);
+
+        // Initialize towns for newly selected regions
+        if (isSelected && RegionToTownsMap.TryGetValue(region, out var towns))
+        {
+            foreach (var town in towns)
+            {
+                if (!selectedTownsDictionary.ContainsKey(town))
+                {
+                    selectedTownsDictionary[town] = false;
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private void UpdateTownSelection(string town, bool isSelected)
+    {
+        selectedTownsDictionary[town] = isSelected;
+        StateHasChanged();
+    }
+
+    private void InitializeTownsForSelectedRegions()
+    {
+        foreach (var region in Regions)
+        {
+            if (selectedRegionsDictionary.ContainsKey(region) && selectedRegionsDictionary[region])
+            {
+                if (RegionToTownsMap.ContainsKey(region))
+                {
+                    foreach (var town in RegionToTownsMap[region])
+                    {
+                        if (!selectedTownsDictionary.ContainsKey(town))
+                        {
+                            selectedTownsDictionary[town] = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void OnSchoolChange(ChangeEventArgs e)
+    {
+        newStudent.School = e.Value?.ToString();
+        UpdateDepartments();
+    }
+
+    private void UpdateDepartments()
+    {
+        if (!string.IsNullOrEmpty(newStudent.School) &&
+            schoolDepartments.ContainsKey(newStudent.School))
+        {
+            departments = schoolDepartments[newStudent.School];
+            // Reset department selection when school changes
+            newStudent.Department = string.Empty;
+        }
+        else
+        {
+            departments = new List<string>();
+            newStudent.Department = string.Empty;
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnDepartmentChange(ChangeEventArgs e)
+    {
+        newStudent.Department = e.Value?.ToString();
+    }
+
+    private string researchGroupMessage = "Γίνεται έλεγχος...";
+    private async Task CheckResearchGroupMembership()
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userEmail = user.Identity.Name;
+
+        // First, check if professor exists in any research group
+        var researchGroupMembership = await dbContext.ResearchGroup_NonFacultyMembers
+            .FirstOrDefaultAsync(rgp => rgp.PK_NonFacultyMemberEmail == userEmail);
+
+        if (researchGroupMembership != null)
+        {
+            // If found, get the research group details
+            var researchGroup = await dbContext.ResearchGroups
+                .FirstOrDefaultAsync(rg => rg.ResearchGroupEmail == researchGroupMembership.PK_ResearchGroupEmail);
+
+            newStudent.NameOfResearchGroupHeIsMember = researchGroup?.ResearchGroupName;
+            researchGroupMessage = "Είστε μέλος της ερευνητικής ομάδας";
+        }
+        else
+        {
+            newStudent.NameOfResearchGroupHeIsMember = "Δεν είστε μέλος σε κάποια Ερευνητική Ομάδα ακόμη";
+            researchGroupMessage = "Δεν βρέθηκε συμμετοχή σε ερευνητική ομάδα.";
+        }
+
+        StateHasChanged();
+    }
+}

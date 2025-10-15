@@ -1,0 +1,128 @@
+﻿@page "/settings"
+
+@using Auth0.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.EntityFrameworkCore
+@using QuizManager.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Net.Http.Json
+@using System.Net.Http
+@using System.Net.Http.Headers
+@using System.Text.Json
+@using System.Security.Claims
+@inject IConfiguration Configuration
+
+<style>
+    h3 {
+        font-size: 24px;
+        color: #FF5733;
+    }
+</style>
+
+<h3>Μόνιμη Διαγραφή Χρήστη</h3>
+
+<button @onclick="DeleteAccount" style="background-color: #f44336; color: white; padding: 10px 20px; border: none; cursor: pointer;">Διαγραφή Λογαριασμού</button>
+
+@inject Data.AppDbContext dbContext
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+
+@code {
+
+    private Student userData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserData();
+    }
+
+    private async Task LoadUserData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var userEmail = user.FindFirst("name")?.Value; 
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                userData = await dbContext.Students.FirstOrDefaultAsync(s => s.Email == userEmail);
+            }
+        }
+    }
+
+    private async Task DeleteAccount()
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure? This Action will delete your account permanently.");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            // Obtain the user ID of the currently authenticated user
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = user?.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId != null)
+            {
+                var domain = "dev-75kcw8hj0pzojdod.us.auth0.com";
+                var managementApiToken = Configuration["ManagementApiToken"];
+
+                var deleteUrl = $"https://{domain}/api/v2/users/{userId}";
+
+                var deleteRequest = new HttpRequestMessage(HttpMethod.Delete, deleteUrl);
+                deleteRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", managementApiToken);
+
+                var deleteResponse = await HttpClient.SendAsync(deleteRequest);
+
+                if (deleteResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"User with ID {userId} has been deleted.");
+                    await DeleteUser();
+                    NavigationManager.NavigateTo("/logout");
+                    await JSRuntime.InvokeVoidAsync("location.reload");
+                }
+                else
+                {
+                    var errorMessage = await deleteResponse.Content.ReadAsStringAsync();
+                    Console.Error.WriteLine($"Error deleting user: {errorMessage}");
+                }
+            }
+            else
+            {
+                Console.Error.WriteLine("User ID not found.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteUser()
+    {
+        try
+        {
+            if (userData != null)
+            {
+                dbContext.Students.Remove(userData);
+                await dbContext.SaveChangesAsync();
+                userData = null; // Clear user data after deletion
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle deletion error
+            Console.WriteLine($"Error deleting user data: {ex.Message}");
+        }
+    }
+}

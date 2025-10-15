@@ -1,0 +1,89 @@
+﻿@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@inject IJSRuntime JSRuntime
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Home</h5>
+                    <p class="card-text">Navigate to the home page.</p>
+                    <NavLink class="btn btn-primary" href="home" Match="NavLinkMatch.All">Go</NavLink>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Students</h5>
+                    <p class="card-text">Act as a Student.</p>
+                    <NavLink class="btn btn-primary" href="studentRegistration">Go</NavLink>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Companies</h5>
+                    <p class="card-text">Act as a Company.</p>
+                    <NavLink class="btn btn-primary" href="companyRegistration">Go</NavLink>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Professors</h5>
+                    <p class="card-text">Act as a Professor.</p>
+                    <NavLink class="btn btn-primary" href="professorRegistration">Go</NavLink>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private bool isAuthenticated;
+    private bool isEmailVerified;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity.IsAuthenticated;
+        if (isAuthenticated)
+        {
+            var user = authState.User;
+            isEmailVerified = IsEmailVerified(user);
+        }
+    }
+
+    // Check if the user's email is verified
+    private bool IsEmailVerified(ClaimsPrincipal user)
+    {
+        return user.Claims.Any(c => c.Type == "email_verified" && c.Value == "true");
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (isAuthenticated && !isEmailVerified)
+        {
+            // Delay the redirection by 2 seconds
+            JSRuntime.InvokeVoidAsync("setTimeout", "function() { window.location.href = 'https://localhost:7290'; }, 2000");
+        }
+    }
+}

@@ -1,0 +1,1013 @@
+﻿@page "/"
+
+@attribute [Authorize]
+@using QuizManager.Models
+@using QuizManager.Data
+@using System.Collections.Generic
+@using Microsoft.EntityFrameworkCore
+@inject IJSRuntime JS
+@inject HttpClient HttpClient
+
+
+
+<style>
+    .dark-red-text {
+        color: darkred;
+    }
+
+    .black-text {
+        color: black;
+    }
+
+    .good-message {
+        background-color: green;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    .center-uoa {
+        position: fixed;
+        display: block;
+        margin-left: 800px;
+        margin-right: 400px;
+        bottom: 60px;
+    }
+
+    .text-underlined {
+        text-decoration: underline;
+    }
+
+    .center-sev {
+        position: absolute;
+        display: block;
+        margin-left: 760px;
+        margin-right: 400px;
+        bottom: 230px;
+    }
+
+    .news-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 15px; /* Adjusted padding for a cleaner look */
+        border: 1px solid #e0e0e0; /* Lighter border */
+        border-radius: 10px; /* Smoother border radius */
+        background-color: #ffffff; /* White background */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        transition: transform 0.3s ease; /* Smooth transform on hover */
+    }
+
+    .news-container:hover {
+        transform: translateY(-5px); /* Lift effect on hover */
+    }
+
+    .news-article {
+        background-color: #fdfdfd; /* Slightly off-white background */
+        padding: 15px; /* More padding for better spacing */
+        border: 1px solid #e0e0e0; /* Lighter border */
+        border-radius: 8px; /* Smoother border radius */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+        font-size: 14px; /* Smaller font size */
+        transition: transform 0.3s ease; /* Smooth transform on hover */
+    }
+
+    .news-article:hover {
+        transform: translateY(-3px); /* Lift effect on hover */
+    }
+
+    .news-article h3 {
+        margin: 0 0 10px; /* Space between title and content */
+        font-size: 16px; /* Slightly larger font size */
+    }
+
+    .news-article p {
+        margin: 0;
+        color: #555; /* Softer text color */
+    }
+
+    .news-article a {
+        text-decoration: none; /* Remove underline from links */
+        color: #007bff; /* Modern link color */
+        transition: color 0.3s ease; /* Smooth color transition */
+    }
+
+    .news-article a:hover {
+        color: #0056b3; /* Darker color on hover */
+    }
+
+    .news-heading {
+        font-size: 20px; /* Larger font size */
+        font-weight: bold; /* Bold text */
+        color: orange; /* Orange color */
+    }
+
+    .right-side-content {
+        position: fixed;
+        right: 20px; /* Adjust this value to move it more/less to the right */
+        top: 40px; /* Adjust this value to move it more/less to the top */
+        width: 200px; /* Adjust the width as needed */
+    }
+
+    .useful-links {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        padding: 10px;
+        background-color: #f0f0f0; /* Background color */
+        border-top: 1px solid #ddd; /* Border on top */
+        width: 100%; /* Full width */
+    }
+
+    .useful-links ul {
+        list-style-type: none; /* Remove bullet points */
+        padding: 0;
+        margin: 0;
+    }
+
+    .useful-links ul li {
+        display: inline; /* Display links inline */
+        margin-right: 20px; /* Add spacing between links */
+    }
+
+    .useful-links a {
+        text-decoration: none; /* Remove underline from links */
+        color: #333; /* Link color */
+    }
+
+    .weather-container {
+        position: fixed;
+        bottom: 20px; /* Adjust top position as needed */
+        right: 10px; /* Adjust right position as needed */
+        background-color: #f0f0f0;
+        padding: 10px;
+    }
+
+    .main-container {
+        position: absolute; /* to ekana ablosute apo fixed 17/03/25 */
+        right: 20px; /* Keep this value for main container position */
+        top: 120px; /* Adjust this value as needed to move it more/less to the top */
+        width: 500px; /* Adjust the width as needed */
+        max-height: 80vh; /* Limit the height to 80% of the viewport height */
+        overflow-y: auto; /* Enable vertical scrolling */
+        padding-right: 15px; /* Optional: add some padding to the right */
+        transition: opacity 0.3s ease; /* Smooth transition for opacity */
+        opacity: 1; /* Set initial opacity */
+        visibility: visible; /* Ensure it is visible */
+    }
+
+
+    .hidden {
+        opacity: 0; /* Fade out effect */
+        visibility: hidden; /* Prevents interaction with hidden elements */
+        pointer-events: none; /* Prevents mouse interactions when hidden */
+    }
+
+    .toggle-arrow {
+        position: fixed; /* Keep fixed positioning */
+        right: 20px; /* Position the arrow */
+        top: 80px; /* Align with the top of the main container */
+        cursor: pointer;
+        font-size: 24px; /* Adjust size as needed */
+        display: flex; /* Use flexbox to align items */
+        align-items: center; /* Center vertically */
+    }
+
+    .toggle-text {
+        margin-left: 8px; /* Add some space between the icon and the text */
+        font-size: 18px; /* Adjust font size as needed */
+    }
+
+    .blue-icon {
+        color: blue; /* Set the color to blue */
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .pagination button {
+        margin: 0 5px;
+    }
+
+    /* Media Query for Smaller Screens */
+    @@media (max-width: 768px) {
+        .main-container {
+            position: relative; /* Remove fixed positioning */
+            width: 100%; /* Full width */
+            max-height: none; /* Remove height limit */
+            padding-right: 0; /* Remove padding */
+        }
+
+        .news-container,
+        .news-article {
+            display: none; /* Hide news and articles on smaller screens */
+        }
+
+        .right-side-content {
+            position: relative; /* Switch to relative positioning */
+            width: 100%; /* Full width */
+            top: 0; /* Remove top offset */
+        }
+
+        .useful-links {
+            position: relative; /* Switch to relative positioning */
+            padding: 10px;
+            font-size: 12px; /* Adjust font size */
+        }
+
+        .pagination {
+            flex-direction: column; /* Stack buttons vertically */
+            gap: 10px; /* Add gap between buttons */
+        }
+
+        .pagination button {
+            width: 100%; /* Full-width buttons */
+            padding: 10px;
+        }
+
+        .center-uoa,
+        .center-sev {
+            display: none; /* Hide on smaller screens */
+        }
+
+        .weather-container {
+            position: relative; /* Switch to relative positioning */
+            right: 0; /* Remove right offset */
+            bottom: 0; /* Align at the bottom */
+        }
+
+        .toggle-arrow {
+            top: 100px; /* Adjust position */
+            font-size: 20px; /* Smaller icon */
+        }
+
+        .toggle-text {
+            font-size: 16px; /* Smaller font size */
+        }
+    }
+</style>
+
+
+
+
+
+
+<PageTitle>Fogus Innovations & Services</PageTitle>
+
+@* FOROGRAFIA AVATAR TOU USER, PROS TO PARON DEN TO XREIAZOMAI
+<div>
+    <img src="@Picture" alt="User Picture" style="width: 100px; height: 100px; border-radius: 50%;">
+    <h1>Welcome @Username</h1>
+</div>
+*@
+
+
+<CascadingAuthenticationState>
+    @*
+    <div>
+        <div class="toggle-arrow" @onclick="ToggleContainer">
+            <i class="fa @(isHidden ? "fa-arrow-left" : "fa-arrow-right") blue-icon" id="arrow-icon"></i>
+            <span class="toggle-text">
+                @(isHidden ? "Εμφάνιση Ανακοινώσεων" : "Απόκρυψη Ανακοινώσεων")
+            </span>
+        </div>
+    </div>
+
+    <div class="main-container @(isHidden ? "hidden" : "")" id="main-container">
+        <!-- University News Section -->
+        <div id="university-news" class="news-container">
+            <h1 class="news-heading">
+                <span class="black-text">Πανεπιστήμιο Αθηνών</span>
+                <span class="dark-red-text"> - </span>Ανακοινώσεις
+            </h1>
+            <div id="university-news-content">
+                @if (newsArticles != null && newsArticles.Any())
+                {
+                    @foreach (var article in newsArticles)
+                    {
+                        <div class="news-article">
+                            <a href="@article.Url" target="_blank">@article.Title</a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>Καμία Ανακοίνωση....</p>
+                }
+            </div>
+        </div>
+        <br/>
+        <!-- SVSE News Section -->
+        <div id="svse-news" class="news-container">
+            <h1 class="news-heading">
+                <span class="black-text">Σύλλογος Βιομηχάνων Στερεάς Ελλάδας</span>
+                <span class="dark-red-text"> - </span>Ανακοινώσεις
+            </h1>
+            <div id="svse-news-content">
+                @if (svseNewsArticles != null && svseNewsArticles.Any())
+                {
+                    @foreach (var article in svseNewsArticles)
+                    {
+                        <div class="news-article">
+                            <a href="@article.Url" target="_blank">@article.Title</a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>Καμία Ανακοίνωση....</p>
+                }
+            </div>
+        </div>
+        <br />
+        <!-- Platform company announcements -->
+        <div class="news-container">
+            @if (Announcements != null && Announcements.Any(announcement => announcement.CompanyAnnouncementStatus == "Δημοσιευμένη"))
+            {
+                <div class="news-container">
+                    <h1 class="news-heading">
+                        <span style="color: #3333FF;">Πλατφόρμα</span>
+                        <span class="dark-red-text"> - </span>Ανακοινώσεις Εταιρειών
+                    </h1>
+
+                    <!-- Display paginated announcements sorted by upload date descending -->
+                    @foreach (var announcement in Announcements
+                   .Where(a => a.CompanyAnnouncementStatus == "Δημοσιευμένη")
+                   .OrderByDescending(a => a.CompanyAnnouncementUploadDate)
+                   .Skip((currentPage - 1) * pageSize)
+                   .Take(pageSize))
+                    {
+                        <div class="news-article" style="margin-bottom: 1px;">
+                            <!-- Clicking on title toggles description -->
+                            <a href="javascript:void(0);"
+                               @onclick="() => ToggleDescription(announcement.Id)"
+                               style="display: block; max-width: 100%; overflow-wrap: break-word;"
+                               title="Κάντε Κλικ εδώ για να δείτε την περιγραφή της ανακοίνωσης">
+                                <span class="black-text"><strong>@announcement.CompanyAnnouncementCompanyName</strong></span> - @announcement.CompanyAnnouncementTitle
+                                <span class="black-text">(@announcement.CompanyAnnouncementUploadDate.ToString("dd/MM/yyyy"))</span>
+                            </a>
+
+                            <!-- Show description based on toggle state -->
+                            <p class="announcement-description @(expandedAnnouncementId == announcement.Id ? "expanded" : "")">
+                                @announcement.CompanyAnnouncementDescription
+                            </p>
+                            <br />
+                            <!-- Show attachment only when the description is expanded -->
+                            @if (expandedAnnouncementId == announcement.Id && announcement.CompanyAnnouncementAttachmentFile != null && announcement.CompanyAnnouncementAttachmentFile.Length > 0)
+                            {
+                                <p class="announcement-attachment">
+                                    <a href="#"
+                                       @onclick="() => DownloadAnnouncementAttachmentFrontPage(announcement.CompanyAnnouncementAttachmentFile, announcement.CompanyAnnouncementTitle)"
+                                       class="darkred"
+                                       title="Κάντε Κλικ εδώ για να κατεβάσετε το αρχείο">
+                                        <i class="fa fa-download"></i> 
+                                        Συννημένο Αρχείο Ανακοίνωσης
+                                    </a>
+                                </p>
+                            }
+                        </div>
+                    }
+
+                    <div class="pagination">
+                        <button class="btn me-2" @onclick="() => ChangePage(currentPage - 1)" disabled="@(currentPage == 1)">Προηγούμενες</button>
+
+                        <button class="btn btn-secondary me-2" @onclick="() => ChangePage(currentPage + 1)" disabled="@(currentPage == totalPages)">Επόμενες</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p>Καμία Ανακοίνωση......</p>
+            }
+        </div>
+
+
+        <br />
+        <!-- Platform professor announcements -->
+        <div class="news-container">
+            @if (ProfessorAnnouncements != null && ProfessorAnnouncements.Any(announcement => announcement.ProfessorAnnouncementStatus == "Δημοσιευμένη"))
+            {
+                <div class="news-container">
+                    <h1 class="news-heading">
+                        <span style="color: #3333FF;">Πλατφόρμα</span>
+                        <span class="dark-red-text"> - </span>Ανακοινώσεις Καθηγητών
+                    </h1>
+
+                    <!-- Display paginated announcements sorted by upload date descending -->
+                    @foreach (var announcement in ProfessorAnnouncements
+                   .Where(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη")
+                   .OrderByDescending(a => a.ProfessorAnnouncementUploadDate)
+                   .Skip((currentPageForProfessorAnnouncements - 1) * pageSize)
+                   .Take(pageSize))
+                    {
+                        <div class="news-article" style="margin-bottom: 1px;">
+                            <!-- Clicking on title toggles description -->
+                            <a href="javascript:void(0);"
+                               @onclick="() => ToggleDescriptionForProfessorAnnouncements(announcement.Id)"
+                               style="display: block; max-width: 100%; overflow-wrap: break-word;"
+                               title="Κάντε Κλικ εδώ για να δείτε την περιγραφή της ανακοίνωσης">
+                                <span class="black-text"><strong>@announcement.ProfessorAnnouncementProfessorName</strong> <strong>@announcement.ProfessorAnnouncementProfessorSurname</strong></span> - @announcement.ProfessorAnnouncementTitle
+                                <span class="black-text">(@announcement.ProfessorAnnouncementUploadDate.ToString("dd/MM/yyyy"))</span>
+                            </a>
+                            <!-- Show description based on toggle state -->
+                            <p class="announcement-description @(expandedProfessorAnnouncementId == announcement.Id ? "expanded" : "")">
+                                @announcement.ProfessorAnnouncementDescription
+                            </p>
+                            <br />
+                            <!-- Show attachment only when description is expanded -->
+                            @if (expandedProfessorAnnouncementId == announcement.Id && announcement.ProfessorAnnouncementAttachmentFile != null && announcement.ProfessorAnnouncementAttachmentFile.Length > 0)
+                            {
+                                <p class="announcement-attachment">
+                                    <a href="#"
+                                       @onclick="() => DownloadProfessorAnnouncementAttachmentFrontPage(announcement.ProfessorAnnouncementAttachmentFile, announcement.ProfessorAnnouncementTitle)"
+                                       class="darkred"
+                                       title="Κάντε Κλικ εδώ για να κατεβάσετε το αρχείο">
+                                        <i class="fa fa-download"></i> <!-- Font Awesome download icon -->
+                                        Συννημένο Αρχείο Ανακοίνωσης
+                                    </a>
+                                </p>
+                            }
+                        </div>
+                    }
+                    <div class="pagination">
+                        <button class="btn me-2" @onclick="() => ChangePageForProfessorAnnouncements(currentPageForProfessorAnnouncements - 1)" disabled="@(currentPageForProfessorAnnouncements == 1)">Προηγούμενες</button>
+
+                        <button class="btn btn-secondary me-2" @onclick="() => ChangePageForProfessorAnnouncements(currentPageForProfessorAnnouncements + 1)" disabled="@(currentPageForProfessorAnnouncements == totalPagesForProfessorAnnouncements)">Επόμενες</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p>Καμία Ανακοίνωση......</p>
+            }
+        </div>
+
+
+        <br />
+        <div class="news-container">
+            @if (CompanyEventsToShowAtFrontPage != null && CompanyEventsToShowAtFrontPage.Any(eventItem => eventItem.CompanyEventStatus == "Δημοσιευμένη"))
+            {
+                <div class="news-container">
+                    <h1 class="news-heading">
+                        <span style="color: #3333FF;">Πλατφόρμα</span>
+                        <span class="dark-red-text"> - </span>Εκδηλώσεις Εταιρειών
+                    </h1>
+
+                    <!-- Display paginated events sorted by date descending -->
+                    @foreach (var eventItem in CompanyEventsToShowAtFrontPage
+                   .Where(e => e.CompanyEventStatus == "Δημοσιευμένη")
+                   .OrderByDescending(e => e.CompanyEventUploadedDate)
+                   .Skip((currentCompanyEventPage - 1) * currentCompanyEventpageSize)
+                   .Take(currentCompanyEventpageSize))
+                    {
+                        <div class="news-article" style="margin-bottom: 1px;">
+                            <!-- Clicking on title toggles description -->
+                            <a href="javascript:void(0);"
+                               @onclick="() => ToggleDescriptionForCompanyEvent(eventItem.Id)"
+                               style="display: block; max-width: 100%; overflow-wrap: break-word;"
+                               title="Κάντε Κλικ εδώ για να δείτε την περιγραφή της εκδήλωσης">
+                                <span class="black-text">
+                                    <strong>
+                                        @eventItem.CompanyEventCompanyName
+                                        @if (eventItem.CompanyEventOtherOrganizerToBeVisible)
+                                        {
+                                            @($" / {eventItem.CompanyEventOtherOrganizer}")
+                                        }
+                                    </strong>
+                                </span> - @eventItem.CompanyEventTitle
+                                <span class="black-text">(@eventItem.CompanyEventUploadedDate.ToString("dd/MM/yyyy"))</span>
+                            </a>
+                            <!-- Show description based on toggle state -->
+                            <p class="event-description @(expandedCompanyEventId == eventItem.Id ? "expanded" : "")">
+                                @eventItem.CompanyEventDescription
+                                @if (expandedCompanyEventId == eventItem.Id) // Only show location when expanded
+                                {
+                                    var location = $"{eventItem.CompanyEventPerifereiaLocation} ({eventItem.CompanyEventDimosLocation}) - {eventItem.CompanyEventPlaceLocation}";
+                                    if (!string.IsNullOrEmpty(location.Trim())) // Check if location is not empty
+                                    {
+                                        <br />
+                                        <span class="event-location">
+                                            <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(location)" target="_blank" title="Δείτε στον Χάρτη">
+                                                <i class="fas fa-map-marker-alt"></i> @location
+                                            </a>
+                                        </span> 
+                                    }
+                                }
+                            </p>
+                            <br />
+                            <!-- Show attachment only when description is expanded -->
+                            @if (expandedCompanyEventId == eventItem.Id && eventItem.CompanyEventAttachmentFile != null && eventItem.CompanyEventAttachmentFile.Length > 0)
+                            {
+                                <p class="event-attachment">
+                                    <a href="#"
+                                       @onclick="() => DownloadCompanyEventAttachmentFrontPage(eventItem.CompanyEventAttachmentFile, eventItem.CompanyEventTitle)"
+                                       class="darkred"
+                                       title="Κάντε Κλικ εδώ για να κατεβάσετε το αρχείο">
+                                        <i class="fa fa-download"></i> <!-- Font Awesome download icon -->
+                                        Συννημένο Αρχείο Εκδήλωσης
+                                    </a>
+                                </p>
+                            }
+                        </div>
+                    }
+
+                    <div class="pagination">
+                        <button class="btn me-2" @onclick="() => ChangePageForCompanyEvents(currentCompanyEventPage - 1)" disabled="@(currentCompanyEventPage == 1)">Προηγούμενες</button>
+
+                        <button class="btn btn-secondary me-2" @onclick="() => ChangePageForCompanyEvents(currentCompanyEventPage + 1)" disabled="@(currentCompanyEventPage == totalPagesForCompanyEvents)">Επόμενες</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p>Καμία Εκδήλωση......</p>
+            }
+        </div>
+
+        <br />
+
+        <div class="news-container">
+            @if (ProfessorEventsToShowAtFrontPage != null && ProfessorEventsToShowAtFrontPage.Any(eventItem => eventItem.ProfessorEventStatus == "Δημοσιευμένη"))
+            {
+                <div class="news-container">
+                    <h1 class="news-heading">
+                        <span style="color: #3333FF;">Πλατφόρμα</span>
+                        <span class="dark-red-text"> - </span>Εκδηλώσεις Καθηγητών
+                    </h1>
+
+                    @foreach (var eventItem in ProfessorEventsToShowAtFrontPage
+                   .Where(e => e.ProfessorEventStatus == "Δημοσιευμένη")
+                   .OrderByDescending(e => e.ProfessorEventUploadedDate)
+                   .Skip((currentProfessorEventPage - 1) * currentProfessorEventpageSize)
+                   .Take(currentProfessorEventpageSize))
+                    {
+                        <div class="news-article" style="margin-bottom: 1px;">
+                            <a href="javascript:void(0);"
+                               @onclick="() => ToggleDescriptionForProfessorEvent(eventItem.Id)"
+                               style="display: block; max-width: 100%; overflow-wrap: break-word;"
+                               title="Κάντε Κλικ εδώ για να δείτε την περιγραφή της εκδήλωσης">
+                                <span class="black-text">
+                                    <strong>
+                                        @eventItem.ProfessorEventProfessorName @eventItem.ProfessorEventProfessorSurName
+                                        @if (eventItem.ProfessorEventOtherOrganizer == "True")
+                                        {
+                                            @($" / {eventItem.ProfessorEventOtherOrganizer}")
+                                        }
+                                    </strong>
+                                </span> - @eventItem.ProfessorEventTitle
+                                <span class="black-text">(@eventItem.ProfessorEventActiveDate.ToString("dd/MM/yyyy"))</span>
+                            </a>
+                            <p class="event-description @(expandedProfessorEventId == eventItem.Id ? "expanded" : "")">
+                                @eventItem.ProfessorEventDescription
+                                @if (expandedProfessorEventId == eventItem.Id) 
+                                {
+                                    var location = $"{eventItem.ProfessorEventPerifereiaLocation} ({eventItem.ProfessorEventDimosLocation}) - {eventItem.ProfessorEventPlaceLocation}";
+                                    if (!string.IsNullOrEmpty(location.Trim())) 
+                                    {
+                                        <br />
+                                        <span class="event-location">
+                                            <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(location)" target="_blank" title="Δείτε στον Χάρτη">
+                                                <i class="fas fa-map-marker-alt"></i> @location
+                                            </a>
+                                        </span>
+                                    }
+                                }
+                            </p>
+                            <br />
+                            @if (expandedProfessorEventId == eventItem.Id && eventItem.ProfessorEventAttachmentFile != null && eventItem.ProfessorEventAttachmentFile.Length > 0)
+                            {
+                                <p class="event-attachment">
+                                    <a href="#"
+                                       @onclick="() => DownloadProfessorEventAttachmentFrontPage(eventItem.ProfessorEventAttachmentFile, eventItem.ProfessorEventTitle)"
+                                       class="darkred"
+                                       title="Κάντε Κλικ εδώ για να κατεβάσετε το αρχείο">
+                                        <i class="fa fa-download"></i> 
+                                        Συννημένο Αρχείο Εκδήλωσης
+                                    </a>
+                                </p>
+                            }
+                        </div>
+                    }
+
+                    <div class="pagination">
+                        <button class="btn me-2" @onclick="() => ChangePageForProfessorEvents(currentProfessorEventPage - 1)" disabled="@(currentProfessorEventPage == 1)">Προηγούμενες</button>
+
+                        <button class="btn btn-secondary me-2" @onclick="() => ChangePageForProfessorEvents(currentProfessorEventPage + 1)" disabled="@(currentProfessorEventPage == totalPagesForProfessorEvents)">Επόμενες</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p>Καμία Εκδήλωση......</p>
+            }
+        </div>
+        <br/>
+        <br />
+    </div>
+    *@
+</CascadingAuthenticationState>
+
+
+
+@code {
+    private string Username = "Anonymous User";
+    private string Picture = "";
+    private List<NewsArticle> newsArticles;
+    private List<NewsArticle> svseNewsArticles;
+    private string fetchError;
+    private WeatherData weatherData;
+    private string errorMessage;
+    public List<AnnouncementAsCompany> Announcements { get; set; }
+    private int expandedAnnouncementId = -1;
+    private bool isHidden = false;
+
+
+    private int currentPage = 1; // Tracks the current page
+    private int pageSize = 3;    // Number of announcements per page
+    private int totalPages => (int)Math.Ceiling((double)Announcements.Where(a => a.CompanyAnnouncementStatus == "Δημοσιευμένη").Count() / pageSize);
+
+    public List<AnnouncementAsProfessor> ProfessorAnnouncements { get; set; }
+    private int currentPageForProfessorAnnouncements = 1;
+    private int expandedProfessorAnnouncementId = -1;
+    private int totalPagesForProfessorAnnouncements => (int)Math.Ceiling((double)ProfessorAnnouncements.Where(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη").Count() / pageSize);
+
+    private int currentCompanyEventPage = 1;
+    private int currentCompanyEventpageSize = 3;
+    private int totalPagesForCompanyEvents => (int)Math.Ceiling((double)CompanyEventsToShowAtFrontPage.Where(a => a.CompanyEventStatus == "Δημοσιευμένη").Count() / currentCompanyEventpageSize);
+
+    private int currentProfessorEventPage = 1;
+    private int currentProfessorEventpageSize = 3;
+    private int totalPagesForProfessorEvents => (int)Math.Ceiling((double)ProfessorEventsToShowAtFrontPage.Where(a => a.ProfessorEventStatus == "Δημοσιευμένη").Count() / currentProfessorEventpageSize);
+
+
+    public List<CompanyEvent> CompanyEventsToShowAtFrontPage { get; set; }
+    private int expandedCompanyEventId = -1;
+
+    public List<ProfessorEvent> ProfessorEventsToShowAtFrontPage { get; set; }
+    private int expandedProfessorEventId = -1;
+
+
+    public class NewsArticle
+    {
+        public string Title { get; set; }
+        public string Url { get; set; }
+        public string Date { get; set; }
+        public string Category { get; set; }
+    }
+
+    public class WeatherData
+    {
+        public int is_day { get; set; }
+        public double temp_c { get; set; }
+    }
+
+    public class ConditionInfo
+    {
+        public string Text { get; set; }
+    }
+    public class WeatherResponse
+    {
+        public WeatherData current { get; set; }
+    }
+
+    private void ToggleDescriptionForCompanyEvent(int companyeventId)
+    {
+        if (expandedCompanyEventId == companyeventId)
+        {
+            expandedCompanyEventId = -1;
+            Console.WriteLine($"Collapsed event {companyeventId}");
+        }
+        else
+        {
+            expandedCompanyEventId = companyeventId;
+            Console.WriteLine($"Expanded event {companyeventId}");
+        }
+    }
+
+    private void ToggleDescriptionForProfessorEvent(int professoreventId)
+    {
+        if (expandedProfessorEventId == professoreventId)
+        {
+            expandedProfessorEventId = -1;
+            Console.WriteLine($"Collapsed event {professoreventId}");
+        }
+        else
+        {
+            expandedProfessorEventId = professoreventId;
+            Console.WriteLine($"Expanded event {professoreventId}");
+        }
+    }
+
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationState { get; set; }
+    [Inject]
+    private IDbContextFactory<Data.AppDbContext> DbContextFactory { get; set; }
+    [Inject]
+    private Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        newsArticles = await FetchNewsArticlesAsync();
+        svseNewsArticles = await FetchSVSENewsArticlesAsync();
+        Announcements = await FetchAnnouncementsAsync();
+        ProfessorAnnouncements = await FetchProfessorAnnouncementsAsync();
+
+        CompanyEventsToShowAtFrontPage = await FetchCompanyEventsAsync();
+        ProfessorEventsToShowAtFrontPage = await FetchProfessorEventsAsync();
+
+        if (authenticationState is not null)
+        {
+            var state = await authenticationState;
+            var user = state?.User;
+
+            Username = user?.Identity?.Name ?? "Anonymous User";
+
+            if (user?.Identity?.IsAuthenticated ?? false)
+            {
+                var userEmail = user.FindFirst("name")?.Value; // Get user's email from custom claim name (email CLAIM IS "name")
+                if (!string.IsNullOrEmpty(userEmail))
+                {
+                    using var dbContext = DbContextFactory.CreateDbContext();
+
+                    var studentWithEmail = await dbContext.Students.FirstOrDefaultAsync(s => s.Email == userEmail);
+                    if (studentWithEmail != null)
+                    {
+                        // Set Picture to the updated Image field from the database if it exists
+                        if (studentWithEmail.Image != null)
+                        {
+                            Picture = $"data:image/png;base64,{Convert.ToBase64String(studentWithEmail.Image)}";
+                        }
+                        else
+                        {
+                            // Use the existing picture URL from claims if no image is found in the database
+                            Picture = user.Claims.FirstOrDefault(c => c.Type == "picture")?.Value ?? "";
+                        }
+                    }
+                    else
+                    {
+                        // Use the existing picture URL from claims if no user is found in the database
+                        Picture = user.Claims.FirstOrDefault(c => c.Type == "picture")?.Value ?? "";
+                    }
+                }
+            }
+        }
+        await base.OnInitializedAsync();
+    }
+
+
+    private async Task<List<AnnouncementAsCompany>> FetchAnnouncementsAsync()
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+        var announcements = await dbContext.AnnouncementsAsCompany.AsNoTracking().ToListAsync();
+        return announcements;
+    }
+
+
+    private async Task<List<NewsArticle>> FetchNewsArticlesAsync()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync("https://www.uoa.gr/anakoinoseis_kai_ekdiloseis");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+
+            var htmlDocument = new HtmlAgilityPack.HtmlDocument();
+            htmlDocument.LoadHtml(content);
+
+            var articles = new List<NewsArticle>();
+
+            var articleNodes = htmlDocument.DocumentNode.SelectNodes("//div[contains(@class, 'topnews')]");
+            if (articleNodes != null)
+            {
+                // Limit the number of articles to 3
+                for (int i = 0; i < Math.Min(articleNodes.Count, 3); i++)
+                {
+                    var articleNode = articleNodes[i];
+
+                    var titleNode = articleNode.SelectSingleNode(".//h3[@class='article__title']/a");
+                    var title = titleNode?.InnerText.Trim();
+                    var relativeUrl = titleNode?.Attributes["href"]?.Value;
+                    var url = new Uri(new Uri("https://www.uoa.gr"), relativeUrl).ToString(); 
+
+                    var dateNode = articleNode.SelectSingleNode(".//span[@class='article__date']/time");
+                    var date = dateNode?.Attributes["datetime"]?.Value;
+
+                    var categoryNode = articleNode.SelectSingleNode(".//span[@class='article__category']/a");
+                    var category = categoryNode?.InnerText.Trim();
+
+                    articles.Add(new NewsArticle
+                        {
+                            Title = title,
+                            Url = url,
+                            Date = date,
+                            Category = category
+                        });
+                }
+            }
+
+            return articles;
+        }
+        catch (Exception ex)
+        {
+            fetchError = ex.Message;
+            return null;
+        }
+
+
+    }
+
+    private async Task<List<NewsArticle>> FetchSVSENewsArticlesAsync()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync("https://svse.gr/index.php/nea-anakoinoseis");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+
+            var htmlDocument = new HtmlAgilityPack.HtmlDocument();
+            htmlDocument.LoadHtml(content);
+
+            var articles = new List<NewsArticle>();
+
+            var articleNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[1]/div/section[2]/div/div/div/main/div/div[3]/div[1]/div/div");
+
+            if (articleNodes != null)
+            {
+                foreach (var articleNode in articleNodes.Take(3)) // Take only the first 3 articles
+                {
+                    var titleNode = articleNode.SelectSingleNode(".//h2/a");
+                    var title = titleNode?.InnerText.Trim();
+                    var relativeUrl = titleNode?.Attributes["href"]?.Value;
+                    var url = new Uri(new Uri("https://svse.gr"), relativeUrl).ToString(); 
+
+                    var dateNode = articleNode.SelectSingleNode(".//time");
+                    var date = dateNode?.InnerText.Trim();
+
+                    articles.Add(new NewsArticle
+                        {
+                            Title = title,
+                            Url = url,
+                            Date = date,
+                            Category = "SVSE News" 
+                        });
+                }
+            }
+            else
+            {
+                fetchError = "No articles found with the specified XPath.";
+            }
+
+            return articles;
+        }
+        catch (Exception ex)
+        {
+            fetchError = ex.Message;
+            return null;
+        }
+    }
+
+    private void ToggleDescription(int announcementId)
+    {
+        if (expandedAnnouncementId == announcementId)
+        {
+            expandedAnnouncementId = -1;
+        }
+        else
+        {
+            expandedAnnouncementId = announcementId;
+        }
+    }
+
+    private void ToggleContainer()
+    {
+        isHidden = !isHidden;
+    }
+
+    private async Task DownloadAnnouncementAttachmentFrontPage(byte[] attachmentData, string fileName)
+    {
+        if (attachmentData != null && attachmentData.Length > 0)
+        {
+            var mimeType = "application/pdf"; // Correct MIME type for PDF
+            await JS.InvokeVoidAsync("BlazorDownloadAttachmentPositionFile", fileName, mimeType, attachmentData);
+        }
+    }
+
+
+    private void ChangePage(int pageNumber)
+    {
+        if (pageNumber >= 1 && pageNumber <= totalPages)
+        {
+            currentPage = pageNumber;
+        }
+        StateHasChanged();
+    }
+
+    private void ToggleDescriptionForProfessorAnnouncements(int announcementId)
+    {
+        if (expandedProfessorAnnouncementId == announcementId)
+        {
+            // Collapse if the same announcement is clicked again
+            expandedProfessorAnnouncementId = -1;
+        }
+        else
+        {
+            // Expand the selected announcement
+            expandedProfessorAnnouncementId = announcementId;
+        }
+    }
+
+    private async Task DownloadProfessorAnnouncementAttachmentFrontPage(byte[] attachmentData, string fileName)
+    {
+        if (attachmentData != null && attachmentData.Length > 0)
+        {
+            var mimeType = "application/pdf"; // Correct MIME type for PDF
+
+            // Ensure the file name ends with .pdf
+            if (!fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                fileName += ".pdf";
+            }
+
+            await JS.InvokeVoidAsync("BlazorDownloadAttachmentPositionFile", fileName, mimeType, attachmentData);
+        }
+    }
+
+
+
+    private void ChangePageForProfessorAnnouncements(int pageNumberForProfessorAnnouncements)
+    {
+        if (pageNumberForProfessorAnnouncements >= 1 && pageNumberForProfessorAnnouncements <= totalPagesForProfessorAnnouncements)
+        {
+            currentPageForProfessorAnnouncements = pageNumberForProfessorAnnouncements;
+        }
+        StateHasChanged();
+    }
+
+    private async Task<List<AnnouncementAsProfessor>> FetchProfessorAnnouncementsAsync()
+    {
+        // Replace this with your actual logic to fetch announcements from your database or API
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+        var professorannouncements = await dbContext.AnnouncementsAsProfessor.AsNoTracking().ToListAsync(); // Example of fetching from a DbContext
+        return professorannouncements;
+    }
+
+    private async Task DownloadCompanyEventAttachmentFrontPage(byte[] attachmentData, string fileName)
+    {
+        if (attachmentData != null && attachmentData.Length > 0)
+        {
+            var base64 = Convert.ToBase64String(attachmentData);
+            var fileUrl = $"data:application/pdf;base64,{base64}";
+
+            await JS.InvokeVoidAsync("triggerDownload", fileUrl, fileName);
+        }
+    }
+
+    private async Task DownloadProfessorEventAttachmentFrontPage(byte[] attachmentData, string fileName)
+    {
+        if (attachmentData != null && attachmentData.Length > 0)
+        {
+            var base64 = Convert.ToBase64String(attachmentData);
+            var fileUrl = $"data:application/pdf;base64,{base64}";
+
+            await JS.InvokeVoidAsync("triggerDownload", fileUrl, fileName);
+        }
+    }
+
+    private void ChangePageForCompanyEvents(int pageNumberForCompanyEvents)
+    {
+        if (pageNumberForCompanyEvents >= 1 && pageNumberForCompanyEvents <= totalPagesForCompanyEvents)
+        {
+            currentCompanyEventPage = pageNumberForCompanyEvents;
+        }
+        StateHasChanged();
+    }
+
+    private void ChangePageForProfessorEvents(int pageNumberForProfessorEvents)
+    {
+        if (pageNumberForProfessorEvents >= 1 && pageNumberForProfessorEvents <= totalPagesForProfessorEvents)
+        {
+            currentProfessorEventPage = pageNumberForProfessorEvents;
+        }
+        StateHasChanged();
+    }
+
+    private async Task<List<CompanyEvent>> FetchCompanyEventsAsync()
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+        var companyevents = await dbContext.CompanyEvents.AsNoTracking().ToListAsync();
+        return companyevents;
+    }
+
+    private async Task<List<ProfessorEvent>> FetchProfessorEventsAsync()
+    {
+        using var dbContext = await DbContextFactory.CreateDbContextAsync();
+        var professorevents = await dbContext.ProfessorEvents.AsNoTracking().ToListAsync();
+        return professorevents;
+    }
+
+}
