@@ -1,0 +1,80 @@
+$ bash -lc 'python - <<'"'"'PY'"'"'
+from pathlib import Path
+text=Path('"'"'/Users/georgek/Downloads/MainLayout.razor.txt'"'"').read_text(encoding='"'"'utf-8'"'"',errors='"'"'ignore'"'"')
+idx=text.find('"'"'@code'"'"')
+print(idx)
+print(text[idx:idx+200])
+PY'
+3023805
+@code {
+
+    // Properties for Research Group search
+    private string searchResearchGroupNameAsCompanyToFindResearchGroup = "";
+    private string searchResearchGroupSchoolAsCompanyToFindResearchGro
+
+
+
+
+$ bash -lc 'python - <<'"'"'PY'"'"'
+from pathlib import Path
+text = Path('"'"'Shared/MainLayout.razor.cs'"'"').read_text()
+import re
+pattern = re.compile(r"private void SearchStudentsAsCompanyToFindStudent\(\)\s*\{.*?\n\}", re.S)
+match = pattern.search(text)
+print(match.group(0)[:1000])
+PY'
+
+
+$ bash -lc 'python - <<'"'"'PY'"'"'
+from pathlib import Path
+text = Path('"'"'Shared/MainLayout.razor.cs'"'"').read_text()
+start = text.find('"'"'private string searchNameOrSurname'"'"')
+end = text.find('"'"'private async Task HandleKeywordsInput'"'"', start)
+print(text[start:end])
+PY'
+
+  
+$ bash -lc 'python - <<'"'"'PY'"'"'
+from pathlib import Path
+text = Path('"'"'Shared/MainLayout.razor.cs'"'"').read_text()
+import re
+
+def extract(name):
+    pattern = re.compile(rf"private .*? {name}\(.*?\)\s*\{{.*?\n\}}", re.S)
+    m = pattern.search(text)
+    if m:
+        print(f"--- {name} ---")
+        print(m.group(0))
+        print()
+    else:
+        print(f"Not found: {name}")
+
+names = [
+    '"'"'HandleInput'"'"',
+    '"'"'SelectNameSurnameSuggestion'"'"',
+    '"'"'HandleAreasOfExpertiseInput'"'"',
+    '"'"'SelectAreasOfExpertiseSuggestion'"'"',
+    '"'"'RemoveSelectedAreaOfExpertise'"'"',
+    '"'"'HandleKeywordsInput'"'"',
+    '"'"'SelectKeywordsSuggestion'"'"',
+    '"'"'RemoveKeyword'"'"',
+    '"'"'OnStudentSchoolChanged'"'"',
+    '"'"'SearchStudentsAsCompanyToFindStudent'"'"',
+    '"'"'GetPaginatedStudents_SearchForStudentsAsCompany'"'"',
+    '"'"'GetVisiblePagesForStudents_SearchForStudentsAsCompany'"'"',
+    '"'"'GoToFirstPageForStudents_SearchForStudentsAsCompany'"'"',
+    '"'"'GoToLastPageForStudents_SearchForStudentsAsCompany'"'"',
+    '"'"'PreviousPageForStudents_SearchForStudentsAsCompany'"'"',
+    '"'"'NextPageForStudents_SearchForStudentsAsCompany'"'"',
+    '"'"'GoToPageForStudents_SearchForStudentsAsCompany'"'"',
+    '"'"'OnPageSizeChange_SearchForStudentsAsCompany'"'"',
+    '"'"'ShowStudentDetailsOnEyeIconWhenSearchForStudentsAsCompany'"'"',
+    '"'"'CloseModalStudentDetailsOnEyeIconWhenSearchForStudentsAsCompany'"'"',
+    '"'"'NormalizeAreas'"'"',
+    '"'"'NormalizeKeywords'"'"',
+    '"'"'DownloadStudentCVFromCompanyInternships'"'"'
+]
+for name in names:
+    extract(name)
+PY'
+--- HandleInput ---
