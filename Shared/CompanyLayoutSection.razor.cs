@@ -41,6 +41,8 @@ namespace QuizManager.Shared
         private List<CompanyEvent> companyEvents = new();
 
         // UI state properties
+        private bool isInitializedAsCompanyUser = false;
+        private bool isCompanyRegistered = false;
         private bool isForm1Visible = false;
         private bool isForm2Visible = false;
         private bool isAnnouncementsFormVisible = false;
@@ -355,6 +357,9 @@ namespace QuizManager.Shared
         // Component initialization
         protected override async Task OnInitializedAsync()
         {
+            isInitializedAsCompanyUser = false;
+            isCompanyRegistered = false;
+
             await LoadAreasAsync();
             await LoadSkillsAsync();
             await LoadCompanyData();
@@ -364,6 +369,8 @@ namespace QuizManager.Shared
             await LoadAnnouncements();
             await LoadEvents();
             await CalculateStatusCounts();
+
+            isInitializedAsCompanyUser = true;
         }
 
         // Data loading methods
@@ -379,43 +386,54 @@ namespace QuizManager.Shared
 
         private async Task LoadCompanyData()
         {
+            companyData = null;
+            isCompanyRegistered = false;
+
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
 
-            if (user.Identity.IsAuthenticated)
+            if (!(user.Identity?.IsAuthenticated ?? false))
             {
-                var userEmail = user.FindFirst("name")?.Value;
-                if (!string.IsNullOrEmpty(userEmail))
-                {
-                    companyData = await dbContext.Companies.FirstOrDefaultAsync(c => c.CompanyEmail == userEmail);
-                    if (companyData != null)
-                    {
-                        // Load company details
-                        companyName = companyData.CompanyName;
-                        companyAreas = companyData.CompanyAreas;
-                        companyTelephone = companyData.CompanyTelephone;
-                        companyWebsite = companyData.CompanyWebsite;
-                        companyLogo = companyData.CompanyLogo;
-                        companyDescription = companyData.CompanyDescription;
-                        companyShortName = companyData.CompanyShortName;
-                        companyType = companyData.CompanyType;
-                        companyActivity = companyData.CompanyActivity;
-                        companyCountry = companyData.CompanyCountry;
-                        companyLocation = companyData.CompanyLocation;
-                        companyPermanentPC = companyData.CompanyPC;
-                        companyRegions = companyData.CompanyRegions;
-                        companyTown = companyData.CompanyTown;
-                        companyHRName = companyData.CompanyHRName;
-                        companyHRSurname = companyData.CompanyHRSurname;
-                        companyHREmail = companyData.CompanyHREmail;
-                        companyHRTelephone = companyData.CompanyHRTelephone;
-                        companyAdminName = companyData.CompanyAdminName;
-                        companyAdminSurname = companyData.CompanyAdminSurname;
-                        companyAdminEmail = companyData.CompanyAdminEmail;
-                        companyAdminTelephone = companyData.CompanyAdminTelephone;
-                    }
-                }
+                return;
             }
+
+            var userEmail = user.FindFirst("name")?.Value;
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return;
+            }
+
+            companyData = await dbContext.Companies.FirstOrDefaultAsync(c => c.CompanyEmail == userEmail);
+            isCompanyRegistered = companyData != null;
+
+            if (!isCompanyRegistered)
+            {
+                return;
+            }
+
+            // Load company details
+            companyName = companyData.CompanyName;
+            companyAreas = companyData.CompanyAreas;
+            companyTelephone = companyData.CompanyTelephone;
+            companyWebsite = companyData.CompanyWebsite;
+            companyLogo = companyData.CompanyLogo;
+            companyDescription = companyData.CompanyDescription;
+            companyShortName = companyData.CompanyShortName;
+            companyType = companyData.CompanyType;
+            companyActivity = companyData.CompanyActivity;
+            companyCountry = companyData.CompanyCountry;
+            companyLocation = companyData.CompanyLocation;
+            companyPermanentPC = companyData.CompanyPC;
+            companyRegions = companyData.CompanyRegions;
+            companyTown = companyData.CompanyTown;
+            companyHRName = companyData.CompanyHRName;
+            companyHRSurname = companyData.CompanyHRSurname;
+            companyHREmail = companyData.CompanyHREmail;
+            companyHRTelephone = companyData.CompanyHRTelephone;
+            companyAdminName = companyData.CompanyAdminName;
+            companyAdminSurname = companyData.CompanyAdminSurname;
+            companyAdminEmail = companyData.CompanyAdminEmail;
+            companyAdminTelephone = companyData.CompanyAdminTelephone;
         }
 
         private async Task LoadJobs()
