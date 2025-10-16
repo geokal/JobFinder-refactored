@@ -85,9 +85,6 @@ namespace QuizManager.Shared
         private string searchKeywords = string.Empty;
         private List<string> keywordsSuggestions = new();
         private List<string> selectedKeywords = new();
-        private string searchAreasOfInterest = string.Empty;
-        private List<string> areasOfInterestSuggestions = new();
-        private List<string> selectedAreasOfInterest = new();
         private string searchNameSurnameAsCompanyToFindProfessor = "";
         private string searchSchoolAsCompanyToFindProfessor = "";
         private string searchDepartmentAsCompanyToFindProfessor = "";
@@ -395,22 +392,6 @@ namespace QuizManager.Shared
             if (!(user.Identity?.IsAuthenticated ?? false))
             {
                 return;
-            }
-
-            var userEmail = user.FindFirst("name")?.Value;
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                return;
-            }
-
-            companyData = await dbContext.Companies.FirstOrDefaultAsync(c => c.CompanyEmail == userEmail);
-            isCompanyRegistered = companyData != null;
-
-            if (!isCompanyRegistered)
-            {
-                return;
-            }
-
             }
 
             var userEmail = user.FindFirst("name")?.Value;
