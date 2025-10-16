@@ -395,7 +395,6 @@ namespace QuizManager.Shared
             if (!(user.Identity?.IsAuthenticated ?? false))
             {
                 return;
-<<<<<<< ours
             }
 
             var userEmail = user.FindFirst("name")?.Value;
@@ -412,7 +411,6 @@ namespace QuizManager.Shared
                 return;
             }
 
-=======
             }
 
             var userEmail = user.FindFirst("name")?.Value;
@@ -429,7 +427,6 @@ namespace QuizManager.Shared
                 return;
             }
 
->>>>>>> theirs
             // Load company details
             companyName = companyData.CompanyName;
             companyAreas = companyData.CompanyAreas;
