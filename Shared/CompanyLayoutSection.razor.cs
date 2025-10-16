@@ -395,6 +395,7 @@ namespace QuizManager.Shared
             if (!(user.Identity?.IsAuthenticated ?? false))
             {
                 return;
+<<<<<<< ours
             }
 
             var userEmail = user.FindFirst("name")?.Value;
@@ -411,6 +412,24 @@ namespace QuizManager.Shared
                 return;
             }
 
+=======
+            }
+
+            var userEmail = user.FindFirst("name")?.Value;
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return;
+            }
+
+            companyData = await dbContext.Companies.FirstOrDefaultAsync(c => c.CompanyEmail == userEmail);
+            isCompanyRegistered = companyData != null;
+
+            if (!isCompanyRegistered)
+            {
+                return;
+            }
+
+>>>>>>> theirs
             // Load company details
             companyName = companyData.CompanyName;
             companyAreas = companyData.CompanyAreas;
@@ -1413,13 +1432,23 @@ namespace QuizManager.Shared
             selectedResearchGroupWhenSearchForResearchGroupsAsCompany = researchGroup;
             showResearchGroupDetailsModalWhenSearchForResearchGroupsAsCompany = true;
 
+            facultyMembers.Clear();
+            nonFacultyMembers.Clear();
+            spinOffCompanies.Clear();
+            facultyMembersCount = 0;
+            nonFacultyMembersCount = 0;
+            activeResearchActionsCount = 0;
+            patentsCount = 0;
+
             if (!string.IsNullOrEmpty(researchGroup.ResearchGroupEmail))
             {
                 await LoadResearchGroupDetailsData(researchGroup.ResearchGroupEmail);
             }
+
+            await InvokeAsync(StateHasChanged);
         }
 
-        private void CloseModalResearchGroupDetailsOnEyeIconWhenSearchForResearchGroupsAsCompany()
+        private async Task CloseModalResearchGroupDetailsOnEyeIconWhenSearchForResearchGroupsAsCompany()
         {
             showResearchGroupDetailsModalWhenSearchForResearchGroupsAsCompany = false;
             selectedResearchGroupWhenSearchForResearchGroupsAsCompany = null;
@@ -1430,6 +1459,8 @@ namespace QuizManager.Shared
             nonFacultyMembersCount = 0;
             activeResearchActionsCount = 0;
             patentsCount = 0;
+
+            await InvokeAsync(StateHasChanged);
         }
 
         private async Task LoadResearchGroupDetailsData(string researchGroupEmail)
