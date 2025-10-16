@@ -5,6 +5,7 @@ using Microsoft.JSInterop;
 using LinqKit;
 using Newtonsoft.Json;
 using QuizManager.Data;
+using System;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using QuizManager.Models;
@@ -204,7 +205,7 @@ namespace QuizManager.Shared
             universityDepartments.Values.SelectMany(depts => depts).Distinct().ToList();
 
         // Data collections
-        private List<Student> searchResultsAsCompanyToFindStudent = new();
+        private List<Student>? searchResultsAsCompanyToFindStudent;
         private List<Professor> searchResultsAsCompanyToFindProfessor = new();
         private List<ResearchGroup> searchResultsAsCompanyToFindResearchGroup = new();
         private List<CompanyJobApplied> jobApplicationsmadeToCompany = new();
@@ -259,6 +260,8 @@ namespace QuizManager.Shared
         private int[] pageSizeOptions_SeeMyUploadedThesesAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
         private int[] pageSizeOptions_SeeMyUploadedEventsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
         private int[] pageSizeOptions_SearchForStudentsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        private int currentPageForStudents_SearchForStudentsAsCompany = 1;
+        private int StudentsPerPage_SearchForStudentsAsCompany = 3;
         private int[] pageSizeOptions_SearchForProfessorsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
         // Areas and skills
@@ -800,6 +803,121 @@ namespace QuizManager.Shared
         private void SearchStudentsAsCompanyToFindStudent()
         {
             // Implementation for student search
+        }
+
+        private int totalPagesForStudents_SearchForStudentsAsCompany =>
+            Math.Max(1,
+                (int)Math.Ceiling((double)(searchResultsAsCompanyToFindStudent?.Count ?? 0) /
+                                  Math.Max(1, StudentsPerPage_SearchForStudentsAsCompany)));
+
+        private IEnumerable<Student> GetPaginatedStudents_SearchForStudentsAsCompany()
+        {
+            return searchResultsAsCompanyToFindStudent?
+                       .Skip((currentPageForStudents_SearchForStudentsAsCompany - 1) *
+                            StudentsPerPage_SearchForStudentsAsCompany)
+                       .Take(StudentsPerPage_SearchForStudentsAsCompany)
+                   ?? Enumerable.Empty<Student>();
+        }
+
+        private void GoToFirstPageForStudents_SearchForStudentsAsCompany()
+        {
+            currentPageForStudents_SearchForStudentsAsCompany = 1;
+            StateHasChanged();
+        }
+
+        private void GoToLastPageForStudents_SearchForStudentsAsCompany()
+        {
+            currentPageForStudents_SearchForStudentsAsCompany =
+                Math.Max(1, totalPagesForStudents_SearchForStudentsAsCompany);
+            StateHasChanged();
+        }
+
+        private void PreviousPageForStudents_SearchForStudentsAsCompany()
+        {
+            if (currentPageForStudents_SearchForStudentsAsCompany > 1)
+            {
+                currentPageForStudents_SearchForStudentsAsCompany--;
+                StateHasChanged();
+            }
+        }
+
+        private void NextPageForStudents_SearchForStudentsAsCompany()
+        {
+            if (currentPageForStudents_SearchForStudentsAsCompany <
+                Math.Max(1, totalPagesForStudents_SearchForStudentsAsCompany))
+            {
+                currentPageForStudents_SearchForStudentsAsCompany++;
+                StateHasChanged();
+            }
+        }
+
+        private void GoToPageForStudents_SearchForStudentsAsCompany(int page)
+        {
+            if (page > 0 && page <= Math.Max(1, totalPagesForStudents_SearchForStudentsAsCompany))
+            {
+                currentPageForStudents_SearchForStudentsAsCompany = page;
+                StateHasChanged();
+            }
+        }
+
+        private List<int> GetVisiblePagesForStudents_SearchForStudentsAsCompany()
+        {
+            var pages = new List<int>();
+            int total = Math.Max(1, totalPagesForStudents_SearchForStudentsAsCompany);
+            int current = Math.Min(currentPageForStudents_SearchForStudentsAsCompany, total);
+
+            pages.Add(1);
+            if (current > 3) pages.Add(-1);
+
+            int start = Math.Max(2, current - 1);
+            int end = Math.Min(total - 1, current + 1);
+
+            for (int i = start; i <= end; i++)
+            {
+                pages.Add(i);
+            }
+
+            if (current < total - 2) pages.Add(-1);
+            if (total > 1) pages.Add(total);
+
+            return pages;
+        }
+
+        private void OnPageSizeChange_SearchForStudentsAsCompany(ChangeEventArgs e)
+        {
+            if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
+            {
+                StudentsPerPage_SearchForStudentsAsCompany = newSize;
+                currentPageForStudents_SearchForStudentsAsCompany = 1;
+                StateHasChanged();
+            }
+        }
+
+        private void ShowStudentDetailsOnEyeIconWhenSearchForStudentsAsCompany(Student student)
+        {
+            selectedStudentWhenSearchForStudentsAsCompany = student;
+            showStudentDetailsModalWhenSearchForStudentsAsCompany = true;
+        }
+
+        private void CloseModalStudentDetailsOnEyeIconWhenSearchForStudentsAsCompany()
+        {
+            showStudentDetailsModalWhenSearchForStudentsAsCompany = false;
+            selectedStudentWhenSearchForStudentsAsCompany = null;
+        }
+
+        private async Task DownloadStudentAttachmentAsCompanyInSearchForStudents(long studentId)
+        {
+            var student = await dbContext.Students
+                .Where(s => s.Id == (int)studentId)
+                .FirstOrDefaultAsync();
+
+            if (student?.Attachment != null)
+            {
+                string fileName = $"{student.Name}_{student.Surname}_CV.pdf";
+                const string mimeType = "application/pdf";
+                string base64Data = Convert.ToBase64String(student.Attachment);
+                await JS.InvokeVoidAsync("downloadFile", fileName, mimeType, base64Data);
+            }
         }
 
         private void HandleProfessorSchoolChanged(ChangeEventArgs e)

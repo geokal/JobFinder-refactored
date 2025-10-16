@@ -1683,25 +1683,13 @@ namespace QuizManager.Shared
             return string.Empty;
         }
 
-        private void OpenUrl(string url)
+        // News Article class
+        public class NewsArticle
         {
-            if (!string.IsNullOrWhiteSpace(url))
-            {
-                if (!url.StartsWith("http://") && !url.StartsWith("https://"))
-                {
-                    url = "http://" + url;
-                }
-                NavigationManager.NavigateTo(url, true);
-            }
-        }
-
-        private void OpenMap(string location)
-        {
-            if (!string.IsNullOrWhiteSpace(location))
-            {
-                var mapUrl = $"https://www.google.com/maps/search/?api=1&query={Uri.EscapeDataString(location)}";
-                NavigationManager.NavigateTo(mapUrl, true);
-            }
+            public string Title { get; set; }
+            public string Url { get; set; }
+            public string Date { get; set; }
+            public string Category { get; set; }
         }
     }
 }
