@@ -1,28 +1,77 @@
-@* Test version of CompanyLayoutSection to verify parameter binding *@
-
 @if (!IsInitialized)
 {
     <div class="alert alert-info">
-        <h4>Company Section - Loading</h4>
-        <p>IsInitialized: @IsInitialized</p>
-        <p>IsRegistered: @IsRegistered</p>
+        <h4>Εταιρεία - Φόρτωση...</h4>
+        <p>Η ενότητα εταιρειών φορτώνει. Παρακαλώ περιμένετε.</p>
     </div>
 }
 else if (!IsRegistered)
 {
-    <div class="alert alert-warning">
-        <h4>Company Section - Not Registered</h4>
-        <p>IsInitialized: @IsInitialized</p>
-        <p>IsRegistered: @IsRegistered</p>
-        <button class="btn btn-primary" @onclick="() => SetRegistered(true)">Register as Company</button>
+    <div class="card mt-4">
+        <div class="card-header bg-warning text-white">
+            <h4 class="mb-0">Εγγραφή Εταιρείας</h4>
+        </div>
+        <div class="card-body">
+            <p class="card-text">Δεν έχετε εγγραφεί ως εταιρεία. Παρακαλώ εγγραφείτε για να αποκτήσετε πρόσβαση στις λειτουργίες.</p>
+            <button class="btn btn-primary" @onclick="() => SetRegistered(true)">Εγγραφή ως Εταιρεία</button>
+        </div>
     </div>
 }
 else
 {
-    <div class="alert alert-success">
-        <h4>Company Section - Registered</h4>
-        <p>IsInitialized: @IsInitialized</p>
-        <p>IsRegistered: @IsRegistered</p>
-        <button class="btn btn-secondary" @onclick="() => SetRegistered(false)">Unregister</button>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Εταιρεία</h3>
+        <button class="btn btn-secondary" @onclick="() => SetRegistered(false)">Απεγγραφή</button>
+    </div>
+
+    <ul class="nav nav-tabs" id="companyTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="announcements-tab" data-bs-toggle="tab" href="#announcements" role="tab" aria-controls="announcements" aria-selected="true">Ανακοινώσεις</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="jobs-tab" data-bs-toggle="tab" href="#jobs" role="tab" aria-controls="jobs" aria-selected="false">Θέσεις Εργασίας</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="internships-tab" data-bs-toggle="tab" href="#internships" role="tab" aria-controls="internships" aria-selected="false">Πρακτικές Ασκήσεις</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="thesis-tab" data-bs-toggle="tab" href="#thesis" role="tab" aria-controls="thesis" aria-selected="false">Διπλωματικές</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="events-tab" data-bs-toggle="tab" href="#events" role="tab" aria-controls="events" aria-selected="false">Εκδηλώσεις</a>
+        </li>
+    </ul>
+    <div class="tab-content" id="companyTabsContent">
+        <div class="tab-pane fade show active" id="announcements" role="tabpanel" aria-labelledby="announcements-tab">
+            <h4 class="mt-3">Ανακοινώσεις Εταιρειών</h4>
+            <div class="alert alert-info">
+                <p><strong>Σημείωση:</strong> Αυτή είναι μια βελτιωμένη έκδοση του CompanyLayoutSection με βασική λειτουργικότητα.</p>
+                <p>Εδώ θα εμφανίζονται οι ανακοινώσεις για τις εταιρείες.</p>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="jobs" role="tabpanel" aria-labelledby="jobs-tab">
+            <h4 class="mt-3">Διαχείριση Θέσεων Εργασίας</h4>
+            <div class="alert alert-info">
+                <p>Εδώ θα εμφανίζονται οι διαθέσιμες θέσεις εργασίας που μπορείτε να διαχειριστείτε.</p>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="internships" role="tabpanel" aria-labelledby="internships-tab">
+            <h4 class="mt-3">Διαχείριση Πρακτικών Ασκήσεων</h4>
+            <div class="alert alert-info">
+                <p>Εδώ θα εμφανίζονται οι διαθέσιμες πρακτικές ασκήσεις που μπορείτε να διαχειριστείτε.</p>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="thesis" role="tabpanel" aria-labelledby="thesis-tab">
+            <h4 class="mt-3">Διαχείριση Διπλωματικών Εργασιών</h4>
+            <div class="alert alert-info">
+                <p>Εδώ θα εμφανίζονται οι διαθέσιμες διπλωματικές εργασίες που μπορείτε να διαχειριστείτε.</p>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="events" role="tabpanel" aria-labelledby="events-tab">
+            <h4 class="mt-3">Διαχείριση Εκδηλώσεων</h4>
+            <div class="alert alert-info">
+                <p>Εδώ θα εμφανίζονται οι εκδηλώσεις που μπορείτε να διαχειριστείτε.</p>
+            </div>
+        </div>
     </div>
 }
