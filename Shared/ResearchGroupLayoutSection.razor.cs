@@ -325,7 +325,7 @@ namespace QuizManager.Shared
 
         private async Task<List<AnnouncementAsCompany>> FetchAnnouncementsAsync()
         {
-            return await dbContext.AnnouncementAsCompany
+            return await dbContext.AnnouncementsAsCompany
                 .Include(a => a.Company)
                 .Where(a => a.CompanyAnnouncementStatus == "Δημοσιευμένη")
                 .OrderByDescending(a => a.CompanyAnnouncementUploadDate)
@@ -334,7 +334,7 @@ namespace QuizManager.Shared
 
         private async Task<List<AnnouncementAsProfessor>> FetchProfessorAnnouncementsAsync()
         {
-            return await dbContext.AnnouncementAsProfessor
+            return await dbContext.AnnouncementsAsProfessor
                 .Include(a => a.Professor)
                 .Where(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη")
                 .OrderByDescending(a => a.ProfessorAnnouncementUploadDate)
@@ -400,7 +400,7 @@ namespace QuizManager.Shared
                 .ToListAsync();
 
             allPublishedCompanies = await dbContext.Companies
-                .Where(c => c.CompanyApprovalStatus == "Εγκεκριμένη")
+                .Where(c => c.CompanyAcceptRules)
                 .OrderBy(c => c.CompanyName)
                 .ToListAsync();
 
@@ -573,7 +573,7 @@ namespace QuizManager.Shared
         private async Task SearchCompaniesAsRG()
         {
             IQueryable<Company> query = dbContext.Companies
-                .Where(c => c.CompanyApprovalStatus == "Εγκεκριμένη");
+                .Where(c => c.CompanyAcceptRules);
 
             if (!string.IsNullOrWhiteSpace(searchCompanyEmailAsRGToFindCompany))
             {
@@ -653,14 +653,16 @@ namespace QuizManager.Shared
 
             if (!string.IsNullOrWhiteSpace(searchAreasOfInterestAsRGToFindProfessor))
             {
-                query = query.Where(p => p.ProfAreasOfInterest.Contains(searchAreasOfInterestAsRGToFindProfessor));
+                query = query.Where(p => p.ProfGeneralFieldOfWork != null &&
+                                         p.ProfGeneralFieldOfWork.Contains(searchAreasOfInterestAsRGToFindProfessor));
             }
 
             if (selectedAreasOfInterestAsRG.Any())
             {
                 foreach (var area in selectedAreasOfInterestAsRG)
                 {
-                    query = query.Where(p => p.ProfAreasOfInterest.Contains(area));
+                    query = query.Where(p => p.ProfGeneralFieldOfWork != null &&
+                                             p.ProfGeneralFieldOfWork.Contains(area));
                 }
             }
 

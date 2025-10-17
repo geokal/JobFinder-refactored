@@ -26,19 +26,19 @@ namespace QuizManager.Shared
 {
     public partial class MainLayout
     {
-        [Inject] private FileUploadService FileUploadService { get; set; }
-        [Inject] private Data.AppDbContext dbContext { get; set; }
-        [Inject] private Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; }
-        [Inject] private HttpClient HttpClient { get; set; }
-        [Inject] private NavigationManager NavigationManager { get; set; }
-        [Inject] private InternshipEmailService InternshipEmailService { get; set; }
-        [Inject] private IJSRuntime JS { get; set; }
-        [Inject] private IAuth0Service Auth0Service { get; set; }
-        [Inject] private GoogleScholarService GoogleScholarService { get; set; }
+        [Inject] protected FileUploadService FileUploadService { get; set; }
+        [Inject] protected Data.AppDbContext dbContext { get; set; }
+        [Inject] protected Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+        [Inject] protected HttpClient HttpClient { get; set; }
+        [Inject] protected NavigationManager NavigationManager { get; set; }
+        [Inject] protected InternshipEmailService InternshipEmailService { get; set; }
+        [Inject] protected IJSRuntime JS { get; set; }
+        [Inject] protected IAuth0Service Auth0Service { get; set; }
+        [Inject] protected GoogleScholarService GoogleScholarService { get; set; }
 
 
-        private List<StudentWithAuth0Details> StudentsWithAuth0Details { get; set; } = new();
-        private string UserRole = "";
+        protected List<StudentWithAuth0Details> StudentsWithAuth0Details { get; set; } = new();
+        protected string UserRole = "";
         bool isStudentRegistered;
         bool isInitializedAsStudentUser = false;
         bool isCompanyRegistered;
@@ -46,16 +46,16 @@ namespace QuizManager.Shared
         bool isProfessorRegistered;
         bool isInitializedAsProfessorUser = false;
         string CurrentUserEmail = "";
-        private List<Student> Students = new List<Student>();
+        protected List<Student> Students = new List<Student>();
         bool isInitializedAsResearchGroupUser = false;
         bool isResearchGroupRegistered;
 
-        private bool ShouldShowAdminTable()
+        protected bool ShouldShowAdminTable()
         {
             return UserRole == "Admin" && !NavigationManager.Uri.Contains("/profile", StringComparison.OrdinalIgnoreCase);
         }
 
-        private async Task LoadStudentsAsync()
+        protected async Task LoadStudentsAsync()
         {
             // First get all students from your Students table
             Students = await dbContext.Students.ToListAsync();
@@ -64,23 +64,23 @@ namespace QuizManager.Shared
         bool showThesisApplications = false;
         bool showInternships = false;
         bool showJobApplications = false;
-        private Student userData;
-        private List<ProfessorThesisApplied> thesisApplications;
-        private List<ProfessorThesisApplied> professorthesisApplications;
-        private List<CompanyThesisApplied> companythesisApplications;
-        private List<CompanyJobApplied> jobApplications;
+        protected Student userData;
+        protected List<ProfessorThesisApplied> thesisApplications;
+        protected List<ProfessorThesisApplied> professorthesisApplications;
+        protected List<CompanyThesisApplied> companythesisApplications;
+        protected List<CompanyJobApplied> jobApplications;
         List<CompanyJob> jobs = new List<CompanyJob>();
         List<CompanyThesis> companytheses = new List<CompanyThesis>();
         List<ProfessorThesis> professortheses = new List<ProfessorThesis>();
         List<AnnouncementAsCompany> announcements = new List<AnnouncementAsCompany>();
         List<ProfessorThesis> theses = new List<ProfessorThesis>();
         List<CompanyInternship> companyinternships = new List<CompanyInternship>();
-        private bool ShowStudentRegistrationButton = false;
-        private bool ShowCompanyRegistrationButton = false;
-        private bool ShowProfessorRegistrationButton = false;
-        private bool ShowAdminRegistrationButton = false;
-        private bool isStudentStatsFormVisibleToShowStudentStatsAsAdmin = false;
-        private bool isAnalyticsVisible = false;
+        protected bool ShowStudentRegistrationButton = false;
+        protected bool ShowCompanyRegistrationButton = false;
+        protected bool ShowProfessorRegistrationButton = false;
+        protected bool ShowAdminRegistrationButton = false;
+        protected bool isStudentStatsFormVisibleToShowStudentStatsAsAdmin = false;
+        protected bool isAnalyticsVisible = false;
 
         string thesisSearch = "";
         string jobSearch = "";
@@ -93,625 +93,625 @@ namespace QuizManager.Shared
         string jobSearchByTown = "";
         string jobSearchByRegion = "";
         string companyjobSearchByRegion = "";
-        private string companyinternshipSearchByTown = "";
-        private bool companyinternshipSearchByTransportOffer;
-        private bool companyjobSearchByTransportOffer;
+        protected string companyinternshipSearchByTown = "";
+        protected bool companyinternshipSearchByTransportOffer;
+        protected bool companyjobSearchByTransportOffer;
         string companyinternshipSearchByArea = "";
-        private List<Area> Areas = new();
-        private List<Skill> Skills = new();
-        private DateTime? internshipSearchByActiveStartDate;
-        private string startDateInput;
-        private string searchMonthInput;
-        private string searchYearInput;
-        private int? searchMonth;
-        private int? searchYear;
-        private int? selectedMonth;
+        protected List<Area> Areas = new();
+        protected List<Skill> Skills = new();
+        protected DateTime? internshipSearchByActiveStartDate;
+        protected string startDateInput;
+        protected string searchMonthInput;
+        protected string searchYearInput;
+        protected int? searchMonth;
+        protected int? searchYear;
+        protected int? selectedMonth;
 
-        private bool IsCompanyRegistrationPage => NavigationManager.Uri.Contains("/companyRegistration");
+        protected bool IsCompanyRegistrationPage => NavigationManager.Uri.Contains("/companyRegistration");
 
-        private string emailUsedToUploadThesis = "";
-        private string professorNameSearch = "";
-        private string professorSurnameSearch = "";
-        private DateTime? thesisUploadDateTime;
-        private int? thesisUploadMonth;
+        protected string emailUsedToUploadThesis = "";
+        protected string professorNameSearch = "";
+        protected string professorSurnameSearch = "";
+        protected DateTime? thesisUploadDateTime;
+        protected int? thesisUploadMonth;
         bool showStudentThesisApplications = false;
         bool showStudentJobApplications = false;
 
-        private CompanyJob job = new CompanyJob();
-        private CompanyThesis thesis = new CompanyThesis();
-        private AnnouncementAsCompany announcement = new AnnouncementAsCompany();
-        private AnnouncementAsProfessor professorannouncement = new AnnouncementAsProfessor();
-        private ProfessorThesis professorthesis = new ProfessorThesis();
-        private IBrowserFile? uploadedFile;
-        private bool showSuccessMessage = false;
-        private bool showErrorMessage = false;
+        protected CompanyJob job = new CompanyJob();
+        protected CompanyThesis thesis = new CompanyThesis();
+        protected AnnouncementAsCompany announcement = new AnnouncementAsCompany();
+        protected AnnouncementAsProfessor professorannouncement = new AnnouncementAsProfessor();
+        protected ProfessorThesis professorthesis = new ProfessorThesis();
+        protected IBrowserFile? uploadedFile;
+        protected bool showSuccessMessage = false;
+        protected bool showErrorMessage = false;
 
-        private bool showErrorMessagesForAreasWhenUploadJobAsCompany = false;
-        private bool showErrorMessagesForAreasWhenUploadInternshipAsCompany = false;
-        private bool showErrorMessagesForSkillsWhenUploadThesisAsCompany = false;
+        protected bool showErrorMessagesForAreasWhenUploadJobAsCompany = false;
+        protected bool showErrorMessagesForAreasWhenUploadInternshipAsCompany = false;
+        protected bool showErrorMessagesForSkillsWhenUploadThesisAsCompany = false;
 
-        private bool showErrorMessageforUploadingjobsAsCompany = false;
-        private bool showErrorMessageforUploadinginternshipsAsProfessor = false;
-        private bool showErrorMessageforUploadingthesisAsCompany = false;
-        private bool showErrorMessageforUploadingannouncementsAsCompany = false;
-        private bool showErrorMessageforUploadingannouncementsAsProfessor = false;
-        private bool showErrorMessageforUploadingThesisAsProfessor = false;
-        private bool showErrorMessageForUploadingCompanyEvent = false;
-        private bool showErrorMessageForUploadingProfessorEvent = false;
-        private bool showSuccessUpdateMessage = false;
-        private bool isEditing = false;
-        private string? companyName;
-        private string? companyAreas;
-        private string? companyTelephone;
-        private string? companyWebsite;
-        private byte[]? companyLogo;
-        private string? companyDescription;
-        private string? companyShortName;
-        private string? companyType;
-        private string? companyActivity;
-        private string? companyCountry;
-        private string? companyLocation;
-        private long? companyPermanentPC;
-        private string? companyRegions;
-        private string? companyTown;
-        private string? companyHRName;
-        private string? companyHRSurname;
-        private string? companyHREmail;
-        private string? companyHRTelephone;
-        private string? companyAdminName;
-        private string? companyAdminSurname;
-        private string? companyAdminEmail;
-        private string? companyAdminTelephone;
-        private Dictionary<long, int> numberOfCompanyPeopleInputWhenCompanyShowsInterestInProfessorEvent = new Dictionary<long, int>();
+        protected bool showErrorMessageforUploadingjobsAsCompany = false;
+        protected bool showErrorMessageforUploadinginternshipsAsProfessor = false;
+        protected bool showErrorMessageforUploadingthesisAsCompany = false;
+        protected bool showErrorMessageforUploadingannouncementsAsCompany = false;
+        protected bool showErrorMessageforUploadingannouncementsAsProfessor = false;
+        protected bool showErrorMessageforUploadingThesisAsProfessor = false;
+        protected bool showErrorMessageForUploadingCompanyEvent = false;
+        protected bool showErrorMessageForUploadingProfessorEvent = false;
+        protected bool showSuccessUpdateMessage = false;
+        protected bool isEditing = false;
+        protected string? companyName;
+        protected string? companyAreas;
+        protected string? companyTelephone;
+        protected string? companyWebsite;
+        protected byte[]? companyLogo;
+        protected string? companyDescription;
+        protected string? companyShortName;
+        protected string? companyType;
+        protected string? companyActivity;
+        protected string? companyCountry;
+        protected string? companyLocation;
+        protected long? companyPermanentPC;
+        protected string? companyRegions;
+        protected string? companyTown;
+        protected string? companyHRName;
+        protected string? companyHRSurname;
+        protected string? companyHREmail;
+        protected string? companyHRTelephone;
+        protected string? companyAdminName;
+        protected string? companyAdminSurname;
+        protected string? companyAdminEmail;
+        protected string? companyAdminTelephone;
+        protected Dictionary<long, int> numberOfCompanyPeopleInputWhenCompanyShowsInterestInProfessorEvent = new Dictionary<long, int>();
 
-        private string? professorName;
-        private string? professorUniversity;
-        private string? professorUniversityDepartment;
-        private byte[]? professorImage;
-        private string? professorSurname;
-        private string? professorVathmidaDEP;
-        private string? companyEmail;
-        private string? professorPersonalTelephone;
-        private string? professorWorkTelephone;
-        private string? professorDepartment;
-        private string? professorGeneralFieldOfWork;
-        private string? professorGeneralSkills;
-        private string? professorPersonalDescription;
+        protected string? professorName;
+        protected string? professorUniversity;
+        protected string? professorUniversityDepartment;
+        protected byte[]? professorImage;
+        protected string? professorSurname;
+        protected string? professorVathmidaDEP;
+        protected string? companyEmail;
+        protected string? professorPersonalTelephone;
+        protected string? professorWorkTelephone;
+        protected string? professorDepartment;
+        protected string? professorGeneralFieldOfWork;
+        protected string? professorGeneralSkills;
+        protected string? professorPersonalDescription;
 
-        private string? professorLinkedInProfile;
-        private string? professorPersonalWebsite;
-        private string? professorScholarProfile;
-        private string? professorOrchidProfile;
+        protected string? professorLinkedInProfile;
+        protected string? professorPersonalWebsite;
+        protected string? professorScholarProfile;
+        protected string? professorOrchidProfile;
 
-        private bool isForm1Visible = false;
-        private bool isAnnouncementsFormVisible = false;
-        private bool isAnnouncementsFormVisibleToShowGeneralAnnouncementsAndEventsAsCompany = false;
-        private bool isAnnouncementsFormVisibleToShowGeneralAnnouncementsAndEventsAsRG = false;
-        private bool isProfessorAnnouncementsFormVisible = false;
-        private bool isProfessorThesisFormVisible = false;
-        private bool isProfessorInternshipFormVisible = false;
-        private bool isProfessorSearchStudentFormVisible = false;
-        private bool isProfessorSearchCompanyFormVisible = false;
-        private bool isRGSearchCompanyFormVisible = false;
-        private bool isForm2Visible = false;
-        private bool isShowActiveThesesAsCompanyFormVisible = false;
-        private bool isThesisApplicationsVisible = false;
-        private bool isAnnouncementsAsStudentVisible = false;
-        private bool isAnnouncementsAsRGVisible = false;
-        private bool isAnnouncementsAsProfessorVisible = false;
-        private bool isSearchInternshipsAsStudentFiltersVisible = false;
-        private bool isJobApplicationsAsStudentVisible = false;
-        private bool isJobPositionAsStudentFiltersVisible = false;
-        private bool isInternshipApplicationsAsStudentVisible = false;
-        private bool isInternshipSearchAsStudentFiltersVisible = false;
-        private bool isEventSearchAsStudentVisible = false;
+        protected bool isForm1Visible = false;
+        protected bool isAnnouncementsFormVisible = false;
+        protected bool isAnnouncementsFormVisibleToShowGeneralAnnouncementsAndEventsAsCompany = false;
+        protected bool isAnnouncementsFormVisibleToShowGeneralAnnouncementsAndEventsAsRG = false;
+        protected bool isProfessorAnnouncementsFormVisible = false;
+        protected bool isProfessorThesisFormVisible = false;
+        protected bool isProfessorInternshipFormVisible = false;
+        protected bool isProfessorSearchStudentFormVisible = false;
+        protected bool isProfessorSearchCompanyFormVisible = false;
+        protected bool isRGSearchCompanyFormVisible = false;
+        protected bool isForm2Visible = false;
+        protected bool isShowActiveThesesAsCompanyFormVisible = false;
+        protected bool isThesisApplicationsVisible = false;
+        protected bool isAnnouncementsAsStudentVisible = false;
+        protected bool isAnnouncementsAsRGVisible = false;
+        protected bool isAnnouncementsAsProfessorVisible = false;
+        protected bool isSearchInternshipsAsStudentFiltersVisible = false;
+        protected bool isJobApplicationsAsStudentVisible = false;
+        protected bool isJobPositionAsStudentFiltersVisible = false;
+        protected bool isInternshipApplicationsAsStudentVisible = false;
+        protected bool isInternshipSearchAsStudentFiltersVisible = false;
+        protected bool isEventSearchAsStudentVisible = false;
 
-        private Dictionary<int, bool> positionDetails = new Dictionary<int, bool>();
-        private List<CompanyJob> companyJobs;
+        protected Dictionary<int, bool> positionDetails = new Dictionary<int, bool>();
+        protected List<CompanyJob> companyJobs;
 
         bool showApplications = false;
-        private List<CompanyJobApplied> jobApplicationsmadeToCompany = new List<CompanyJobApplied>(); // List for job applications
-        private Company companyData;
+        protected List<CompanyJobApplied> jobApplicationsmadeToCompany = new List<CompanyJobApplied>(); // List for job applications
+        protected Company companyData;
 
-        private Company companyDatas = new Company();
+        protected Company companyDatas = new Company();
 
-        private long? selectedPositionId = null;
+        protected long? selectedPositionId = null;
 
-        private int totalStudentsCount = 0;
-        private bool isDoughnutChartVisible = false;
-        private bool isDepartmentDistributionChartVisible = false;
-        private Dictionary<string, int> departmentDistribution = new Dictionary<string, int>();
-        private Dictionary<string, int> skillDistribution = new Dictionary<string, int>();
-        private bool hasReadAsCompanyPermission = false;
+        protected int totalStudentsCount = 0;
+        protected bool isDoughnutChartVisible = false;
+        protected bool isDepartmentDistributionChartVisible = false;
+        protected Dictionary<string, int> departmentDistribution = new Dictionary<string, int>();
+        protected Dictionary<string, int> skillDistribution = new Dictionary<string, int>();
+        protected bool hasReadAsCompanyPermission = false;
 
-        private bool isUploadCompanyInternshipsFormVisible = false;
-        private bool isUploadCompanyThesisFormVisible = false;
-        private bool isShowActiveInternshipsAsCompanyFormVisible = false;
-        private bool isShowActiveInternshipsAsProfessorFormVisible = false;
-        private bool isUploadCompanyEventFormVisible = false;
+        protected bool isUploadCompanyInternshipsFormVisible = false;
+        protected bool isUploadCompanyThesisFormVisible = false;
+        protected bool isShowActiveInternshipsAsCompanyFormVisible = false;
+        protected bool isShowActiveInternshipsAsProfessorFormVisible = false;
+        protected bool isUploadCompanyEventFormVisible = false;
 
-        private bool isShowActiveJobsAsCompanyFormVisible = false;
-        private bool isUploadProfessorEventFormVisible = false;
+        protected bool isShowActiveJobsAsCompanyFormVisible = false;
+        protected bool isUploadProfessorEventFormVisible = false;
 
-        private CompanyInternship companyInternship = new CompanyInternship();
-        private CompanyThesis companyThesis = new CompanyThesis();
+        protected CompanyInternship companyInternship = new CompanyInternship();
+        protected CompanyThesis companyThesis = new CompanyThesis();
 
-        private string selectedRegion = "";
-        private string selectedTown = "";
-        private Dictionary<string, bool> selectedTownsDictionary = new Dictionary<string, bool>();
-        private HashSet<string> selectedRegions = new HashSet<string>();
-        private Dictionary<string, bool> selectedRegionsDictionary = new Dictionary<string, bool>();
-        private List<Area> availableAreas = new List<Area>();
-        private List<Skill> availableSkills = new List<Skill>();
-        private List<string> expandedAreas = new List<string>();
-        private List<SelectedArea> selectedAreasForAssessment = new List<SelectedArea>();
+        protected string selectedRegion = "";
+        protected string selectedTown = "";
+        protected Dictionary<string, bool> selectedTownsDictionary = new Dictionary<string, bool>();
+        protected HashSet<string> selectedRegions = new HashSet<string>();
+        protected Dictionary<string, bool> selectedRegionsDictionary = new Dictionary<string, bool>();
+        protected List<Area> availableAreas = new List<Area>();
+        protected List<Skill> availableSkills = new List<Skill>();
+        protected List<string> expandedAreas = new List<string>();
+        protected List<SelectedArea> selectedAreasForAssessment = new List<SelectedArea>();
 
-        private string companyNameSearch { get; set; }
-        private string emailSearch { get; set; }
-        private string positionTypeSearch { get; set; }
+        protected string companyNameSearch { get; set; }
+        protected string emailSearch { get; set; }
+        protected string positionTypeSearch { get; set; }
 
-        private string companyThesisSearch { get; set; }
-        private string companyEmailSearch { get; set; }
-        private string normalizedThesisSearch { get; set; }
-        private string normalizedEmailSearch { get; set; }
-        private string normalizedProfessorNameSearch { get; set; }
-        private string normalizedProfessorSurnameSearch { get; set; }
+        protected string companyThesisSearch { get; set; }
+        protected string companyEmailSearch { get; set; }
+        protected string normalizedThesisSearch { get; set; }
+        protected string normalizedEmailSearch { get; set; }
+        protected string normalizedProfessorNameSearch { get; set; }
+        protected string normalizedProfessorSurnameSearch { get; set; }
 
-        private DateTime? uploadDateSearch { get; set; }
+        protected DateTime? uploadDateSearch { get; set; }
 
-        private CompanyInternship companyinternship = new CompanyInternship();
-        private string selectedRegionForInternship;
-        private List<string> filteredTownsForInternship;
+        protected CompanyInternship companyinternship = new CompanyInternship();
+        protected string selectedRegionForInternship;
+        protected List<string> filteredTownsForInternship;
 
-        private List<CompanyInternship> internships = new List<CompanyInternship>();
-        private List<ProfessorInternship> professorInternships = new List<ProfessorInternship>();
+        protected List<CompanyInternship> internships = new List<CompanyInternship>();
+        protected List<ProfessorInternship> professorInternships = new List<ProfessorInternship>();
 
-        private List<string> InternshipAsCompanyStatusOptions = new List<string> { "Δημοσιευμένη", "Μη Δημοσιευμένη", "Αποσυρμένη" };
+        protected List<string> InternshipAsCompanyStatusOptions = new List<string> { "Δημοσιευμένη", "Μη Δημοσιευμένη", "Αποσυρμένη" };
 
-        private string selectedStatusFilterForInternships = "Όλα";
-        private string selectedStatusFilterForProfessorInternships = "Όλα";
-        private string selectedStatusFilterForCompanyTheses = "Όλα";
-        private string selectedStatusFilterForJobs = "Όλα";
-        private string selectedStatusFilterForAnnouncements = "Όλα";
-        private string selectedStatusFilterForAnnouncementsAsProfessor = "Όλα";
-        private string selectedStatusFilterForEventsAsCompany = "Όλα";
-        private string selectedStatusFilterForEventsAsProfessor = "Όλα";
-        private string selectedStatusFilterForThesesAsProfessor = "Όλα";
+        protected string selectedStatusFilterForInternships = "Όλα";
+        protected string selectedStatusFilterForProfessorInternships = "Όλα";
+        protected string selectedStatusFilterForCompanyTheses = "Όλα";
+        protected string selectedStatusFilterForJobs = "Όλα";
+        protected string selectedStatusFilterForAnnouncements = "Όλα";
+        protected string selectedStatusFilterForAnnouncementsAsProfessor = "Όλα";
+        protected string selectedStatusFilterForEventsAsCompany = "Όλα";
+        protected string selectedStatusFilterForEventsAsProfessor = "Όλα";
+        protected string selectedStatusFilterForThesesAsProfessor = "Όλα";
 
-        private CompanyInternship selectedInternship;
-        private ProfessorInternship selectedProfessorInternship;
-        private CompanyJob selectedJob;
-        private CompanyThesis selectedCompanyThesis;
-        private bool isEditPopupVisibleForInternships = false;
-        private bool isEditPopupVisibleForProfessorInternships = false;
-        private bool isEditPopupVisibleForJobs = false;
-        private bool isEditPopupVisibleForCompanyThesis = false;
-        private ThesisApplication selectedThesisApplication;
-        private CompanyThesisApplied selectedCompanyThesisApplicationToShowAsStudent;
-        private ProfessorThesisApplied selectedProfessorThesisApplicationToShowAsStudent;
-        private ProfessorThesis selectedProfessorThesis;
+        protected CompanyInternship selectedInternship;
+        protected ProfessorInternship selectedProfessorInternship;
+        protected CompanyJob selectedJob;
+        protected CompanyThesis selectedCompanyThesis;
+        protected bool isEditPopupVisibleForInternships = false;
+        protected bool isEditPopupVisibleForProfessorInternships = false;
+        protected bool isEditPopupVisibleForJobs = false;
+        protected bool isEditPopupVisibleForCompanyThesis = false;
+        protected ThesisApplication selectedThesisApplication;
+        protected CompanyThesisApplied selectedCompanyThesisApplicationToShowAsStudent;
+        protected ProfessorThesisApplied selectedProfessorThesisApplicationToShowAsStudent;
+        protected ProfessorThesis selectedProfessorThesis;
 
-        private bool showStudentInternshipApplications = false;
+        protected bool showStudentInternshipApplications = false;
 
-        private List<InternshipApplied> internshipApplications = new List<InternshipApplied>();
-        private List<ProfessorInternshipApplied> professorInternshipApplications = new List<ProfessorInternshipApplied>();
+        protected List<InternshipApplied> internshipApplications = new List<InternshipApplied>();
+        protected List<ProfessorInternshipApplied> professorInternshipApplications = new List<ProfessorInternshipApplied>();
 
-        private CompanyJobApplied selectedJobApplication;
-        private CompanyInternshipAreasForCheckboxes companyInternshipforcheckboxes = new CompanyInternshipAreasForCheckboxes();
+        protected CompanyJobApplied selectedJobApplication;
+        protected CompanyInternshipAreasForCheckboxes companyInternshipforcheckboxes = new CompanyInternshipAreasForCheckboxes();
 
-        private List<Area> SelectedAreasWhenUploadInternshipAsCompany = new();
-        private List<Area> SelectedAreasWhenUploadThesisAsCompany = new();
-        private List<Area> SelectedAreasWhenUploadJobAsCompany = new();
-        private List<Area> SelectedAreasWhenUploadEventAsCompany = new();
-        private List<Skill> SelectedSkillsWhenUploadThesisAsCompany = new();
+        protected List<Area> SelectedAreasWhenUploadInternshipAsCompany = new();
+        protected List<Area> SelectedAreasWhenUploadThesisAsCompany = new();
+        protected List<Area> SelectedAreasWhenUploadJobAsCompany = new();
+        protected List<Area> SelectedAreasWhenUploadEventAsCompany = new();
+        protected List<Skill> SelectedSkillsWhenUploadThesisAsCompany = new();
 
-        private List<Area> SelectedAreasWhenUploadInternshipAsProfessor = new();
-        private List<Area> SelectedAreasWhenUploadThesisAsProfessor = new();
-        private List<Area> SelectedAreasWhenUploadJobAsProfessor = new();
-        private List<Area> SelectedAreasWhenUploadEventAsProfessor = new();
+        protected List<Area> SelectedAreasWhenUploadInternshipAsProfessor = new();
+        protected List<Area> SelectedAreasWhenUploadThesisAsProfessor = new();
+        protected List<Area> SelectedAreasWhenUploadJobAsProfessor = new();
+        protected List<Area> SelectedAreasWhenUploadEventAsProfessor = new();
 
-        private List<Area> SelectedAreasToEditForCompanyJob = new List<Area>();
-        private List<Area> SelectedAreasToEditForCompanyInternship = new List<Area>();
-        private List<Area> SelectedAreasToEditForCompanyThesis = new List<Area>();
-        private List<Skill> SelectedSkillsToEditForCompanyThesis = new List<Skill>();
-        private List<Skill> SelectedSkills = new();
+        protected List<Area> SelectedAreasToEditForCompanyJob = new List<Area>();
+        protected List<Area> SelectedAreasToEditForCompanyInternship = new List<Area>();
+        protected List<Area> SelectedAreasToEditForCompanyThesis = new List<Area>();
+        protected List<Skill> SelectedSkillsToEditForCompanyThesis = new List<Skill>();
+        protected List<Skill> SelectedSkills = new();
 
-        private List<Professor> professors = new List<Professor>();
-        private int? selectedProfessorId;
-        private int? selectedCompanyId;
-        private string statusToEdit;
+        protected List<Professor> professors = new List<Professor>();
+        protected int? selectedProfessorId;
+        protected int? selectedCompanyId;
+        protected string statusToEdit;
 
-        private DateTime? selectedDateToSearchInternship { get; set; }
-        private DateTime? finishEstimationDateToSearchInternship { get; set; }
+        protected DateTime? selectedDateToSearchInternship { get; set; }
+        protected DateTime? finishEstimationDateToSearchInternship { get; set; }
 
-        private DateTime? selectedDateToSearchJob { get; set; }
+        protected DateTime? selectedDateToSearchJob { get; set; }
 
-        private List<string> selectedAreas = new List<string>();
-        private bool isInternshipAreasVisible = false;
+        protected List<string> selectedAreas = new List<string>();
+        protected bool isInternshipAreasVisible = false;
 
-        private Dictionary<long, bool> expandedInternships = new Dictionary<long, bool>();
-        private Dictionary<long, bool> expandedProfessorInternships = new Dictionary<long, bool>();
+        protected Dictionary<long, bool> expandedInternships = new Dictionary<long, bool>();
+        protected Dictionary<long, bool> expandedProfessorInternships = new Dictionary<long, bool>();
 
-        private Dictionary<long, bool> expandedJobs = new Dictionary<long, bool>();
-        private Dictionary<long, bool> expandedCompanyTheses = new Dictionary<long, bool>();
-        private Dictionary<long, bool> expandedCompanyThesesForProfessorInterest = new Dictionary<long, bool>();
-        private Dictionary<long, bool> expandedProfessorThesesForCompanyInterest = new Dictionary<long, bool>();
-        private int remainingCharactersInInternshipFieldUploadAsCompany = 120;
-        private int remainingCharactersInThesisFieldUploadAsCompany = 120;
-        private int remainingCharactersInThesisFieldUploadAsProfessor = 120;
-        private int remainingCharactersInAnnouncementFieldUploadAsCompany = 120;
-        private int remainingCharactersInAnnouncementFieldUploadAsProfessor = 120;
-        private int remainingCharactersInInternshipDescriptionUploadAsCompany = 1000;
-        private int remainingCharactersInCompanyEventDescription = 1000;
-        private int remainingCharactersInEventTitleField = 120;
+        protected Dictionary<long, bool> expandedJobs = new Dictionary<long, bool>();
+        protected Dictionary<long, bool> expandedCompanyTheses = new Dictionary<long, bool>();
+        protected Dictionary<long, bool> expandedCompanyThesesForProfessorInterest = new Dictionary<long, bool>();
+        protected Dictionary<long, bool> expandedProfessorThesesForCompanyInterest = new Dictionary<long, bool>();
+        protected int remainingCharactersInInternshipFieldUploadAsCompany = 120;
+        protected int remainingCharactersInThesisFieldUploadAsCompany = 120;
+        protected int remainingCharactersInThesisFieldUploadAsProfessor = 120;
+        protected int remainingCharactersInAnnouncementFieldUploadAsCompany = 120;
+        protected int remainingCharactersInAnnouncementFieldUploadAsProfessor = 120;
+        protected int remainingCharactersInInternshipDescriptionUploadAsCompany = 1000;
+        protected int remainingCharactersInCompanyEventDescription = 1000;
+        protected int remainingCharactersInEventTitleField = 120;
 
-        private int remainingCharactersInJobFieldUploadAsCompany = 120;
-        private int remainingCharactersInJobDescriptionUploadAsCompany = 1000;
-        private int remainingCharactersInThesisDescriptionUploadAsCompany = 1000;
-        private int remainingCharactersInThesisDescriptionUploadAsProfessor = 1000;
-        private int remainingCharactersInAnnouncementDescriptionUploadAsCompany = 1000;
-        private int remainingCharactersInAnnouncementDescriptionUploadAsProfessor = 1000;
+        protected int remainingCharactersInJobFieldUploadAsCompany = 120;
+        protected int remainingCharactersInJobDescriptionUploadAsCompany = 1000;
+        protected int remainingCharactersInThesisDescriptionUploadAsCompany = 1000;
+        protected int remainingCharactersInThesisDescriptionUploadAsProfessor = 1000;
+        protected int remainingCharactersInAnnouncementDescriptionUploadAsCompany = 1000;
+        protected int remainingCharactersInAnnouncementDescriptionUploadAsProfessor = 1000;
 
-        private string selectedStatusFilterToCountInternships = "Όλα";
-        private int totalCount, publishedCount, unpublishedCount, withdrawnCount;
-        private int totalCountForCompanyTheses, publishedCountForCompanyTheses, unpublishedCountForCompanyTheses, withdrawnCountForCompanyTheses;
-        private int totalCountJobs, publishedCountJobs, unpublishedCountJobs, withdrawnCountJobs;
-        private int totalCountAnnouncements, publishedCountAnnouncements, unpublishedCountAnnouncements, withdrawnCountAnnouncements;
-        private int totalCountAnnouncementsAsProfessor, publishedCountAnnouncementsAsProfessor, unpublishedCountAnnouncementsAsProfessor, withdrawnCountAnnouncementsAsProfessor;
-        private int totalCountThesesAsProfessor, publishedCountThesesAsProfessor, unpublishedCountThesesAsProfessor, withdrawnCountThesesAsProfessor;
-        private int totalCountEventsAsCompany, publishedCountEventsAsCompany, unpublishedCountEventsAsCompany, withdrawnCountEventsAsCompany;
-        private int totalCountEventsAsProfessor, publishedCountEventsAsProfessor, unpublishedCountEventsAsProfessor, withdrawnCountEventsAsProfessor;
+        protected string selectedStatusFilterToCountInternships = "Όλα";
+        protected int totalCount, publishedCount, unpublishedCount, withdrawnCount;
+        protected int totalCountForCompanyTheses, publishedCountForCompanyTheses, unpublishedCountForCompanyTheses, withdrawnCountForCompanyTheses;
+        protected int totalCountJobs, publishedCountJobs, unpublishedCountJobs, withdrawnCountJobs;
+        protected int totalCountAnnouncements, publishedCountAnnouncements, unpublishedCountAnnouncements, withdrawnCountAnnouncements;
+        protected int totalCountAnnouncementsAsProfessor, publishedCountAnnouncementsAsProfessor, unpublishedCountAnnouncementsAsProfessor, withdrawnCountAnnouncementsAsProfessor;
+        protected int totalCountThesesAsProfessor, publishedCountThesesAsProfessor, unpublishedCountThesesAsProfessor, withdrawnCountThesesAsProfessor;
+        protected int totalCountEventsAsCompany, publishedCountEventsAsCompany, unpublishedCountEventsAsCompany, withdrawnCountEventsAsCompany;
+        protected int totalCountEventsAsProfessor, publishedCountEventsAsProfessor, unpublishedCountEventsAsProfessor, withdrawnCountEventsAsProfessor;
 
-        private int totalProfessorInternshipsCount, publishedProfessorInternshipsCount, unpublishedProfessorInternshipsCount, withdrawnProfessorInternshipsCount;
+        protected int totalProfessorInternshipsCount, publishedProfessorInternshipsCount, unpublishedProfessorInternshipsCount, withdrawnProfessorInternshipsCount;
 
-        private bool actionsPerformedToAcceptorRejectInternshipsAsCompany = false;
-        private bool actionsPerformedToAcceptorRejectInternshipsAsProfessor = false;
-        private bool actionsPerformedToAcceptorRejectJobsAsCompany = false;
-        private bool actionsPerformedToAcceptorRejectThesisAsCompany = false;
-        private bool actionsPerformedToAcceptorRejectThesesAsProfessor = false;
+        protected bool actionsPerformedToAcceptorRejectInternshipsAsCompany = false;
+        protected bool actionsPerformedToAcceptorRejectInternshipsAsProfessor = false;
+        protected bool actionsPerformedToAcceptorRejectJobsAsCompany = false;
+        protected bool actionsPerformedToAcceptorRejectThesisAsCompany = false;
+        protected bool actionsPerformedToAcceptorRejectThesesAsProfessor = false;
 
-        private List<Company> companies = new List<Company>(); // Initialize with an empty list
-        private Company selectedCompany;
-        private Student selectedStudent;
-        private List<string> availableTowns;
+        protected List<Company> companies = new List<Company>(); // Initialize with an empty list
+        protected Company selectedCompany;
+        protected Student selectedStudent;
+        protected List<string> availableTowns;
 
-        private bool isSaveAnnouncementAsCompanySuccessful = false;
-        private string saveAnnouncementAsCompanyMessage = string.Empty;
-        private bool isSaveAnnouncementAsProfessorSuccessful = false;
-        private string saveAnnouncementAsProfessorMessage = string.Empty;
-        private string saveEventAsCompanyMessage = string.Empty;
-        private string saveEventAsProfessorMessage = string.Empty;
-        private bool isSaveThesisAsProfessorSuccessful = false;
-        private string saveThesisAsProfessorMessage = string.Empty;
+        protected bool isSaveAnnouncementAsCompanySuccessful = false;
+        protected string saveAnnouncementAsCompanyMessage = string.Empty;
+        protected bool isSaveAnnouncementAsProfessorSuccessful = false;
+        protected string saveAnnouncementAsProfessorMessage = string.Empty;
+        protected string saveEventAsCompanyMessage = string.Empty;
+        protected string saveEventAsProfessorMessage = string.Empty;
+        protected bool isSaveThesisAsProfessorSuccessful = false;
+        protected string saveThesisAsProfessorMessage = string.Empty;
 
-        private bool isPositionAreasVisible = false;
-        private bool isThesisAreasVisible = false;
-        private bool isCompanySearchStudentVisible = false;
-        private bool isCompanySearchProfessorVisible = false;
-        private bool isRGSearchProfessorVisible = false;
-        private List<string> selectedPositionAreas = new List<string>();
-        private List<string> selectedThesisAreas = new List<string>();
+        protected bool isPositionAreasVisible = false;
+        protected bool isThesisAreasVisible = false;
+        protected bool isCompanySearchStudentVisible = false;
+        protected bool isCompanySearchProfessorVisible = false;
+        protected bool isRGSearchProfessorVisible = false;
+        protected List<string> selectedPositionAreas = new List<string>();
+        protected List<string> selectedThesisAreas = new List<string>();
 
-        private bool isUploadedAnnouncementsVisible = false;
-        private bool isUploadedEventsVisible = false;
-        private bool isUploadedEventsVisibleAsProfessor = false;
+        protected bool isUploadedAnnouncementsVisible = false;
+        protected bool isUploadedEventsVisible = false;
+        protected bool isUploadedEventsVisibleAsProfessor = false;
 
-        private bool isUploadedAnnouncementsVisibleAsProfessor = false;
-        private bool isUploadedThesesVisibleAsProfessor = false;
-        private bool isUploadedCompanyThesesVisibleAsProfessor = false;
-        private bool isUploadedProfessorThesesVisibleAsCompany = false;
-        private List<AnnouncementAsCompany> UploadedAnnouncements { get; set; } = new List<AnnouncementAsCompany>();
-        private List<CompanyThesis> UploadedCompanyTheses { get; set; } = new List<CompanyThesis>();
-        private List<AnnouncementAsProfessor> UploadedAnnouncementsAsProfessor { get; set; } = new List<AnnouncementAsProfessor>();
-        private List<CompanyEvent> UploadedEventsAsCompany { get; set; } = new List<CompanyEvent>();
-        private List<ProfessorEvent> UploadedEventsAsProfessor { get; set; } = new List<ProfessorEvent>();
-        private List<ProfessorThesis> UploadedThesesAsProfessor { get; set; } = new List<ProfessorThesis>();
-        private List<CompanyThesis> UploadedCompanyThesesToSeeAsProfessor { get; set; } = new List<CompanyThesis>();
-        private bool isEditModalVisible = false;
-        private bool isEditModalVisibleForAnnouncementsAsProfessor = false;
-        private bool isEditModalVisibleForThesesAsProfessor = false;
-        private bool isEditModalVisibleForEventsAsCompany = false;
-        private bool isEditModalVisibleForEventsAsProfessor = false;
-        private AnnouncementAsCompany currentAnnouncement;
-        private CompanyEvent currentCompanyEvent;
-        private ProfessorEvent currentProfessorEvent;
-        private CompanyThesis currentThesis;
-        private AnnouncementAsProfessor currentAnnouncementAsProfessor;
-        private ProfessorThesis currentThesisAsProfessor;
+        protected bool isUploadedAnnouncementsVisibleAsProfessor = false;
+        protected bool isUploadedThesesVisibleAsProfessor = false;
+        protected bool isUploadedCompanyThesesVisibleAsProfessor = false;
+        protected bool isUploadedProfessorThesesVisibleAsCompany = false;
+        protected List<AnnouncementAsCompany> UploadedAnnouncements { get; set; } = new List<AnnouncementAsCompany>();
+        protected List<CompanyThesis> UploadedCompanyTheses { get; set; } = new List<CompanyThesis>();
+        protected List<AnnouncementAsProfessor> UploadedAnnouncementsAsProfessor { get; set; } = new List<AnnouncementAsProfessor>();
+        protected List<CompanyEvent> UploadedEventsAsCompany { get; set; } = new List<CompanyEvent>();
+        protected List<ProfessorEvent> UploadedEventsAsProfessor { get; set; } = new List<ProfessorEvent>();
+        protected List<ProfessorThesis> UploadedThesesAsProfessor { get; set; } = new List<ProfessorThesis>();
+        protected List<CompanyThesis> UploadedCompanyThesesToSeeAsProfessor { get; set; } = new List<CompanyThesis>();
+        protected bool isEditModalVisible = false;
+        protected bool isEditModalVisibleForAnnouncementsAsProfessor = false;
+        protected bool isEditModalVisibleForThesesAsProfessor = false;
+        protected bool isEditModalVisibleForEventsAsCompany = false;
+        protected bool isEditModalVisibleForEventsAsProfessor = false;
+        protected AnnouncementAsCompany currentAnnouncement;
+        protected CompanyEvent currentCompanyEvent;
+        protected ProfessorEvent currentProfessorEvent;
+        protected CompanyThesis currentThesis;
+        protected AnnouncementAsProfessor currentAnnouncementAsProfessor;
+        protected ProfessorThesis currentThesisAsProfessor;
 
-        private List<AnnouncementAsCompany> FilteredAnnouncements { get; set; }
-        private List<CompanyEvent> FilteredCompanyEvents { get; set; }
-        private List<ProfessorEvent> FilteredProfessorEvents { get; set; }
-        private List<CompanyThesis> FilteredCompanyTheses { get; set; }
-        private List<AnnouncementAsProfessor> FilteredAnnouncementsAsProfessor { get; set; }
-        private List<ProfessorInternship> FilteredInternshipsAsProfessor { get; set; }
-        private List<ProfessorThesis> FilteredThesesAsProfessor { get; set; }
-        private bool isModalVisibleForJobs = false;
-        private bool isModalVisibleToShowProfessorThesisAsProfessor = false;
-        private bool isModalVisibleForProfessorThesisToShowDetailsAsStudent = false;
-        private bool isModalVisibleForCompanyThesisToShowDetailsAsStudent = false;
-        private bool isModalVisibleToShowCompanyThesisDetails = false;
-        private bool isModalVisibleToEditCompanyThesisDetails = false;
-        private bool isModalVisibleToShowStudentDetailsAsCompanyFromTheirHyperlinkNameInCompanyInternships = false;
-        private bool isModalVisibleToShowStudentDetailsAsProfessorFromTheirHyperlinkNameInProfessorInternships = false;
-        private CompanyJob currentJob;
-        private CompanyJob currentJobApplicationMadeAsStudent;
+        protected List<AnnouncementAsCompany> FilteredAnnouncements { get; set; }
+        protected List<CompanyEvent> FilteredCompanyEvents { get; set; }
+        protected List<ProfessorEvent> FilteredProfessorEvents { get; set; }
+        protected List<CompanyThesis> FilteredCompanyTheses { get; set; }
+        protected List<AnnouncementAsProfessor> FilteredAnnouncementsAsProfessor { get; set; }
+        protected List<ProfessorInternship> FilteredInternshipsAsProfessor { get; set; }
+        protected List<ProfessorThesis> FilteredThesesAsProfessor { get; set; }
+        protected bool isModalVisibleForJobs = false;
+        protected bool isModalVisibleToShowProfessorThesisAsProfessor = false;
+        protected bool isModalVisibleForProfessorThesisToShowDetailsAsStudent = false;
+        protected bool isModalVisibleForCompanyThesisToShowDetailsAsStudent = false;
+        protected bool isModalVisibleToShowCompanyThesisDetails = false;
+        protected bool isModalVisibleToEditCompanyThesisDetails = false;
+        protected bool isModalVisibleToShowStudentDetailsAsCompanyFromTheirHyperlinkNameInCompanyInternships = false;
+        protected bool isModalVisibleToShowStudentDetailsAsProfessorFromTheirHyperlinkNameInProfessorInternships = false;
+        protected CompanyJob currentJob;
+        protected CompanyJob currentJobApplicationMadeAsStudent;
 
-        private List<AllTheses> sumUpThesesFromBothCompanyAndProfessor = new List<AllTheses>();
-        private List<AllInternships> sumUpInternshipsFromBothCompanyAndProfessor = new List<AllInternships>();
+        protected List<AllTheses> sumUpThesesFromBothCompanyAndProfessor = new List<AllTheses>();
+        protected List<AllInternships> sumUpInternshipsFromBothCompanyAndProfessor = new List<AllInternships>();
 
-        private string thesisSearchForInternshipsAsStudent;
-        private string professorNameSearchForInternshipsAsStudent;
-        private string professorSurnameSearchForInternshipsAsStudent;
-        private string companyNameSearchForInternshipsAsStudent;
-        private int? thesisUploadMonthForInternshipsAsStudent;
+        protected string thesisSearchForInternshipsAsStudent;
+        protected string professorNameSearchForInternshipsAsStudent;
+        protected string professorSurnameSearchForInternshipsAsStudent;
+        protected string companyNameSearchForInternshipsAsStudent;
+        protected int? thesisUploadMonthForInternshipsAsStudent;
 
-        private string thesisSearchForThesesAsStudent;
-        private string professorNameSearchForThesesAsStudent;
-        private string professorSurnameSearchForThesesAsStudent;
-        private string companyNameSearchForThesesAsStudent;
-        private int? thesisUploadMonthForThesesAsStudent;
-        private DateTime? thesisStartDateForThesesAsStudent;
+        protected string thesisSearchForThesesAsStudent;
+        protected string professorNameSearchForThesesAsStudent;
+        protected string professorSurnameSearchForThesesAsStudent;
+        protected string companyNameSearchForThesesAsStudent;
+        protected int? thesisUploadMonthForThesesAsStudent;
+        protected DateTime? thesisStartDateForThesesAsStudent;
 
-        private List<Area> availableAreasForProfessorThesis = new List<Area>();
-        private List<Skill> availableSkillsForProfessorThesis = new List<Skill>();
-        private List<long> selectedAreasForProfessorThesis = new List<long>();
-        private List<long> selectedSkillsForProfessorThesis = new List<long>();
+        protected List<Area> availableAreasForProfessorThesis = new List<Area>();
+        protected List<Skill> availableSkillsForProfessorThesis = new List<Skill>();
+        protected List<long> selectedAreasForProfessorThesis = new List<long>();
+        protected List<long> selectedSkillsForProfessorThesis = new List<long>();
 
-        private ProfessorThesis currentProfessorThesis;
-        private ProfessorThesisApplied currentProfessorThesisToShowDetailsAsStudent;
-        private CompanyThesis currentCompanyThesisToShowDetailsAsStudent;
-        private bool isModalVisibleToShowProfessorThesisDetails = false;
+        protected ProfessorThesis currentProfessorThesis;
+        protected ProfessorThesisApplied currentProfessorThesisToShowDetailsAsStudent;
+        protected CompanyThesis currentCompanyThesisToShowDetailsAsStudent;
+        protected bool isModalVisibleToShowProfessorThesisDetails = false;
 
-        private Dictionary<long, bool> expandedTheses = new Dictionary<long, bool>();
+        protected Dictionary<long, bool> expandedTheses = new Dictionary<long, bool>();
 
-        private IEnumerable<CompanyThesisApplied> companyThesisApplications;
-        private IEnumerable<ProfessorThesisApplied> professorThesisApplications;
+        protected IEnumerable<CompanyThesisApplied> companyThesisApplications;
+        protected IEnumerable<ProfessorThesisApplied> professorThesisApplications;
 
-        private ProfessorThesis selectedProfessorThesisDetails;
-        private Professor selectedProfessorDetailsForHyperlinkNameInThesisAsStudent;
-        private Company selectedCompanyDetailsForHyperlinkNameInThesisAsStudent;
-        private CompanyThesis selectedCompanyThesisDetails;
-        private CompanyInternship selectedCompanyInternshipDetails;
-        private ProfessorInternship selectedProfessorInternshipDetails;
+        protected ProfessorThesis selectedProfessorThesisDetails;
+        protected Professor selectedProfessorDetailsForHyperlinkNameInThesisAsStudent;
+        protected Company selectedCompanyDetailsForHyperlinkNameInThesisAsStudent;
+        protected CompanyThesis selectedCompanyThesisDetails;
+        protected CompanyInternship selectedCompanyInternshipDetails;
+        protected ProfessorInternship selectedProfessorInternshipDetails;
 
-        private List<CompanyThesis> companyThesesResultsToFindThesesAsProfessor = new List<CompanyThesis>();
-        private bool searchPerformedToFindThesesAsProfessor = false;
+        protected List<CompanyThesis> companyThesesResultsToFindThesesAsProfessor = new List<CompanyThesis>();
+        protected bool searchPerformedToFindThesesAsProfessor = false;
 
-        private List<ProfessorThesis> professorThesesResultsToFindThesesAsCompany = new List<ProfessorThesis>();
-        private bool searchPerformedToFindThesesAsCompany = false;
+        protected List<ProfessorThesis> professorThesesResultsToFindThesesAsCompany = new List<ProfessorThesis>();
+        protected bool searchPerformedToFindThesesAsCompany = false;
 
-        private CompanyThesis selectedCompanyThesisToSeeDetailsOnEyeIconAsProfessor;
+        protected CompanyThesis selectedCompanyThesisToSeeDetailsOnEyeIconAsProfessor;
 
-        private Company selectedCompanyToSeeDetailsOnExpandedInterestAsProfessor;
+        protected Company selectedCompanyToSeeDetailsOnExpandedInterestAsProfessor;
 
-        private bool isThesisDetailEyeIconModalVisibleToSeeAsProfessor = false;
+        protected bool isThesisDetailEyeIconModalVisibleToSeeAsProfessor = false;
 
-        private ProfessorThesis selectedProfessorThesisToSeeDetailsOnEyeIconAsCompany;
-        private bool isThesisDetailEyeIconModalVisibleToSeeAsCompany = false;
-        private bool isExpandedModalVisibleToSeeCompanyDetailsAsProfessor = false;
+        protected ProfessorThesis selectedProfessorThesisToSeeDetailsOnEyeIconAsCompany;
+        protected bool isThesisDetailEyeIconModalVisibleToSeeAsCompany = false;
+        protected bool isExpandedModalVisibleToSeeCompanyDetailsAsProfessor = false;
 
-        private bool isCompanyDetailModalVisibleForHyperlinkNameToShowCompanyDetailsToTheProfessor = false;
-        private Company selectedCompanyNameAsHyperlinkToShowDetailsToTheProfessor;
+        protected bool isCompanyDetailModalVisibleForHyperlinkNameToShowCompanyDetailsToTheProfessor = false;
+        protected Company selectedCompanyNameAsHyperlinkToShowDetailsToTheProfessor;
 
         // Search criteria
-        private string searchCompanyNameToFindThesesAsProfessor;
-        private string searchThesisTitleToFindThesesAsProfessor;
-        private string searchSupervisorToFindThesesAsProfessor;
-        private string searchDepartmentToFindThesesAsProfessor;
-        private string searchSkillsToFindThesesAsProfessor;
-        private DateTime? searchStartingDateToFindThesesAsProfessor;
+        protected string searchCompanyNameToFindThesesAsProfessor;
+        protected string searchThesisTitleToFindThesesAsProfessor;
+        protected string searchSupervisorToFindThesesAsProfessor;
+        protected string searchDepartmentToFindThesesAsProfessor;
+        protected string searchSkillsToFindThesesAsProfessor;
+        protected DateTime? searchStartingDateToFindThesesAsProfessor;
 
-        private string searchProfessorNameToFindThesesAsCompany;
-        private string searchProfessorSurnameToFindThesesAsCompany;
-        private string searchProfessorThesisTitleToFindThesesAsCompany;
-        private string searchAreasToFindThesesAsCompany;
-        private string searchSkillsToFindThesesAsCompany;
-        private DateTime? searchStartingDateToFindThesesAsCompany;
+        protected string searchProfessorNameToFindThesesAsCompany;
+        protected string searchProfessorSurnameToFindThesesAsCompany;
+        protected string searchProfessorThesisTitleToFindThesesAsCompany;
+        protected string searchAreasToFindThesesAsCompany;
+        protected string searchSkillsToFindThesesAsCompany;
+        protected DateTime? searchStartingDateToFindThesesAsCompany;
 
-        private Dictionary<long, bool> professorInterestStatus = new Dictionary<long, bool>();
-        private List<ThesisWithInterestStatus> thesesWithInterestStatus;
+        protected Dictionary<long, bool> professorInterestStatus = new Dictionary<long, bool>();
+        protected List<ThesisWithInterestStatus> thesesWithInterestStatus;
 
-        private List<ProfessorThesisWithInterestStatus> professorthesesWithInterestStatus;
+        protected List<ProfessorThesisWithInterestStatus> professorthesesWithInterestStatus;
 
-        private Professor? selectedProfessor;
-        private ProfessorThesis? selectedCompanyThesiss;
+        protected Professor? selectedProfessor;
+        protected ProfessorThesis? selectedCompanyThesiss;
 
-        private CompanyEvent companyEvent = new CompanyEvent();
-        private ProfessorEvent professorEvent = new ProfessorEvent();
+        protected CompanyEvent companyEvent = new CompanyEvent();
+        protected ProfessorEvent professorEvent = new ProfessorEvent();
 
-        private DotNetObjectReference<MainLayout> dotNetHelper;
-        private List<string> suggestions = new List<string>();
+        protected DotNetObjectReference<MainLayout> dotNetHelper;
+        protected List<string> suggestions = new List<string>();
 
-        private string searchNameAsCompanyToFindStudent = string.Empty;
-        private string searchSurnameAsCompanyToFindStudent = string.Empty;
-        private string searchRegNumberAsCompanyToFindStudent = string.Empty;
-        private string searchDepartmentAsCompanyToFindStudent = string.Empty;
+        protected string searchNameAsCompanyToFindStudent = string.Empty;
+        protected string searchSurnameAsCompanyToFindStudent = string.Empty;
+        protected string searchRegNumberAsCompanyToFindStudent = string.Empty;
+        protected string searchDepartmentAsCompanyToFindStudent = string.Empty;
 
-        private string InternshipStatus = string.Empty;
-        private string ThesisStatus = string.Empty;
+        protected string InternshipStatus = string.Empty;
+        protected string ThesisStatus = string.Empty;
 
-        private List<Student> searchResultsAsCompanyToFindStudent;
+        protected List<Student> searchResultsAsCompanyToFindStudent;
 
-        private List<CompanyEvent> companyEventsToSeeAsStudent;
-        private List<ProfessorEvent> professorEventsToSeeAsStudent;
-        private CompanyEvent selectedCompanyEventToSeeAsStudent;
-        private bool isCompanyEventsVisibleToSeeAsStudent = false;
-        private bool isProfessorEventsVisibleToSeeAsStudent = false;
-        private bool isModalVisibleToSeeCompanyEventsAsStudent = false;
+        protected List<CompanyEvent> companyEventsToSeeAsStudent;
+        protected List<ProfessorEvent> professorEventsToSeeAsStudent;
+        protected CompanyEvent selectedCompanyEventToSeeAsStudent;
+        protected bool isCompanyEventsVisibleToSeeAsStudent = false;
+        protected bool isProfessorEventsVisibleToSeeAsStudent = false;
+        protected bool isModalVisibleToSeeCompanyEventsAsStudent = false;
 
-        private Company? currentCompanyDetailsToShowOnHyperlinkAsStudentForCompanyEvents;
-        private Professor? currentProfessorDetailsToShowOnHyperlinkAsStudentForProfessorEvents;
-        private Dictionary<long, bool> needsTransportForCompanyEvent = new Dictionary<long, bool>(); // Use a suitable type for the event ID
-        private Dictionary<long, bool> needsTransportForProfessorEvent = new Dictionary<long, bool>(); // Use a suitable type for the event ID
+        protected Company? currentCompanyDetailsToShowOnHyperlinkAsStudentForCompanyEvents;
+        protected Professor? currentProfessorDetailsToShowOnHyperlinkAsStudentForProfessorEvents;
+        protected Dictionary<long, bool> needsTransportForCompanyEvent = new Dictionary<long, bool>(); // Use a suitable type for the event ID
+        protected Dictionary<long, bool> needsTransportForProfessorEvent = new Dictionary<long, bool>(); // Use a suitable type for the event ID
 
-        private Dictionary<long, string> selectedStartingPoint = new Dictionary<long, string>();
-        private List<CompanyEvent> companyEvents = new List<CompanyEvent>();
+        protected Dictionary<long, string> selectedStartingPoint = new Dictionary<long, string>();
+        protected List<CompanyEvent> companyEvents = new List<CompanyEvent>();
 
-        private List<ProfessorEvent> professorEvents = new List<ProfessorEvent>();
+        protected List<ProfessorEvent> professorEvents = new List<ProfessorEvent>();
 
-        private bool isProfessorDetailModalVisible = false;
+        protected bool isProfessorDetailModalVisible = false;
 
-        private string searchEmailAsProfessorToFindStudent = string.Empty;
-        private string searchNameAsProfessorToFindStudent = string.Empty;
-        private string searchSurnameAsProfessorToFindStudent = string.Empty;
-        private string searchRegNumberAsProfessorToFindStudent = string.Empty;
-        private string searchDepartmentAsProfessorToFindStudent = string.Empty;
-        private string searchAreasOfExpertiseAsProfessorToFindStudent = string.Empty;
-        private string searchKeywordsAsProfessorToFindStudent = string.Empty;
+        protected string searchEmailAsProfessorToFindStudent = string.Empty;
+        protected string searchNameAsProfessorToFindStudent = string.Empty;
+        protected string searchSurnameAsProfessorToFindStudent = string.Empty;
+        protected string searchRegNumberAsProfessorToFindStudent = string.Empty;
+        protected string searchDepartmentAsProfessorToFindStudent = string.Empty;
+        protected string searchAreasOfExpertiseAsProfessorToFindStudent = string.Empty;
+        protected string searchKeywordsAsProfessorToFindStudent = string.Empty;
 
-        private string searchCompanyEmailAsProfessorToFindCompany = string.Empty;
-        private string searchCompanyNameENGAsProfessorToFindCompany = string.Empty;
-        private string searchCompanyTypeAsProfessorToFindCompany = string.Empty;
-        private string searchCompanyActivityrAsProfessorToFindCompany = string.Empty;
-        private string searchCompanyTownAsProfessorToFindCompany = string.Empty;
-        private string searchCompanyAreasAsProfessorToFindCompany = string.Empty;
-        private string searchCompanyDesiredSkillsAsProfessorToFindCompany = string.Empty;
+        protected string searchCompanyEmailAsProfessorToFindCompany = string.Empty;
+        protected string searchCompanyNameENGAsProfessorToFindCompany = string.Empty;
+        protected string searchCompanyTypeAsProfessorToFindCompany = string.Empty;
+        protected string searchCompanyActivityrAsProfessorToFindCompany = string.Empty;
+        protected string searchCompanyTownAsProfessorToFindCompany = string.Empty;
+        protected string searchCompanyAreasAsProfessorToFindCompany = string.Empty;
+        protected string searchCompanyDesiredSkillsAsProfessorToFindCompany = string.Empty;
 
-        private string searchCompanyEmailAsRGToFindCompany = string.Empty;
-        private string searchCompanyNameENGAsRGToFindCompany = string.Empty;
-        private string searchCompanyTypeAsRGToFindCompany = string.Empty;
-        private string searchCompanyActivityrAsRGToFindCompany = string.Empty;
-        private string searchCompanyTownAsRGToFindCompany = string.Empty;
-        private string searchCompanyAreasAsRGToFindCompany = string.Empty;
-        private string searchCompanyDesiredSkillsAsRGToFindCompany = string.Empty;
+        protected string searchCompanyEmailAsRGToFindCompany = string.Empty;
+        protected string searchCompanyNameENGAsRGToFindCompany = string.Empty;
+        protected string searchCompanyTypeAsRGToFindCompany = string.Empty;
+        protected string searchCompanyActivityrAsRGToFindCompany = string.Empty;
+        protected string searchCompanyTownAsRGToFindCompany = string.Empty;
+        protected string searchCompanyAreasAsRGToFindCompany = string.Empty;
+        protected string searchCompanyDesiredSkillsAsRGToFindCompany = string.Empty;
 
-        private List<Student> searchResultsAsProfessorToFindStudent;
-        private bool showStudentDetailsModal = false;
+        protected List<Student> searchResultsAsProfessorToFindStudent;
+        protected bool showStudentDetailsModal = false;
 
-        private List<Company> searchResultsAsProfessorToFindCompany;
-        private List<Company> searchResultsAsRGToFindCompany;
-        private bool showCompanyDetailsModal = false;
+        protected List<Company> searchResultsAsProfessorToFindCompany;
+        protected List<Company> searchResultsAsRGToFindCompany;
+        protected bool showCompanyDetailsModal = false;
 
-        private bool isModalVisibleToShowCompanyDetailsAtProfessorThesisInterest = false;
-        private bool isModalVisibleToShowprofessorDetailsAtCompanyThesisInterest = false;
-        private Company currentCompanyDetails = new Company();
+        protected bool isModalVisibleToShowCompanyDetailsAtProfessorThesisInterest = false;
+        protected bool isModalVisibleToShowprofessorDetailsAtCompanyThesisInterest = false;
+        protected Company currentCompanyDetails = new Company();
 
-        private bool isModalVisibleToShowStudentDetailsInNameAsHyperlinkForProfessorThesis = false;
-        private Student currentStudentDetails = new Student();
+        protected bool isModalVisibleToShowStudentDetailsInNameAsHyperlinkForProfessorThesis = false;
+        protected Student currentStudentDetails = new Student();
 
-        private bool showStudentDetailsModalWhenSearchForStudentsAsCompany = false;
-        private Student selectedStudentWhenSearchForStudentsAsCompany;
+        protected bool showStudentDetailsModalWhenSearchForStudentsAsCompany = false;
+        protected Student selectedStudentWhenSearchForStudentsAsCompany;
 
-        private string searchNameAsCompanyToFindProfessor;
-        private string searchSurnameAsCompanyToFindProfessor;
-        private string searchDepartmentAsCompanyToFindProfessor;
-        private string searchAreasOfInterestAsCompanyToFindProfessor;
-        private List<Professor> searchResultsAsCompanyToFindProfessor;
+        protected string searchNameAsCompanyToFindProfessor;
+        protected string searchSurnameAsCompanyToFindProfessor;
+        protected string searchDepartmentAsCompanyToFindProfessor;
+        protected string searchAreasOfInterestAsCompanyToFindProfessor;
+        protected List<Professor> searchResultsAsCompanyToFindProfessor;
 
-        private bool showProfessorDetailsModalWhenSearchForProfessorsAsCompany = false;
-        private bool showProfessorDetailsModalWhenSearchForProfessorsAsRG = false;
-        private Professor selectedProfessorWhenSearchForProfessorsAsCompany;
-        private Professor selectedProfessorWhenSearchForProfessorsAsRG;
+        protected bool showProfessorDetailsModalWhenSearchForProfessorsAsCompany = false;
+        protected bool showProfessorDetailsModalWhenSearchForProfessorsAsRG = false;
+        protected Professor selectedProfessorWhenSearchForProfessorsAsCompany;
+        protected Professor selectedProfessorWhenSearchForProfessorsAsRG;
 
-        private Professor currentProfessorDetails = new Professor();
+        protected Professor currentProfessorDetails = new Professor();
 
-        private string searchNameOrSurname = string.Empty;
-        private List<string> nameSurnameSuggestions = new List<string>();
+        protected string searchNameOrSurname = string.Empty;
+        protected List<string> nameSurnameSuggestions = new List<string>();
 
-        private string searchNameSurnameAsCompanyToFindProfessor { get; set; }
-        private string searchNameSurnameAsStudentToFindProfessor { get; set; }
-        private List<string> professorNameSurnameSuggestions { get; set; } = new();
-        private List<string> thesisTitleSuggestions { get; set; } = new();
-        private List<string> companyNameSuggestionsWhenSearchForProfessorThesisAutocompleteNameAsStudent { get; set; } = new();
+        protected string searchNameSurnameAsCompanyToFindProfessor { get; set; }
+        protected string searchNameSurnameAsStudentToFindProfessor { get; set; }
+        protected List<string> professorNameSurnameSuggestions { get; set; } = new();
+        protected List<string> thesisTitleSuggestions { get; set; } = new();
+        protected List<string> companyNameSuggestionsWhenSearchForProfessorThesisAutocompleteNameAsStudent { get; set; } = new();
 
         ////////////////////////////////////////////////////////////////////////////////////////
-        private string searchNameSurnameAsRGToFindProfessor { get; set; }
-        private List<string> professorNameSurnameSuggestionsAsRG { get; set; } = new();
-        private string searchDepartmentAsRGToFindProfessor;
-        private string searchAreasOfInterestAsRGToFindProfessor;
-        private List<Professor> searchResultsAsRGToFindProfessor;
+        protected string searchNameSurnameAsRGToFindProfessor { get; set; }
+        protected List<string> professorNameSurnameSuggestionsAsRG { get; set; } = new();
+        protected string searchDepartmentAsRGToFindProfessor;
+        protected string searchAreasOfInterestAsRGToFindProfessor;
+        protected List<Professor> searchResultsAsRGToFindProfessor;
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        private string searchAreasOfExpertise = string.Empty;
-        private string searchAreasOfInterest = string.Empty;
-        private List<string> areasOfExpertiseSuggestions = new List<string>();
-        private List<string> areasOfInterestSuggestions = new List<string>();
-        private string searchKeywords = string.Empty;
-        private List<string> keywordsSuggestions = new List<string>();
+        protected string searchAreasOfExpertise = string.Empty;
+        protected string searchAreasOfInterest = string.Empty;
+        protected List<string> areasOfExpertiseSuggestions = new List<string>();
+        protected List<string> areasOfInterestSuggestions = new List<string>();
+        protected string searchKeywords = string.Empty;
+        protected List<string> keywordsSuggestions = new List<string>();
 
-        private string searchAreasOfExpertiseAsRG = string.Empty;
-        private string searchAreasOfInterestAsRG = string.Empty;
-        private List<string> areasOfExpertiseSuggestionsAsRG = new List<string>();
-        private List<string> areasOfInterestSuggestionsAsRG = new List<string>();
-        private string searchKeywordsAsRG = string.Empty;
-        private List<string> keywordsSuggestionsAsRG = new List<string>();
+        protected string searchAreasOfExpertiseAsRG = string.Empty;
+        protected string searchAreasOfInterestAsRG = string.Empty;
+        protected List<string> areasOfExpertiseSuggestionsAsRG = new List<string>();
+        protected List<string> areasOfInterestSuggestionsAsRG = new List<string>();
+        protected string searchKeywordsAsRG = string.Empty;
+        protected List<string> keywordsSuggestionsAsRG = new List<string>();
 
-        private string? selectedDegreeLevel { get; set; }
+        protected string? selectedDegreeLevel { get; set; }
 
-        private DateTime currentMonth = DateTime.Today;
-        private string[] daysOfWeek = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-        private int firstDayOfMonth => (int)new DateTime(currentMonth.Year, currentMonth.Month, 1).DayOfWeek;
+        protected DateTime currentMonth = DateTime.Today;
+        protected string[] daysOfWeek = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+        protected int firstDayOfMonth => (int)new DateTime(currentMonth.Year, currentMonth.Month, 1).DayOfWeek;
 
-        private List<ProfessorEvent> selectedProfessorDateEvents = new List<ProfessorEvent>();
-        private List<CompanyEvent> selectedDateEvents = new List<CompanyEvent>();
+        protected List<ProfessorEvent> selectedProfessorDateEvents = new List<ProfessorEvent>();
+        protected List<CompanyEvent> selectedDateEvents = new List<CompanyEvent>();
 
-        private bool isModalVisibleToShowEventsOnCalendarForEachClickedDay = false;
-        private int daysInCurrentMonth => DateTime.DaysInMonth(currentMonth.Year, currentMonth.Month);
-        private int totalCellsInGrid;
-        private int remainingCells => totalCellsInGrid - (firstDayOfMonth + daysInCurrentMonth);
-        private int remainingCellsValue;
-        private DateTime? selectedDate;
+        protected bool isModalVisibleToShowEventsOnCalendarForEachClickedDay = false;
+        protected int daysInCurrentMonth => DateTime.DaysInMonth(currentMonth.Year, currentMonth.Month);
+        protected int totalCellsInGrid;
+        protected int remainingCells => totalCellsInGrid - (firstDayOfMonth + daysInCurrentMonth);
+        protected int remainingCellsValue;
+        protected DateTime? selectedDate;
 
-        private Dictionary<int, List<CompanyEvent>> eventsForDate = new Dictionary<int, List<CompanyEvent>>();
-        private Dictionary<int, List<ProfessorEvent>> eventsForDateForProfessors = new Dictionary<int, List<ProfessorEvent>>();
+        protected Dictionary<int, List<CompanyEvent>> eventsForDate = new Dictionary<int, List<CompanyEvent>>();
+        protected Dictionary<int, List<ProfessorEvent>> eventsForDateForProfessors = new Dictionary<int, List<ProfessorEvent>>();
 
-        private int selectedDay = 0; // To store the selected day
-        private int highlightedDay = 0; // To store the day that needs to be highlighted
-        private int adjustedFirstDayOfMonth => (firstDayOfMonth == 0) ? 6 : firstDayOfMonth - 1; // Adjust Sunday (0) to Saturday (6) and Monday (1) to 0
+        protected int selectedDay = 0; // To store the selected day
+        protected int highlightedDay = 0; // To store the day that needs to be highlighted
+        protected int adjustedFirstDayOfMonth => (firstDayOfMonth == 0) ? 6 : firstDayOfMonth - 1; // Adjust Sunday (0) to Saturday (6) and Monday (1) to 0
 
         public List<CompanyEvent> CompanyEventsToShowAtFrontPage { get; set; }
         public List<ProfessorEvent> ProfessorEventsToShowAtFrontPage { get; set; }
 
-        private List<InterestInCompanyEvent> InterestedStudents = new();
-        private List<InterestInCompanyEventAsProfessor> InterestedProfessorsInCompanyEvent = new();
-        private long? selectedEventIdForStudents;
-        private long? selectedEventIdForProfessors;
+        protected List<InterestInCompanyEvent> InterestedStudents = new();
+        protected List<InterestInCompanyEventAsProfessor> InterestedProfessorsInCompanyEvent = new();
+        protected long? selectedEventIdForStudents;
+        protected long? selectedEventIdForProfessors;
 
-        private List<InterestInProfessorEvent> InterestedStudentsForProfessorEvent = new();
-        private long? selectedEventIdForStudentsWhenShowInterestForProfessorEvent;
+        protected List<InterestInProfessorEvent> InterestedStudentsForProfessorEvent = new();
+        protected long? selectedEventIdForStudentsWhenShowInterestForProfessorEvent;
 
-        private bool showModal = false;
-        private bool showProfessorModal = false;
-        private bool showModalForStudentsAtProfessorEventInterest = false;
-        private InterestInCompanyEvent selectedStudentToShowDetailsForInterestinCompanyEvent;
-        private Professor selectedProfessorToShowDetailsForInterestinCompanyEvent;
-        private InterestInProfessorEvent selectedStudentToShowDetailsForInterestinProfessorEvent;
-        private IEnumerable<CompanyThesisApplied> companythesisapplicants;
-        private bool isFormValidToSaveAnnouncementAsCompany = true;
-        private bool showErrorMessageforUploadingAnnouncementAsCompany = false;
-        private bool isFormValidToSaveEventAsCompany = true;
-        private bool isFormValidToSaveEventAsProfessor = true;
+        protected bool showModal = false;
+        protected bool showProfessorModal = false;
+        protected bool showModalForStudentsAtProfessorEventInterest = false;
+        protected InterestInCompanyEvent selectedStudentToShowDetailsForInterestinCompanyEvent;
+        protected Professor selectedProfessorToShowDetailsForInterestinCompanyEvent;
+        protected InterestInProfessorEvent selectedStudentToShowDetailsForInterestinProfessorEvent;
+        protected IEnumerable<CompanyThesisApplied> companythesisapplicants;
+        protected bool isFormValidToSaveAnnouncementAsCompany = true;
+        protected bool showErrorMessageforUploadingAnnouncementAsCompany = false;
+        protected bool isFormValidToSaveEventAsCompany = true;
+        protected bool isFormValidToSaveEventAsProfessor = true;
 
-        private List<string> selectedKeywords = new();
-        private List<string> selectedAreasOfExpertise = new();
-        private List<string> selectedAreasOfInterest = new();
+        protected List<string> selectedKeywords = new();
+        protected List<string> selectedAreasOfExpertise = new();
+        protected List<string> selectedAreasOfInterest = new();
 
-        private List<string> selectedKeywordsAsRG = new();
-        private List<string> selectedAreasOfExpertiseAsRG = new();
-        private List<string> selectedAreasOfInterestAsRG = new();
+        protected List<string> selectedKeywordsAsRG = new();
+        protected List<string> selectedAreasOfExpertiseAsRG = new();
+        protected List<string> selectedAreasOfInterestAsRG = new();
 
-        private bool showErrorMessageforPostalCode = false;
+        protected bool showErrorMessageforPostalCode = false;
 
-        private const long MaxFileSize = 10 * 1024 * 1024; //10MB FILE SIZE
+        protected const long MaxFileSize = 10 * 1024 * 1024; //10MB FILE SIZE
 
         // Track current page and calculate the total number of pages
-        private int currentPage = 1;
-        private int totalPages => selectedDateEvents?.Count ?? 0;
+        protected int currentPage = 1;
+        protected int totalPages => selectedDateEvents?.Count ?? 0;
 
-        private CompanyEvent? eventToDisplay => selectedDateEvents?.ElementAtOrDefault(currentPage - 1);
-        private ProfessorEvent? professoreventToDisplay => selectedProfessorDateEvents?.ElementAtOrDefault(currentPage - 1);
+        protected CompanyEvent? eventToDisplay => selectedDateEvents?.ElementAtOrDefault(currentPage - 1);
+        protected ProfessorEvent? professoreventToDisplay => selectedProfessorDateEvents?.ElementAtOrDefault(currentPage - 1);
 
-        private string selectedEventType = "all"; // Default to show all events
-        private object selectedEvent = null;
+        protected string selectedEventType = "all"; // Default to show all events
+        protected object selectedEvent = null;
 
-        private string selectedEventFilter { get; set; } = "All";
-        private List<CompanyEvent> filteredCompanyEvents =>
+        protected string selectedEventFilter { get; set; } = "All";
+        protected List<CompanyEvent> filteredCompanyEvents =>
         selectedEventFilter == "All" || selectedEventFilter == "Company"
             ? selectedDateEvents
             : new List<CompanyEvent>();
 
-        private List<ProfessorEvent> filteredProfessorEvents =>
+        protected List<ProfessorEvent> filteredProfessorEvents =>
         selectedEventFilter == "All" || selectedEventFilter == "Professor"
             ? selectedProfessorDateEvents
             : new List<ProfessorEvent>();
@@ -719,226 +719,240 @@ namespace QuizManager.Shared
         // Get the event for the current page
 
         // Methods for pagination
-        private void NextPage()
+        protected void NextPage()
         {
             if (currentPage < totalPages)
                 currentPage++;
         }
 
-        private void PreviousPage()
+        protected void PreviousPage()
         {
             if (currentPage > 1)
                 currentPage--;
         }
 
-        private DateTime _professorEventDate;
-        private int existingEventsCountToCheckAsProfessor = 0;
+        protected DateTime _professorEventDate;
+        protected int existingEventsCountToCheckAsProfessor = 0;
 
-        private bool isCompanyDetailsModalOpenForHyperlinkNameAsStudent = false;
-        private bool isModalOpenForCompanyEventToSeeAsStudent = false;
-        private bool isModalOpenForProfessorEventToSeeAsStudent = false;
-        private bool isModalOpenForCompanyDetailsToSeeAsStudent = false;
-        private bool isModalOpenForProfessorDetailsToSeeAsStudent = false;
-        private bool isCompanyDetailsModal2Visible = false;
-        private bool isCompanyDetailsModal3Visible = false;
-        private bool isInternshipDetailsModalVisible = false;
-        private bool isJobDetailsModal2Visible = false;
-        private bool isCompanyDetailsModal4Visible = false;
-        private bool iscompanyDetailsModalVisible = false;
+        protected bool isCompanyDetailsModalOpenForHyperlinkNameAsStudent = false;
+        protected bool isModalOpenForCompanyEventToSeeAsStudent = false;
+        protected bool isModalOpenForProfessorEventToSeeAsStudent = false;
+        protected bool isModalOpenForCompanyDetailsToSeeAsStudent = false;
+        protected bool isModalOpenForProfessorDetailsToSeeAsStudent = false;
+        protected bool isCompanyDetailsModal2Visible = false;
+        protected bool isCompanyDetailsModal3Visible = false;
+        protected bool isInternshipDetailsModalVisible = false;
+        protected bool isJobDetailsModal2Visible = false;
+        protected bool isCompanyDetailsModal4Visible = false;
+        protected bool iscompanyDetailsModalVisible = false;
 
-        private List<InterestInCompanyEventAsProfessor> filteredProfessorInterestForCompanyEvents = new();
-        private List<InterestInProfessorEventAsCompany> filteredCompanyInterestForProfessorEvents = new();
-        private ProfessorInternship professorInternship = new ProfessorInternship();
+        protected List<InterestInCompanyEventAsProfessor> filteredProfessorInterestForCompanyEvents = new();
+        protected List<InterestInProfessorEventAsCompany> filteredCompanyInterestForProfessorEvents = new();
+        protected ProfessorInternship professorInternship = new ProfessorInternship();
 
-        private bool isCompanyDetailsModalOpenForJobSearch = false;
-        private bool isCompanyDetailsModalOpenForJobShow = false;
-        private Company? selectedCompanyDetailsForJobSearch = null;
-        private Company? selectedCompanyDetailsForJobShow = null;
-        private bool isJobDetailsModalVisibleToSeeJobApplicationsAsStudent = false;
+        protected bool isCompanyDetailsModalOpenForJobSearch = false;
+        protected bool isCompanyDetailsModalOpenForJobShow = false;
+        protected Company? selectedCompanyDetailsForJobSearch = null;
+        protected Company? selectedCompanyDetailsForJobShow = null;
+        protected bool isJobDetailsModalVisibleToSeeJobApplicationsAsStudent = false;
 
-        private bool isModalOpenToSeeCompanyDetails_ThesisStudentApplicationsToShow = false;
-        private Company selectedCompanyDetails_ThesisStudentApplicationsToShow = null;
-        private bool isModalOpenToSeeProfessorDetails_ThesisStudentApplicationsToShow = false;
-        private bool isModalOpenToSeeProfessorDetails_InternshipStudentApplicationsToShow = false;
-        private Professor selectedProfessorDetails_ThesisStudentApplicationsToShow = null;
+        protected bool isModalOpenToSeeCompanyDetails_ThesisStudentApplicationsToShow = false;
+        protected Company selectedCompanyDetails_ThesisStudentApplicationsToShow = null;
+        protected bool isModalOpenToSeeProfessorDetails_ThesisStudentApplicationsToShow = false;
+        protected bool isModalOpenToSeeProfessorDetails_InternshipStudentApplicationsToShow = false;
+        protected Professor selectedProfessorDetails_ThesisStudentApplicationsToShow = null;
 
-        private bool isModalOpenToSeeCompanyThesisDetails_ThesisStudentApplicationsToShow = false;
-        private CompanyThesis selectedCompanyThesisDetails_ThesisStudentApplicationsToShow = null;
+        protected bool isModalOpenToSeeCompanyThesisDetails_ThesisStudentApplicationsToShow = false;
+        protected CompanyThesis selectedCompanyThesisDetails_ThesisStudentApplicationsToShow = null;
 
-        private bool isModalOpenToSeeProfessorThesisDetails_ThesisStudentApplicationsToShow = false;
-        private ProfessorThesis selectedProfessorThesisDetails_ThesisStudentApplicationsToShow = null;
+        protected bool isModalOpenToSeeProfessorThesisDetails_ThesisStudentApplicationsToShow = false;
+        protected ProfessorThesis selectedProfessorThesisDetails_ThesisStudentApplicationsToShow = null;
 
-        private bool isProfessorDetailsModalVisible_StudentInternshipApplicationsShow = false;
-        private Professor selectedProfessorDetails = null;
-        private bool isInternshipDetailsModalVisible_StudentInternshipApplicationsShow = false;
+        protected bool isProfessorDetailsModalVisible_StudentInternshipApplicationsShow = false;
+        protected Professor selectedProfessorDetails = null;
+        protected bool isInternshipDetailsModalVisible_StudentInternshipApplicationsShow = false;
 
-        private bool showCompanyThesisApplications = true;
-        private bool showProfessorThesisApplications = true;
-        private bool isLoading = false;
-        private string filterValue = "all";
+        protected bool showCompanyThesisApplications = true;
+        protected bool showProfessorThesisApplications = true;
+        protected bool isLoading = false;
+        protected string filterValue = "all";
 
-        private List<CompanyThesisApplied> companyApplicationsToShowOnPagination_SeeMyThesisApplicationsAsStudent;
-        private List<ProfessorThesisApplied> professorApplicationsToShowOnPagination_SeeMyThesisApplicationsAsStudent;
-        private int itemsPerPageToShowOnPagination_SeeMyThesisApplicationsAsStudent;
-        private int totalPagesToShowOnPagination_SeeMyThesisApplicationsAsStudent;
-        private int currentPageToShowOnPagination_SeeMyThesisApplicationsAsStudent;
-        private List<CompanyThesisApplied> currentCompanyApplicationsToShowOnPagination_SeeMyThesisApplicationsAsStudent;
-        private List<ProfessorThesisApplied> currentProfessorApplicationsToShowOnPagination_SeeMyThesisApplicationsAsStudent;
+        protected List<CompanyThesisApplied> companyApplicationsToShowOnPagination_SeeMyThesisApplicationsAsStudent;
+        protected List<ProfessorThesisApplied> professorApplicationsToShowOnPagination_SeeMyThesisApplicationsAsStudent;
+        protected int itemsPerPageToShowOnPagination_SeeMyThesisApplicationsAsStudent;
+        protected int totalPagesToShowOnPagination_SeeMyThesisApplicationsAsStudent;
+        protected int currentPageToShowOnPagination_SeeMyThesisApplicationsAsStudent;
+        protected List<CompanyThesisApplied> currentCompanyApplicationsToShowOnPagination_SeeMyThesisApplicationsAsStudent;
+        protected List<ProfessorThesisApplied> currentProfessorApplicationsToShowOnPagination_SeeMyThesisApplicationsAsStudent;
 
-        private bool showCompanyThesisApplicationsToSearchAsStudent = true;
-        private bool showProfessorThesisApplicationsToSearchAsStudent = true;
-        private string selectedThesisFilter = "all";
-        private List<AllTheses> publishedTheses;
-        private string dropdownState = "all";
+        protected bool showCompanyThesisApplicationsToSearchAsStudent = true;
+        protected bool showProfessorThesisApplicationsToSearchAsStudent = true;
+        protected string selectedThesisFilter = "all";
+        protected List<AllTheses> publishedTheses;
+        protected string dropdownState = "all";
 
-        private bool showExpandedAreasInCompanyThesisEditModalAsCompany = false;
-        private bool showExpandedSkillsInCompanyThesisEditModalAsCompany = false;
-        private void ToggleAreasInEditCompanyThesisModalAsCompany() => showExpandedAreasInCompanyThesisEditModalAsCompany = !showExpandedAreasInCompanyThesisEditModalAsCompany;
-        private void ToggleSkillsInEditCompanyThesisModalAsCompany() => showExpandedSkillsInCompanyThesisEditModalAsCompany = !showExpandedSkillsInCompanyThesisEditModalAsCompany;
-        private bool showExpandedAreasInCompanyInternshipEditModalAsCompany = false;
-        private void ToggleAreasInEditCompanyInternshipModalAsCompany() => showExpandedAreasInCompanyInternshipEditModalAsCompany = !showExpandedAreasInCompanyInternshipEditModalAsCompany;
-        private void ToggleAreasInEditCompanyEventModal() => showExpandedAreasInCompanyEventEditModal = !showExpandedAreasInCompanyEventEditModal;
+        protected bool showExpandedAreasInCompanyThesisEditModalAsCompany = false;
+        protected bool showExpandedSkillsInCompanyThesisEditModalAsCompany = false;
+        protected void ToggleAreasInEditCompanyThesisModalAsCompany() => showExpandedAreasInCompanyThesisEditModalAsCompany = !showExpandedAreasInCompanyThesisEditModalAsCompany;
+        protected void ToggleSkillsInEditCompanyThesisModalAsCompany() => showExpandedSkillsInCompanyThesisEditModalAsCompany = !showExpandedSkillsInCompanyThesisEditModalAsCompany;
+        protected bool showExpandedAreasInCompanyInternshipEditModalAsCompany = false;
+        protected void ToggleAreasInEditCompanyInternshipModalAsCompany() => showExpandedAreasInCompanyInternshipEditModalAsCompany = !showExpandedAreasInCompanyInternshipEditModalAsCompany;
+        protected void ToggleAreasInEditCompanyEventModal() => showExpandedAreasInCompanyEventEditModal = !showExpandedAreasInCompanyEventEditModal;
 
-        private List<Area> selectedThesisAreasForProfessor = new();
-        private List<Skill> selectedThesisSkillsForProfessor = new();
+        protected List<Area> selectedThesisAreasForProfessor = new();
+        protected List<Skill> selectedThesisSkillsForProfessor = new();
 
-        private CompanyThesis companythesis;
-        private CompanyInternship companyinternshipp;
-        private CompanyJob companyjobb;
-        private ProfessorInternship professorinternship;
+        protected CompanyThesis companythesis;
+        protected CompanyInternship companyinternshipp;
+        protected CompanyJob companyjobb;
+        protected ProfessorInternship professorinternship;
 
-        private IEnumerable<CompanyThesisApplied> applicants;
-        private IEnumerable<InternshipApplied> companyInternshipApplicants;
-        private IEnumerable<CompanyJobApplied> companyJobApplicants;
-        private IEnumerable<ProfessorInternshipApplied> professorInternshipApplicants;
+        protected IEnumerable<CompanyThesisApplied> applicants;
+        protected IEnumerable<InternshipApplied> companyInternshipApplicants;
+        protected IEnumerable<CompanyJobApplied> companyJobApplicants;
+        protected IEnumerable<ProfessorInternshipApplied> professorInternshipApplicants;
 
-        private bool showExpandedAreasInCompanyEventEditModal = false;
+        protected bool showExpandedAreasInCompanyEventEditModal = false;
 
-        private List<Area> SelectedAreasToEditForCompanyEvent = new List<Area>();
+        protected List<Area> SelectedAreasToEditForCompanyEvent = new List<Area>();
 
-        private List<string> AvailableTowns = new List<string>();
+        protected List<string> AvailableTowns = new List<string>();
 
-        private Dictionary<long, IEnumerable<CompanyJobApplied>> jobApplicants = new Dictionary<long, IEnumerable<CompanyJobApplied>>();
-        private Dictionary<long, IEnumerable<CompanyJobApplied>> jobApplicantsMap = new Dictionary<long, IEnumerable<CompanyJobApplied>>();
-        private Dictionary<long, IEnumerable<InternshipApplied>> internshipApplicantsMap = new Dictionary<long, IEnumerable<InternshipApplied>>();
-        private Dictionary<long, IEnumerable<ProfessorInternshipApplied>> professorInternshipApplicantsMap = new Dictionary<long, IEnumerable<ProfessorInternshipApplied>>();
-        private Dictionary<long, IEnumerable<CompanyThesisApplied>> companyThesisApplicantsMap = new Dictionary<long, IEnumerable<CompanyThesisApplied>>();
-        private Dictionary<long, IEnumerable<ProfessorThesisApplied>> professorThesisApplicantsMap = new Dictionary<long, IEnumerable<ProfessorThesisApplied>>();
-        private Dictionary<long, IEnumerable<CompanyThesis>> companyThesesProfessorsMap = new Dictionary<long, IEnumerable<CompanyThesis>>();
+        protected Dictionary<long, IEnumerable<CompanyJobApplied>> jobApplicants = new Dictionary<long, IEnumerable<CompanyJobApplied>>();
+        protected Dictionary<long, IEnumerable<CompanyJobApplied>> jobApplicantsMap = new Dictionary<long, IEnumerable<CompanyJobApplied>>();
+        protected Dictionary<long, IEnumerable<InternshipApplied>> internshipApplicantsMap = new Dictionary<long, IEnumerable<InternshipApplied>>();
+        protected Dictionary<long, IEnumerable<ProfessorInternshipApplied>> professorInternshipApplicantsMap = new Dictionary<long, IEnumerable<ProfessorInternshipApplied>>();
+        protected Dictionary<long, IEnumerable<CompanyThesisApplied>> companyThesisApplicantsMap = new Dictionary<long, IEnumerable<CompanyThesisApplied>>();
+        protected Dictionary<long, IEnumerable<ProfessorThesisApplied>> professorThesisApplicantsMap = new Dictionary<long, IEnumerable<ProfessorThesisApplied>>();
+        protected Dictionary<long, IEnumerable<CompanyThesis>> companyThesesProfessorsMap = new Dictionary<long, IEnumerable<CompanyThesis>>();
 
-        private List<string> jobTitleAutocompleteSuggestionsWhenSearchForCompanyJobsAsStudent { get; set; } = new();
-        private List<string> companyNameAutocompleteSuggestionsWhenSearchForCompanyJobsAsStudent { get; set; } = new();
-        private List<string> internshipTitleAutocompleteSuggestionsWhenSearchInternshipAsStudent { get; set; } = new();
+        protected List<string> jobTitleAutocompleteSuggestionsWhenSearchForCompanyJobsAsStudent { get; set; } = new();
+        protected List<string> companyNameAutocompleteSuggestionsWhenSearchForCompanyJobsAsStudent { get; set; } = new();
+        protected List<string> internshipTitleAutocompleteSuggestionsWhenSearchInternshipAsStudent { get; set; } = new();
 
-        private int currentCompanyEventpageSize = 3;
-        private int pageSize = 3;
+        protected int currentCompanyEventpageSize = 3;
+        protected int pageSize = 3;
         public List<AnnouncementAsProfessor> ProfessorAnnouncements { get; set; }
         public List<AnnouncementAsCompany> CompanyAnnouncements { get; set; }
-        private int totalPagesForCompanyEvents => (int)Math.Ceiling((double)CompanyEventsToShowAtFrontPage.Where(a => a.CompanyEventStatus == "Δημοσιευμένη").Count() / currentCompanyEventpageSize);
-        private int expandedCompanyEventId = -1;
-        private string fetchError;
-        private int expandedProfessorEventId = -1;
-        private int expandedAnnouncementId = -1;
-        private bool isHidden = false;
-        private int expandedProfessorAnnouncementId = -1;
-        private int totalPagesForProfessorAnnouncements => (int)Math.Ceiling((double)ProfessorAnnouncements.Where(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη").Count() / pageSize);
-        private int currentPageForProfessorAnnouncements = 1;
-        private int currentCompanyEventPage = 1;
-        private int currentProfessorEventPage = 1;
-        private int totalPagesForProfessorEvents => (int)Math.Ceiling((double)ProfessorEventsToShowAtFrontPage.Where(a => a.ProfessorEventStatus == "Δημοσιευμένη").Count() / currentProfessorEventpageSize);
-        private int currentProfessorEventpageSize = 3;
+        protected int totalPagesForCompanyEvents => (int)Math.Ceiling((double)CompanyEventsToShowAtFrontPage.Where(a => a.CompanyEventStatus == "Δημοσιευμένη").Count() / currentCompanyEventpageSize);
+        protected int expandedCompanyEventId = -1;
+        protected string fetchError;
+        protected int expandedProfessorEventId = -1;
+        protected int expandedAnnouncementId = -1;
+        protected bool isHidden = false;
+        protected int expandedProfessorAnnouncementId = -1;
+        protected int totalPagesForProfessorAnnouncements => (int)Math.Ceiling((double)ProfessorAnnouncements.Where(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη").Count() / pageSize);
+        protected int currentPageForProfessorAnnouncements = 1;
+        protected int currentCompanyEventPage = 1;
+        protected int currentProfessorEventPage = 1;
+        protected int totalPagesForProfessorEvents => (int)Math.Ceiling((double)ProfessorEventsToShowAtFrontPage.Where(a => a.ProfessorEventStatus == "Δημοσιευμένη").Count() / currentProfessorEventpageSize);
+        protected int currentProfessorEventpageSize = 3;
 
-        private int totalPagesForCompanyAnnouncements => (int)Math.Ceiling((double)CompanyAnnouncements.Where(a => a.CompanyAnnouncementStatus == "Δημοσιευμένη").Count() / pageSize);
-        private int currentPageForCompanyAnnouncements = 1;
+        protected int totalPagesForCompanyAnnouncements => (int)Math.Ceiling((double)CompanyAnnouncements.Where(a => a.CompanyAnnouncementStatus == "Δημοσιευμένη").Count() / pageSize);
+        protected int currentPageForCompanyAnnouncements = 1;
 
-        private Professor selectedProfessorDetailsForHyperlinkNameInInternshipAsStudent;
-        private Company selectedCompanyDetailsForHyperlinkNameInInternshipAsStudent;
-        private bool isCompanyDetailsModalOpenForHyperlinkNameAsStudentForCompanyInternship;
+        protected Professor selectedProfessorDetailsForHyperlinkNameInInternshipAsStudent;
+        protected Company selectedCompanyDetailsForHyperlinkNameInInternshipAsStudent;
+        protected bool isCompanyDetailsModalOpenForHyperlinkNameAsStudentForCompanyInternship;
 
-        private List<NewsArticle> newsArticles;
-        private List<NewsArticle> svseNewsArticles;
+        protected List<NewsArticle> newsArticles;
+        protected List<NewsArticle> svseNewsArticles;
         public List<AnnouncementAsCompany> Announcements { get; set; }
 
-        private bool showSuccessMessageWhenSaveInternshipAsCompany = false;
+        protected bool showSuccessMessageWhenSaveInternshipAsCompany = false;
 
-        private string searchAreasInputToFindThesesAsCompany = string.Empty;
-        private List<string> areaSuggestionsToFindThesesAsCompany = new();
-        private List<string> selectedAreasToFindThesesAsCompany = new();
+        protected string searchAreasInputToFindThesesAsCompany = string.Empty;
+        protected List<string> areaSuggestionsToFindThesesAsCompany = new();
+        protected List<string> selectedAreasToFindThesesAsCompany = new();
 
         // For filtering
-        private string filterValueForInternships = "all";
-        private bool showCompanyInternshipApplications = true;
-        private bool showProfessorInternshipApplications = true;
+        protected string filterValueForInternships = "all";
+        protected bool showCompanyInternshipApplications = true;
+        protected bool showProfessorInternshipApplications = true;
 
         // For pagination
-        private int currentPageForInternshipsToSee = 1;
-        private int pageSizeForInternshipsToSee = 3; // Adjust as needed
-        private int totalInternshipCount = 0;
-        private int totalPagesForInternshipsToSee = 1;
+        protected int currentPageForInternshipsToSee = 1;
+        protected int pageSizeForInternshipsToSee = 3; // Adjust as needed
+        protected int totalInternshipCount = 0;
+        protected int totalPagesForInternshipsToSee = 1;
 
-        private HashSet<long> interestedProfessorEventIds = new();
-        private HashSet<long> alreadyInterestedCompanyEventIds = new();
-        private HashSet<long> professorThesisIdsApplied = new();
-        private HashSet<long> companyThesisIdsApplied = new();
-        private HashSet<long> jobIdsApplied = new();
-        private HashSet<long> internshipIdsApplied = new();
-        private HashSet<long> professorInternshipIdsApplied = new();
+        protected HashSet<long> interestedProfessorEventIds = new();
+        protected HashSet<long> alreadyInterestedCompanyEventIds = new();
+        protected HashSet<long> professorThesisIdsApplied = new();
+        protected HashSet<long> companyThesisIdsApplied = new();
+        protected HashSet<long> jobIdsApplied = new();
+        protected HashSet<long> internshipIdsApplied = new();
+        protected HashSet<long> professorInternshipIdsApplied = new();
 
-        private int currentInternshipPage = 1;
-        private int InternshipsPerPage = 3; // Set to show 3 internships per page
-        private int totalInternshipPages => (int)Math.Ceiling((double)publishedInternships.Count / InternshipsPerPage);
+        protected int currentInternshipPage = 1;
+        protected int InternshipsPerPage = 3; // Set to show 3 internships per page
+        protected int totalInternshipPages => (int)Math.Ceiling((double)publishedInternships.Count / InternshipsPerPage);
 
         // STUDENT PAGINATION ON TABLE DROPDOWNS - ALL TABS
-        private int[] pageSizeOptions_SeeMyThesisApplicationsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SearchForThesisAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SeeMyJobApplicationsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SearchForJobsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SeeMyInternshipApplicationsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SearchForInternshipsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SearchForEventsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyThesisApplicationsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SearchForThesisAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyJobApplicationsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SearchForJobsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyInternshipApplicationsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SearchForInternshipsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SearchForEventsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
         // COMPANY PAGINATION ON TABLE DROPDOWNS - ALL TABS
-        private int[] pageSizeOptions_SeeMyUploadedAnnouncementsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SeeMyUploadedJobsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SeeMyUploadedInternshipsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SeeMyUploadedThesesAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SearchForProfessorThesesAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SeeMyUploadedEventsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SearchForStudentsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SearchForProfessorsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyUploadedAnnouncementsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyUploadedJobsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyUploadedInternshipsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyUploadedThesesAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SearchForProfessorThesesAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyUploadedEventsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SearchForStudentsAsCompany = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SearchForProfessorsAsStudent = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
         // SEARCH FOR PROFESSOR AS RG
-        private int[] pageSizeOptions_SearchForProfessorsAsRG = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SearchForProfessorsAsRG = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
         // PROFESSOR PAGINATION ON TABLE DROPDOWNS - ALL TABS
-        private int[] pageSizeOptions_SeeMyUploadedAnnouncementsAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SeeMyUploadedThesesAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] companyThesesPageSize_SearchForCompanyThesesAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SeeMyUploadedInternshipsAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] pageSizeOptions_SeeMyUploadedEventsAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] studentSearchPageSizeOptions = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        private int[] companySearchPageSizeOptions = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyUploadedAnnouncementsAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyUploadedThesesAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] companyThesesPageSize_SearchForCompanyThesesAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyUploadedInternshipsAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] pageSizeOptions_SeeMyUploadedEventsAsProfessor = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] studentSearchPageSizeOptions = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        protected int[] companySearchPageSizeOptions = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
-        private List<ProfessorInternshipApplied> _professorinternshipapplicants = new();
-        private string uploadErrorMessage = string.Empty;
-        private bool uploadSuccess = false;
-        private ResearchGroup researchGroupData;
+        protected List<ProfessorInternshipApplied> _professorinternshipapplicants = new();
+        protected string uploadErrorMessage = string.Empty;
+        protected bool uploadSuccess = false;
+        protected ResearchGroup researchGroupData;
+        protected List<ResearchGroup_Professors> facultyMembers = new();
+        protected List<ResearchGroup_NonFacultyMembers> nonFacultyMembers = new();
+        protected List<ResearchGroup_ResearchActions> researchActions = new();
+        protected List<ResearchGroup_Patents> patents = new();
+        protected List<ResearchGroup_Publications> memberPublications = new();
+        protected List<ResearchGroup_SpinOffCompany> spinOffCompanies = new();
+        protected int numberOfFacultyMembers;
+        protected int numberOfCollaborators;
+        protected int numberOfActiveResearchActions;
+        protected int numberOfInactiveResearchActions;
+        protected int numberOfActivePatents;
+        protected int numberOfInactivePatents;
+        protected int numberOfTotalPublications;
+        protected int numberOfRecentPublications;
 
-        private Student selectedStudentFromCache;
+        protected Student selectedStudentFromCache;
 
-        private Dictionary<string, Student> studentDataCache = new Dictionary<string, Student>();
-        private Dictionary<string, Company> companyDataCache = new Dictionary<string, Company>();
-        private Dictionary<string, Professor> professorDataCache = new Dictionary<string, Professor>();
-        private Dictionary<long, CompanyJob> jobDataCache = new Dictionary<long, CompanyJob>();
-        private Dictionary<long, CompanyInternship> internshipDataCache = new Dictionary<long, CompanyInternship>();
-        private Dictionary<long, ProfessorInternship> professorInternshipDataCache = new Dictionary<long, ProfessorInternship>();
-        private Dictionary<long, CompanyThesis> thesisDataCache = new Dictionary<long, CompanyThesis>();
-        private Dictionary<long, ProfessorThesis> professorThesisDataCache = new Dictionary<long, ProfessorThesis>();
+        protected Dictionary<string, Student> studentDataCache = new Dictionary<string, Student>();
+        protected Dictionary<string, Company> companyDataCache = new Dictionary<string, Company>();
+        protected Dictionary<string, Professor> professorDataCache = new Dictionary<string, Professor>();
+        protected Dictionary<long, CompanyJob> jobDataCache = new Dictionary<long, CompanyJob>();
+        protected Dictionary<long, CompanyInternship> internshipDataCache = new Dictionary<long, CompanyInternship>();
+        protected Dictionary<long, ProfessorInternship> professorInternshipDataCache = new Dictionary<long, ProfessorInternship>();
+        protected Dictionary<long, CompanyThesis> thesisDataCache = new Dictionary<long, CompanyThesis>();
+        protected Dictionary<long, ProfessorThesis> professorThesisDataCache = new Dictionary<long, ProfessorThesis>();
 
-        private bool hasExistingEventsOnSelectedDate = false;
-        private int existingEventsCount = 0;
+        protected bool hasExistingEventsOnSelectedDate = false;
+        protected int existingEventsCount = 0;
 
-        private async Task CheckExistingEventsForDate()
+        protected async Task CheckExistingEventsForDate()
         {
             if (companyEvent.CompanyEventActiveDate.Date > DateTime.Today.Date)
             {
@@ -963,7 +977,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task HandleDateChange(ChangeEventArgs e)
+        protected async Task HandleDateChange(ChangeEventArgs e)
         {
             if (DateTime.TryParse(e.Value?.ToString(), out DateTime newDate))
             {
@@ -972,25 +986,25 @@ namespace QuizManager.Shared
             }
         }
 
-        private AnnouncementAsCompany? selectedCompanyAnnouncementToSeeDetailsAsCompany;
-        private void OpenCompanyAnnouncementDetailsModal(AnnouncementAsCompany currentAnnouncement)
+        protected AnnouncementAsCompany? selectedCompanyAnnouncementToSeeDetailsAsCompany;
+        protected void OpenCompanyAnnouncementDetailsModal(AnnouncementAsCompany currentAnnouncement)
         {
             selectedCompanyAnnouncementToSeeDetailsAsCompany = currentAnnouncement;
         }
 
-        private void CloseCompanyAnnouncementDetailsModal()
+        protected void CloseCompanyAnnouncementDetailsModal()
         {
             selectedCompanyAnnouncementToSeeDetailsAsCompany = null;
         }
 
-        private List<string> DegreeLevel = new List<string>
+        protected List<string> DegreeLevel = new List<string>
     {
         "Προπτυχιακός Φοιτητής",
         "Μεταπτυχιακός Φοιτητής",
         "Υποψήφιος Διδάκτορας",
     };
 
-        private List<string> ForeasType = new List<string>
+        protected List<string> ForeasType = new List<string>
     {
         "Ιδιωτικός Φορέας",
         "Δημόσιος Φορέας",
@@ -998,7 +1012,7 @@ namespace QuizManager.Shared
         "Άλλο"
     };
 
-        private List<string> Regions = new List<string>
+        protected List<string> Regions = new List<string>
     {
         "Ανατολική Μακεδονία και Θράκη",
         "Κεντρική Μακεδονία",
@@ -1014,7 +1028,7 @@ namespace QuizManager.Shared
         "Νότιο Αιγαίο",
         "Κρήτη"
     };
-        private Dictionary<string, List<string>> RegionToTownsMap = new Dictionary<string, List<string>>
+        protected Dictionary<string, List<string>> RegionToTownsMap = new Dictionary<string, List<string>>
     {
         {"Ανατολική Μακεδονία και Θράκη", new List<string> {"Κομοτηνή", "Αλεξανδρούπολη", "Καβάλα", "Ξάνθη", "Δράμα", "Ορεστιάδα", "Διδυμότειχο", "Ίασμος", "Νέα Βύσσα", "Φέρες"}},
         {"Κεντρική Μακεδονία", new List<string> {"Θεσσαλονίκη", "Κατερίνη", "Σέρρες", "Κιλκίς", "Πολύγυρος", "Ναούσα", "Έδεσσα", "Γιαννιτσά", "Καβάλα", "Άμφισσα"}},
@@ -1462,21 +1476,21 @@ namespace QuizManager.Shared
 
         }
 
-        private async Task<CompanyThesis> GetCompanyThesisAsync()
+        protected async Task<CompanyThesis> GetCompanyThesisAsync()
         {
             // Replace this with your actual logic to fetch the company thesis
             // Ensure this does not return null unless expected
             return await dbContext.CompanyTheses.FirstOrDefaultAsync(); // Example fetch
         }
 
-        private async Task<CompanyInternship> GetCompanyInternshipsAsync()
+        protected async Task<CompanyInternship> GetCompanyInternshipsAsync()
         {
             // Replace this with your actual logic to fetch the company intern
             // Ensure this does not return null unless expected
             return await dbContext.CompanyInternships.FirstOrDefaultAsync(); // Example fetch
         }
 
-        private async Task<CompanyJob> GetCompanyJobsAsync()
+        protected async Task<CompanyJob> GetCompanyJobsAsync()
         {
             // Replace this with your actual logic to fetch the company intern
             // Ensure this does not return null unless expected
@@ -1484,32 +1498,32 @@ namespace QuizManager.Shared
             currentJobPage = 1;
         }
 
-        private async Task<List<CompanyThesis>> GetCompanyThesesAsync()
+        protected async Task<List<CompanyThesis>> GetCompanyThesesAsync()
         {
             return await dbContext.CompanyTheses.ToListAsync();
         }
 
-        private async Task LoadAreasAsync()
+        protected async Task LoadAreasAsync()
         {
             Areas = await dbContext.Areas.ToListAsync();
         }
 
-        private async Task LoadSkillsAsync()
+        protected async Task LoadSkillsAsync()
         {
             Skills = await dbContext.Skills.ToListAsync();
         }
 
-        private void NavigateToSearchJobs()
+        protected void NavigateToSearchJobs()
         {
             NavigationManager.NavigateTo("/searchjobs");
         }
 
-        private void NavigateToSearchThesis()
+        protected void NavigateToSearchThesis()
         {
             NavigationManager.NavigateTo("/searchthesis");
         }
 
-        private bool HideAllInitialCards()
+        protected bool HideAllInitialCards()
         {
             var uri = NavigationManager.Uri;
             return uri.Contains("profile")
@@ -1530,7 +1544,7 @@ namespace QuizManager.Shared
             //EPISIS NA GINEI TO UPDATE GIA TA STOIXEIA TOU USER STIN IDIA FORMA OPWS AKRIVWS GINETAI KAI META EDIT POSITIONS KAI EDIT THESIS
         }
 
-        private async Task ShowMyThesisApplicationsAsStudent()
+        protected async Task ShowMyThesisApplicationsAsStudent()
         {
             try
             {
@@ -1582,7 +1596,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ShowMyJobApplicationsAsStudent()
+        protected async Task ShowMyJobApplicationsAsStudent()
         {
             try
             {
@@ -1625,7 +1639,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DeleteProfessorThesisApplicationMadeAsStudent(long rngForThesisApplied)
+        protected async Task DeleteProfessorThesisApplicationMadeAsStudent(long rngForThesisApplied)
         {
             try
             {
@@ -1672,7 +1686,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DeleteCompanyThesisApplication(long rngForThesisApplied)
+        protected async Task DeleteCompanyThesisApplication(long rngForThesisApplied)
         {
             try
             {
@@ -1712,7 +1726,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DeleteJobApplication(long rngForJobApplied)
+        protected async Task DeleteJobApplication(long rngForJobApplied)
         {
             try
             {
@@ -1790,7 +1804,7 @@ namespace QuizManager.Shared
         }
 
         //I methodos egine Update gia na tsekarei to department opws ginetai kai ,me ta Professor Internships (student.deparmtnet == professor.department) 
-        private async Task SearchThesisApplicationsAsStudent()
+        protected async Task SearchThesisApplicationsAsStudent()
         {
             dbContext.ChangeTracker.Clear();
 
@@ -2015,7 +2029,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task SearchJobApplicationsAsStudent()
+        protected async Task SearchJobApplicationsAsStudent()
         {
             try
             {
@@ -2107,8 +2121,8 @@ namespace QuizManager.Shared
             }
         }
 
-        private List<AllInternships> publishedInternships = new();
-        private async Task SearchInternshipsAsStudent()
+        protected List<AllInternships> publishedInternships = new();
+        protected async Task SearchInternshipsAsStudent()
         {
             try
             {
@@ -2279,15 +2293,15 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NavigateToUploadThesis()
+        protected void NavigateToUploadThesis()
         {
             NavigationManager.NavigateTo("/uploadthesis");
         }
-        private void NavigateToUploadInternship()
+        protected void NavigateToUploadInternship()
         {
             NavigationManager.NavigateTo("/uploadinternship");
         }
-        private void NavigateToUploadJobs()
+        protected void NavigateToUploadJobs()
         {
             NavigationManager.NavigateTo("/uploadjobs");
         }
@@ -2349,7 +2363,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadUserThesisApplications()
+        protected async Task LoadUserThesisApplications()
         {
             try
             {
@@ -2440,7 +2454,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadUserJobApplications()
+        protected async Task LoadUserJobApplications()
         {
             try
             {
@@ -2472,7 +2486,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ToggleAndLoadStudentThesisApplications()
+        protected async Task ToggleAndLoadStudentThesisApplications()
         {
             showStudentThesisApplications = !showStudentThesisApplications;
 
@@ -2483,7 +2497,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ToggleAndLoadStudentJobApplications()
+        protected async Task ToggleAndLoadStudentJobApplications()
         {
             showStudentJobApplications = !showStudentJobApplications;
 
@@ -2493,7 +2507,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ApplyForThesisAsStudent(AllTheses thesis)
+        protected async Task ApplyForThesisAsStudent(AllTheses thesis)
         {
             // First ask for confirmation
             var confirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -2778,7 +2792,7 @@ namespace QuizManager.Shared
             NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
         }
 
-        private async Task SaveChangesWithErrorHandling(DbContext context, string thesisTitle)
+        protected async Task SaveChangesWithErrorHandling(DbContext context, string thesisTitle)
         {
             try
             {
@@ -2798,7 +2812,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadCompanyJobApplicantData()
+        protected async Task LoadCompanyJobApplicantData()
         {
             try
             {
@@ -2857,7 +2871,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadCompanyInternshipApplicantData()
+        protected async Task LoadCompanyInternshipApplicantData()
         {
             try
             {
@@ -2913,7 +2927,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadProfessorInternshipApplicantData()
+        protected async Task LoadProfessorInternshipApplicantData()
         {
             try
             {
@@ -2970,7 +2984,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadCompanyThesisApplicantData()
+        protected async Task LoadCompanyThesisApplicantData()
         {
             try
             {
@@ -3029,7 +3043,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task<Student> GetStudentDetails(string email)
+        protected async Task<Student> GetStudentDetails(string email)
         {
             return await dbContext.Students
                 .Where(s => s.Email.ToLower() == email.ToLower())
@@ -3049,7 +3063,7 @@ namespace QuizManager.Shared
                 .FirstOrDefaultAsync();
         }
 
-        private async Task<Company> GetCompanyDetails(string email)
+        protected async Task<Company> GetCompanyDetails(string email)
         {
             return await dbContext.Companies
                 .Where(c => c.CompanyEmail.ToLower() == email.ToLower())
@@ -3084,7 +3098,7 @@ namespace QuizManager.Shared
                 .FirstOrDefaultAsync();
         }
 
-        private async Task<Professor> GetProfessorDetails(string email)
+        protected async Task<Professor> GetProfessorDetails(string email)
         {
             return await dbContext.Professors
                 .Where(p => p.ProfEmail.ToLower() == email.ToLower())
@@ -3108,7 +3122,7 @@ namespace QuizManager.Shared
                 .FirstOrDefaultAsync();
         }
 
-        private async Task ApplyForJobAsStudent(CompanyJob job)
+        protected async Task ApplyForJobAsStudent(CompanyJob job)
         {
             // Retrieve the latest job status
             var latestJob = await dbContext.CompanyJobs
@@ -3247,7 +3261,7 @@ namespace QuizManager.Shared
             NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
         }
 
-        private async Task UploadJobAsCompany(bool publishJob = false)
+        protected async Task UploadJobAsCompany(bool publishJob = false)
         {
             try
             {
@@ -3361,7 +3375,7 @@ namespace QuizManager.Shared
             NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
         }
 
-        private async Task UploadThesisAsCompany(bool publishThesis = false)
+        protected async Task UploadThesisAsCompany(bool publishThesis = false)
         {
             try
             {
@@ -3486,7 +3500,7 @@ namespace QuizManager.Shared
         }
 
         // Helper method to log current thesis state
-        private void LogCurrentThesisState()
+        protected void LogCurrentThesisState()
         {
             Console.WriteLine($"Title: '{thesis?.CompanyThesisTitle}' (null/empty: {string.IsNullOrWhiteSpace(thesis?.CompanyThesisTitle)})");
             Console.WriteLine($"Description: '{thesis?.CompanyThesisDescriptionsUploaded}' (null/empty: {string.IsNullOrWhiteSpace(thesis?.CompanyThesisDescriptionsUploaded)})");
@@ -3498,14 +3512,14 @@ namespace QuizManager.Shared
         }
 
         // Helper method to handle validation errors
-        private async Task HandleValidationError(string elementId)
+        protected async Task HandleValidationError(string elementId)
         {
             showErrorMessageforUploadingthesisAsCompany = true;
             await JS.InvokeVoidAsync("scrollToElementById", elementId);
             Console.WriteLine($"Validation failed for element: {elementId}");
         }
 
-        private async Task UploadInternshipAsCompany()
+        protected async Task UploadInternshipAsCompany()
         {
             try
             {
@@ -3665,7 +3679,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileSelected(InputFileChangeEventArgs e)
+        protected async Task HandleFileSelected(InputFileChangeEventArgs e)
         {
             var file = e.File;
             if (file != null && file.ContentType == "application/pdf")
@@ -3676,7 +3690,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileSelectedForCompanyThesisAttachment(InputFileChangeEventArgs e)
+        protected async Task HandleFileSelectedForCompanyThesisAttachment(InputFileChangeEventArgs e)
         {
             var file = e.File;
             if (file != null && file.ContentType == "application/pdf")
@@ -3687,7 +3701,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileSelectedForAnnouncementAttachment(InputFileChangeEventArgs e)
+        protected async Task HandleFileSelectedForAnnouncementAttachment(InputFileChangeEventArgs e)
         {
             var file = e.File;
             if (file != null && file.ContentType == "application/pdf")
@@ -3698,7 +3712,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileSelectedForAnnouncementAttachmentAsProfessor(InputFileChangeEventArgs e)
+        protected async Task HandleFileSelectedForAnnouncementAttachmentAsProfessor(InputFileChangeEventArgs e)
         {
             var file = e.File;
             if (file != null && file.ContentType == "application/pdf")
@@ -3711,7 +3725,7 @@ namespace QuizManager.Shared
 
         //SOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO AYTO EDW LEITOURGEI KANONIKA. THA KANW TO IDIO GIA OLA TA ATTACHMENTS KAI EDW KAI STON HOST KAI STO ANEVASMA GIA KA8E ARXEIO 8ELEI ALLAGI SOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO
 
-        private async Task HandleFileSelectedForThesisAttachmentAsProfessor(InputFileChangeEventArgs e)
+        protected async Task HandleFileSelectedForThesisAttachmentAsProfessor(InputFileChangeEventArgs e)
         {
             var file = e.File;
             if (file != null && file.ContentType == "application/pdf")
@@ -3723,7 +3737,7 @@ namespace QuizManager.Shared
         }
         //SOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO AYTO EDW LEITOURGEI KANONIKA. THA KANW TO IDIO GIA OLA TA ATTACHMENTS KAI EDW KAI STON HOST KAI STO ANEVASMA GIA KA8E ARXEIO 8ELEI ALLAGI SOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO
 
-        private async Task HandleFileSelectedForUploadInternshipAsCompany(InputFileChangeEventArgs e)
+        protected async Task HandleFileSelectedForUploadInternshipAsCompany(InputFileChangeEventArgs e)
         {
             var file = e.File;
             if (file != null && file.ContentType == "application/pdf")
@@ -3734,67 +3748,67 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleFormVisibilityForUploadCompanyJobs()
+        protected void ToggleFormVisibilityForUploadCompanyJobs()
         {
             isForm1Visible = !isForm1Visible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForUploadCompanyAnnouncements()
+        protected void ToggleFormVisibilityForUploadCompanyAnnouncements()
         {
             isAnnouncementsFormVisible = !isAnnouncementsFormVisible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityToShowGeneralAnnouncementsAndEventsAsCompany()
+        protected void ToggleFormVisibilityToShowGeneralAnnouncementsAndEventsAsCompany()
         {
             isAnnouncementsFormVisibleToShowGeneralAnnouncementsAndEventsAsCompany = !isAnnouncementsFormVisibleToShowGeneralAnnouncementsAndEventsAsCompany;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityToShowGeneralAnnouncementsAndEventsAsRG()
+        protected void ToggleFormVisibilityToShowGeneralAnnouncementsAndEventsAsRG()
         {
             isAnnouncementsFormVisibleToShowGeneralAnnouncementsAndEventsAsRG = !isAnnouncementsFormVisibleToShowGeneralAnnouncementsAndEventsAsRG;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForUploadProfessorAnnouncements()
+        protected void ToggleFormVisibilityForUploadProfessorAnnouncements()
         {
             isProfessorAnnouncementsFormVisible = !isProfessorAnnouncementsFormVisible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForUploadProfessorThesis()
+        protected void ToggleFormVisibilityForUploadProfessorThesis()
         {
             isProfessorThesisFormVisible = !isProfessorThesisFormVisible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForUploadProfessorInternship()
+        protected void ToggleFormVisibilityForUploadProfessorInternship()
         {
             isProfessorInternshipFormVisible = !isProfessorInternshipFormVisible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForSearchStudentAsProfessor()
+        protected void ToggleFormVisibilityForSearchStudentAsProfessor()
         {
             isProfessorSearchStudentFormVisible = !isProfessorSearchStudentFormVisible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForSearchCompanyAsProfessor()
+        protected void ToggleFormVisibilityForSearchCompanyAsProfessor()
         {
             isProfessorSearchCompanyFormVisible = !isProfessorSearchCompanyFormVisible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForSearchCompanyAsRG()
+        protected void ToggleFormVisibilityForSearchCompanyAsRG()
         {
             isRGSearchCompanyFormVisible = !isRGSearchCompanyFormVisible;
             StateHasChanged();
         }
 
-        private async Task ToggleFormVisibilityToShowMyActiveJobsAsCompany()
+        protected async Task ToggleFormVisibilityToShowMyActiveJobsAsCompany()
         {
             isForm2Visible = !isForm2Visible;
             if (isForm2Visible)
@@ -3806,7 +3820,7 @@ namespace QuizManager.Shared
 
         }
 
-        private async Task ToggleFormVisibilityToShowMyActiveThesesAsCompany()
+        protected async Task ToggleFormVisibilityToShowMyActiveThesesAsCompany()
         {
             isShowActiveThesesAsCompanyFormVisible = !isShowActiveThesesAsCompanyFormVisible;
             if (isShowActiveThesesAsCompanyFormVisible)
@@ -3818,7 +3832,7 @@ namespace QuizManager.Shared
 
         }
 
-        private async Task TogglePositionDetails(CompanyJob position)
+        protected async Task TogglePositionDetails(CompanyJob position)
         {
             if (positionDetails.ContainsKey(position.Id))
             {
@@ -3833,7 +3847,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task DeleteJobPosition(int jobId)
+        protected async Task DeleteJobPosition(int jobId)
         {
             // Show custom confirmation dialog with HTML styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -3856,7 +3870,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DeleteCompanyThesis(int companythesisId)
+        protected async Task DeleteCompanyThesis(int companythesisId)
         {
             // Show custom confirmation dialog with HTML styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -3879,7 +3893,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void EditJobPosition(int positionId)
+        protected void EditJobPosition(int positionId)
         {
             // Check if 'companyJobs' is not null before attempting to access it
             if (jobs == null)
@@ -3908,7 +3922,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DownloadAttachmentForCompanyJobs(int jobId)
+        protected async Task DownloadAttachmentForCompanyJobs(int jobId)
         {
             var job = await dbContext.CompanyJobs.FindAsync(jobId);
             if (job != null && job.PositionAttachment != null)
@@ -3919,7 +3933,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DownloadAttachmentForCompanyTheses(int companyThesisId)
+        protected async Task DownloadAttachmentForCompanyTheses(int companyThesisId)
         {
             var companythesis = await dbContext.CompanyTheses.FindAsync(companyThesisId);
             if (companythesis != null && companythesis.CompanyThesisAttachmentUpload != null)
@@ -3933,7 +3947,7 @@ namespace QuizManager.Shared
         }
 
         //SOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO AYTO EDW LEITOURGEI KANONIKA. THA KANW TO IDIO GIA OLA TA ATTACHMENTS KAI EDW KAI STON HOST KAI STO ANEVASMA GIA KA8E ARXEIO 8ELEI ALLAGI SOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO
-        private async Task DownloadAttachmentForProfessorTheses(int professorThesisId)
+        protected async Task DownloadAttachmentForProfessorTheses(int professorThesisId)
         {
             var professorThesis = await dbContext.ProfessorTheses.FindAsync(professorThesisId);
             if (professorThesis != null && professorThesis.ThesisAttachment != null)
@@ -3953,7 +3967,7 @@ namespace QuizManager.Shared
         }
         //SOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO AYTO EDW LEITOURGEI KANONIKA. THA KANW TO IDIO GIA OLA TA ATTACHMENTS KAI EDW KAI STON HOST KAI STO ANEVASMA GIA KA8E ARXEIO 8ELEI ALLAGI SOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO
 
-        private async Task DownloadAttachmentForCompanyInternships(int internshipId)
+        protected async Task DownloadAttachmentForCompanyInternships(int internshipId)
         {
             var internship = await dbContext.CompanyInternships.FindAsync(internshipId);
             if (internship != null && internship.CompanyInternshipAttachment != null)
@@ -3964,7 +3978,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DownloadAttachmentForProfessorInternships(int internshipId)
+        protected async Task DownloadAttachmentForProfessorInternships(int internshipId)
         {
             var internship = await dbContext.ProfessorInternships.FindAsync(internshipId);
             if (internship != null && internship.ProfessorInternshipAttachment != null)
@@ -3975,7 +3989,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UpdateJob()
+        protected async Task UpdateJob()
         {
             try
             {
@@ -3998,7 +4012,7 @@ namespace QuizManager.Shared
 
         }
 
-        private async Task UpdateCompanyThesis()
+        protected async Task UpdateCompanyThesis()
         {
             try
             {
@@ -4021,7 +4035,7 @@ namespace QuizManager.Shared
 
         }
 
-        private async Task LoadUserApplications()
+        protected async Task LoadUserApplications()
         {
             try
             {
@@ -4053,7 +4067,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadWhoApplied(long rngForPositionUploaded)
+        protected async Task LoadWhoApplied(long rngForPositionUploaded)
         {
             try
             {
@@ -4085,7 +4099,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task AcceptApplicationAsCompany(CompanyJobApplied application)
+        protected async Task AcceptApplicationAsCompany(CompanyJobApplied application)
         {
             try
             {
@@ -4126,7 +4140,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task RejectApplicationAsCompany(CompanyJobApplied application)
+        protected async Task RejectApplicationAsCompany(CompanyJobApplied application)
         {
             try
             {
@@ -4167,7 +4181,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ToggleDoughnutChart()
+        protected async Task ToggleDoughnutChart()
         {
             isDoughnutChartVisible = !isDoughnutChartVisible;
             if (isDoughnutChartVisible)
@@ -4180,7 +4194,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ToggleDepartmentDistributionChart()
+        protected async Task ToggleDepartmentDistributionChart()
         {
             isDepartmentDistributionChartVisible = !isDepartmentDistributionChartVisible;
             if (isDepartmentDistributionChartVisible)
@@ -4193,7 +4207,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadSkillDistributionAsync()
+        protected async Task LoadSkillDistributionAsync()
         {
             var students = await dbContext.Students.ToListAsync();
             foreach (var student in students)
@@ -4220,7 +4234,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadDepartmentDistributionAsync()
+        protected async Task LoadDepartmentDistributionAsync()
         {
             var students = await dbContext.Students.ToListAsync();
             foreach (var student in students)
@@ -4292,31 +4306,31 @@ namespace QuizManager.Shared
         //     }
         // }
 
-        private void ToggleFormVisibilityForUploadCompanyInternships()
+        protected void ToggleFormVisibilityForUploadCompanyInternships()
         {
             isUploadCompanyInternshipsFormVisible = !isUploadCompanyInternshipsFormVisible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForUploadCompanyThesis()
+        protected void ToggleFormVisibilityForUploadCompanyThesis()
         {
             isUploadCompanyThesisFormVisible = !isUploadCompanyThesisFormVisible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForUploadCompanyEvent()
+        protected void ToggleFormVisibilityForUploadCompanyEvent()
         {
             isUploadCompanyEventFormVisible = !isUploadCompanyEventFormVisible;
             StateHasChanged();
         }
 
-        private void ToggleFormVisibilityForUploadProfessorEvent()
+        protected void ToggleFormVisibilityForUploadProfessorEvent()
         {
             isUploadProfessorEventFormVisible = !isUploadProfessorEventFormVisible;
             StateHasChanged();
         }
 
-        private void OnAreaChange(ChangeEventArgs e)
+        protected void OnAreaChange(ChangeEventArgs e)
         {
             var selectedValue = e.Value.ToString();
             var selectedArea = availableAreas.FirstOrDefault(a => a.AreaName == selectedValue);
@@ -4326,7 +4340,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task MoveSelectedAreaToLeft()
+        protected async Task MoveSelectedAreaToLeft()
         {
             var newlySelectedAreas = await GetSelectedAreasFromDOM("selectedAreas");
 
@@ -4352,7 +4366,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task MoveSelectedAreaToRight()
+        protected async Task MoveSelectedAreaToRight()
         {
             var newlySelectedAreas = await GetSelectedAreasFromDOM("availableAreas");
 
@@ -4380,13 +4394,13 @@ namespace QuizManager.Shared
             public int Assessment { get; set; } = 1; // Default assessment value is 1
         }
 
-        private async Task<List<string>> GetSelectedAreasFromDOM(string selectId)
+        protected async Task<List<string>> GetSelectedAreasFromDOM(string selectId)
         {
             var selectedAreas = await JS.InvokeAsync<List<string>>("getSelectedValues", new object[] { selectId });
             return selectedAreas;
         }
 
-        private void ToggleSubFields(Area area)
+        protected void ToggleSubFields(Area area)
         {
             if (expandedAreas.Contains(area.AreaName))
             {
@@ -4399,7 +4413,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private List<string> GetTownsForRegion(string region)
+        protected List<string> GetTownsForRegion(string region)
         {
             if (string.IsNullOrEmpty(region) || !RegionToTownsMap.ContainsKey(region))
             {
@@ -4409,27 +4423,27 @@ namespace QuizManager.Shared
             return RegionToTownsMap[region];
         }
 
-        private void UpdateTransportOffer(bool offer)
+        protected void UpdateTransportOffer(bool offer)
         {
             companyInternship.CompanyInternshipTransportOffer = offer;
         }
 
-        private void UpdateTransportOfferForProfessorInternship(bool offer)
+        protected void UpdateTransportOfferForProfessorInternship(bool offer)
         {
             professorInternship.ProfessorInternshipTransportOffer = offer;
         }
 
-        private void ToggleFormVisibilityToShowMyActiveInternshipsAsCompany()
+        protected void ToggleFormVisibilityToShowMyActiveInternshipsAsCompany()
         {
             isShowActiveInternshipsAsCompanyFormVisible = !isShowActiveInternshipsAsCompanyFormVisible;
         }
 
-        private void ToggleFormVisibilityToShowMyActiveInternshipsAsProfessor()
+        protected void ToggleFormVisibilityToShowMyActiveInternshipsAsProfessor()
         {
             isShowActiveInternshipsAsProfessorFormVisible = !isShowActiveInternshipsAsProfessorFormVisible;
         }
 
-        private void ToggleInternshipDetails(CompanyInternship internship)
+        protected void ToggleInternshipDetails(CompanyInternship internship)
         {
             if (positionDetails.ContainsKey(internship.Id))
             {
@@ -4441,7 +4455,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DeleteInternship(int internshipId)
+        protected async Task DeleteInternship(int internshipId)
         {
             // Call JavaScript function for confirmation with HTML content and custom styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -4463,7 +4477,7 @@ namespace QuizManager.Shared
             NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
         }
 
-        private async Task DeleteProfessorInternship(int internshipId)
+        protected async Task DeleteProfessorInternship(int internshipId)
         {
             var internship = await dbContext.ProfessorInternships.FindAsync(internshipId);
             if (internship != null)
@@ -4474,7 +4488,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadInternships()
+        protected async Task LoadInternships()
         {
             try
             {
@@ -4511,7 +4525,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadProfessorInternships()
+        protected async Task LoadProfessorInternships()
         {
             try
             {
@@ -4544,7 +4558,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadJobs()
+        protected async Task LoadJobs()
         {
             try
             {
@@ -4574,7 +4588,7 @@ namespace QuizManager.Shared
 
         }
 
-        private async Task LoadThesesAsCompany()
+        protected async Task LoadThesesAsCompany()
         {
             try
             {
@@ -4603,7 +4617,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadThesesAsProfessor()
+        protected async Task LoadThesesAsProfessor()
         {
             try
             {
@@ -4639,7 +4653,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadProfessors()
+        protected async Task LoadProfessors()
         {
             try
             {
@@ -4664,7 +4678,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadCompanies()
+        protected async Task LoadCompanies()
         {
             try
             {
@@ -4689,60 +4703,60 @@ namespace QuizManager.Shared
             }
         }
 
-        private bool isModalVisibleForInternships = false;
-        private bool isModalVisibleForInternshipsAsStudent = false;
-        private bool isModalVisibleForProfessorInternshipsAsStudent = false;
-        private CompanyInternship currentInternship = null;
-        private bool isModalVisibleForProfessorInternships = false;
-        private ProfessorInternship currentProfessorInternship = null;
+        protected bool isModalVisibleForInternships = false;
+        protected bool isModalVisibleForInternshipsAsStudent = false;
+        protected bool isModalVisibleForProfessorInternshipsAsStudent = false;
+        protected CompanyInternship currentInternship = null;
+        protected bool isModalVisibleForProfessorInternships = false;
+        protected ProfessorInternship currentProfessorInternship = null;
 
-        private void ShowInternshipDetails(CompanyInternship internship)
+        protected void ShowInternshipDetails(CompanyInternship internship)
         {
             currentInternship = internship;
             isModalVisibleForInternships = true;
 
         }
 
-        private void ShowProfessorInternshipDetails(ProfessorInternship professorinternship)
+        protected void ShowProfessorInternshipDetails(ProfessorInternship professorinternship)
         {
             currentProfessorInternship = professorinternship;
             isModalVisibleForProfessorInternships = true;
 
         }
 
-        private void CloseModalForInternships()
+        protected void CloseModalForInternships()
         {
             isModalVisibleForInternships = false;
             selectedCompanyInternshipDetails = null;
         }
 
-        private void CloseModalForProfessorInternships()
+        protected void CloseModalForProfessorInternships()
         {
             isModalVisibleForProfessorInternships = false;
             currentProfessorInternship = null;
         }
 
         // Method to show the edit popup with selected internship details
-        private void EditInternshipDetails(CompanyInternship internship)
+        protected void EditInternshipDetails(CompanyInternship internship)
         {
             selectedInternship = internship;
             isEditPopupVisibleForInternships = true; // Show the edit popup
         }
 
-        private void EditProfessorInternshipDetails(ProfessorInternship internship)
+        protected void EditProfessorInternshipDetails(ProfessorInternship internship)
         {
             selectedProfessorInternship = internship;
             isEditPopupVisibleForProfessorInternships = true; // Show the edit popup
         }
 
         // Method to close the edit popup
-        private void CloseEditPopupForInternships()
+        protected void CloseEditPopupForInternships()
         {
             isEditPopupVisibleForInternships = false; // Hide the edit popup
         }
 
         // Method to save the edited internship details
-        private async Task SaveEditedInternship()
+        protected async Task SaveEditedInternship()
         {
             try
             {
@@ -4819,7 +4833,7 @@ namespace QuizManager.Shared
 
 
 
-        private async Task ShowJobDetails(CompanyJob job)
+        protected async Task ShowJobDetails(CompanyJob job)
         {
             if (job.Company == null)
             {
@@ -4833,37 +4847,37 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void ShowProfessorThesisDetailsAsStudent(ProfessorThesis professorthesis)
+        protected void ShowProfessorThesisDetailsAsStudent(ProfessorThesis professorthesis)
         {
             currentProfessorThesis = professorthesis;
             isModalVisibleToShowProfessorThesisDetails = true;
 
         }
 
-        private void ShowProfessorThesisDetailsAsProfessor(ProfessorThesis professorthesis)
+        protected void ShowProfessorThesisDetailsAsProfessor(ProfessorThesis professorthesis)
         {
             currentProfessorThesis = professorthesis;
             isModalVisibleToShowProfessorThesisAsProfessor = true;
         }
 
-        private void CloseModalForJobs()
+        protected void CloseModalForJobs()
         {
             isModalVisibleForJobs = false;
             currentJob = null;
         }
 
-        private void EditJobDetails(CompanyJob job)
+        protected void EditJobDetails(CompanyJob job)
         {
             selectedJob = job;
             isEditPopupVisibleForJobs = true; // Show the edit popup
         }
 
-        private void CloseEditPopupForJobs()
+        protected void CloseEditPopupForJobs()
         {
             isEditPopupVisibleForJobs = false; // Hide the edit popup
         }
 
-        private async Task SaveEditedJob()
+        protected async Task SaveEditedJob()
         {
             try
             {
@@ -4930,42 +4944,42 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ShowCompanyThesisDetails(CompanyThesis companythesis)
+        protected void ShowCompanyThesisDetails(CompanyThesis companythesis)
         {
             currentThesis = companythesis;
             isModalVisibleToShowCompanyThesisDetails = true;
 
         }
-        private void EditCompanyThesisDetails(CompanyThesis companythesis)
+        protected void EditCompanyThesisDetails(CompanyThesis companythesis)
         {
             selectedCompanyThesis = companythesis;
             isModalVisibleToEditCompanyThesisDetails = true; // Show the edit popup
         }
-        private void CloseModalForCompanyThesis()
+        protected void CloseModalForCompanyThesis()
         {
             isModalVisibleToShowCompanyThesisDetails = false;
             currentThesis = null;
         }
 
-        private void CloseModalForProfessorDetails()
+        protected void CloseModalForProfessorDetails()
         {
             isModalVisibleToShowprofessorDetailsAtCompanyThesisInterest = false;
             currentProfessorDetails = null;
         }
 
-        private async Task ShowCompanyThesisApplicationsAsStudent(CompanyThesisApplied thesis)
+        protected async Task ShowCompanyThesisApplicationsAsStudent(CompanyThesisApplied thesis)
         {
             selectedCompanyThesisApplicationToShowAsStudent = thesis;
             await JS.InvokeVoidAsync("showModal", "thesisDetailsModal");
         }
 
-        private async Task ShowProfessorThesisApplicationsAsStudent(ProfessorThesisApplied thesis)
+        protected async Task ShowProfessorThesisApplicationsAsStudent(ProfessorThesisApplied thesis)
         {
             selectedProfessorThesisApplicationToShowAsStudent = thesis;
             await JS.InvokeVoidAsync("showModal", "thesisDetailsModal");
         }
 
-        private async Task ConfirmApplyForInternship(CompanyInternship internship)
+        protected async Task ConfirmApplyForInternship(CompanyInternship internship)
         {
             var message = $"Πρόκεται να κάνετε αίτηση για την Θέση \"{internship.CompanyInternshipTitle}\". Είστε σίγουρος/η;";
 
@@ -4977,7 +4991,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ApplyForInternshipAsStudent(CompanyInternship internship)
+        protected async Task ApplyForInternshipAsStudent(CompanyInternship internship)
         {
             // Retrieve the latest internship status using updated property name
             var latestInternship = await dbContext.CompanyInternships
@@ -5108,7 +5122,7 @@ namespace QuizManager.Shared
             NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
         }
 
-        private async Task ConfirmApplyForProfessorInternship(ProfessorInternship internship)
+        protected async Task ConfirmApplyForProfessorInternship(ProfessorInternship internship)
         {
             var message = $"Πρόκεται να κάνετε αίτηση για την Θέση \"{internship.ProfessorInternshipTitle}\". Είστε σίγουρος/η;";
 
@@ -5120,7 +5134,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ApplyForProfessorInternshipAsStudent(ProfessorInternship internship)
+        protected async Task ApplyForProfessorInternshipAsStudent(ProfessorInternship internship)
         {
             // Retrieve the latest internship status using the new property name
             var latestInternship = await dbContext.ProfessorInternships
@@ -5257,7 +5271,7 @@ namespace QuizManager.Shared
             NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
         }
 
-        private async Task ConfirmApplyForJob(CompanyJob job)
+        protected async Task ConfirmApplyForJob(CompanyJob job)
         {
             var message = $"Πρόκεται να κάνετε αίτηση για την Θέση \"{job.PositionTitle}\".Είστε σίγουρος/η;";
             var confirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", message);
@@ -5268,7 +5282,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ToggleAndLoadStudentInternshipApplications()
+        protected async Task ToggleAndLoadStudentInternshipApplications()
         {
             showStudentInternshipApplications = !showStudentInternshipApplications;
 
@@ -5280,7 +5294,7 @@ namespace QuizManager.Shared
             StateHasChanged(); // Ensure UI updates after toggling
         }
 
-        private async Task LoadUserInternshipApplications()
+        protected async Task LoadUserInternshipApplications()
         {
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
@@ -5348,13 +5362,13 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void ShowJobDetails(CompanyJobApplied jobApplication)
+        protected void ShowJobDetails(CompanyJobApplied jobApplication)
         {
             selectedJobApplication = jobApplication;
             ShowJobDetailsModal();
         }
 
-        private async void ShowJobDetailsModal()
+        protected async void ShowJobDetailsModal()
         {
             await JS.InvokeVoidAsync("ShowBootstrapModal", "#jobDetailsModal");
         }
@@ -5364,42 +5378,42 @@ namespace QuizManager.Shared
             public List<Area> CompanyInternshipAreas { get; set; } = new List<Area>();
         }
 
-        private bool IsSelectedAreasWhenUploadJobAsCompany(Area area)
+        protected bool IsSelectedAreasWhenUploadJobAsCompany(Area area)
         {
             return SelectedAreasWhenUploadJobAsCompany.Contains(area);
         }
 
-        private bool IsSelectedAreasWhenUploadThesisAsCompany(Area area)
+        protected bool IsSelectedAreasWhenUploadThesisAsCompany(Area area)
         {
             return SelectedAreasWhenUploadThesisAsCompany.Contains(area);
         }
 
-        private bool IsSelectedAreasWhenUploadInternshipAsCompany(Area area)
+        protected bool IsSelectedAreasWhenUploadInternshipAsCompany(Area area)
         {
             return SelectedAreasWhenUploadInternshipAsCompany.Contains(area);
         }
 
-        private bool IsSelectedAreaForCompanyEvent(Area area)
+        protected bool IsSelectedAreaForCompanyEvent(Area area)
         {
             return SelectedAreasWhenUploadEventAsCompany.Contains(area);
         }
 
-        private bool IsSelectedAreaForProfessorEvent(Area area)
+        protected bool IsSelectedAreaForProfessorEvent(Area area)
         {
             return SelectedAreasWhenUploadEventAsProfessor.Contains(area);
         }
 
-        private bool IsSelectedAreaForProfessorInternship(Area area)
+        protected bool IsSelectedAreaForProfessorInternship(Area area)
         {
             return SelectedAreasWhenUploadInternshipAsProfessor.Contains(area);
         }
 
-        private bool IsSelectedForSkillsWhenUploadThesisAsCompany(Skill skill)
+        protected bool IsSelectedForSkillsWhenUploadThesisAsCompany(Skill skill)
         {
             return SelectedSkillsWhenUploadThesisAsCompany.Contains(skill);
         }
 
-        private void OnCheckedChangedAreasWhenUploadJobAsCompany(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedAreasWhenUploadJobAsCompany(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -5423,7 +5437,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnCheckedChangedAreasWhenUploadInternshipAsCompany(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedAreasWhenUploadInternshipAsCompany(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -5447,7 +5461,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnCheckedChangedAreasWhenUploadThesisAsCompany(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedAreasWhenUploadThesisAsCompany(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -5471,7 +5485,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnCheckedChangedAreasWhenUploadInternshipAsProfessor(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedAreasWhenUploadInternshipAsProfessor(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -5495,7 +5509,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnCheckedChangedForCompanyEvent(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForCompanyEvent(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -5513,7 +5527,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnCheckedChangedForProfessorEvent(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForProfessorEvent(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -5531,7 +5545,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnCheckedChangedForSkillsWhenUploadThesisAsCompany(ChangeEventArgs e, Skill skill)
+        protected void OnCheckedChangedForSkillsWhenUploadThesisAsCompany(ChangeEventArgs e, Skill skill)
         {
             if (e.Value is bool isChecked)
             {
@@ -5554,42 +5568,42 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ToggleCheckboxesForCompanyInternship()
+        protected async Task ToggleCheckboxesForCompanyInternship()
         {
             await JS.InvokeVoidAsync("toggleCompanyInternshipCheckboxes");
         }
 
-        private async Task ToggleCheckboxesForProfessorInternship()
+        protected async Task ToggleCheckboxesForProfessorInternship()
         {
             await JS.InvokeVoidAsync("toggleProfessorInternshipCheckboxes");
         }
 
-        private async Task ToggleCheckboxesForAreasForCompanyThesis()
+        protected async Task ToggleCheckboxesForAreasForCompanyThesis()
         {
             await JS.InvokeVoidAsync("toggleCompanyThesisAreasCheckboxes");
         }
 
-        private async Task ToggleCheckboxesForAreasForCompanyEvent()
+        protected async Task ToggleCheckboxesForAreasForCompanyEvent()
         {
             await JS.InvokeVoidAsync("toggleCompanyEventAreasCheckboxes");
         }
 
-        private async Task ToggleCheckboxesForAreasForProfessorEvent()
+        protected async Task ToggleCheckboxesForAreasForProfessorEvent()
         {
             await JS.InvokeVoidAsync("toggleProfessorEventAreasCheckboxes");
         }
 
-        private async Task ToggleCheckboxesForSkillsForCompanyThesis()
+        protected async Task ToggleCheckboxesForSkillsForCompanyThesis()
         {
             await JS.InvokeVoidAsync("toggleCompanyThesisSkillsCheckboxes");
         }
 
-        private async Task ToggleCheckboxesForCompanyJob()
+        protected async Task ToggleCheckboxesForCompanyJob()
         {
             await JS.InvokeVoidAsync("toggleCompanyJobCheckboxes");
         }
 
-        private async Task UpdateInternshipStatusAsCompany(int internshipId, string newStatus)
+        protected async Task UpdateInternshipStatusAsCompany(int internshipId, string newStatus)
         {
             // Skip confirmation dialog if the new status is "Μη Δημοσιευμένη"
             if (newStatus != "Μη Δημοσιευμένη")
@@ -5641,7 +5655,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UpdateInternshipStatusAsProfessor(int internshipId, string newStatus)
+        protected async Task UpdateInternshipStatusAsProfessor(int internshipId, string newStatus)
         {
             // Retrieve the internship from the database
             var internship = await dbContext.ProfessorInternships
@@ -5682,7 +5696,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UpdateJobStatusAsCompany(int jobId, string newStatus)
+        protected async Task UpdateJobStatusAsCompany(int jobId, string newStatus)
         {
             // Show confirmation dialog only if the new status is NOT "Μη Δημοσιευμένη"
             if (newStatus != "Μη Δημοσιευμένη")
@@ -5735,7 +5749,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UpdateThesisStatusAsCompany(int companythesisId, string newCompanyThesisStatus)
+        protected async Task UpdateThesisStatusAsCompany(int companythesisId, string newCompanyThesisStatus)
         {
             try
             {
@@ -5811,7 +5825,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnAreaCheckboxChanged(ChangeEventArgs e, string areaName)
+        protected void OnAreaCheckboxChanged(ChangeEventArgs e, string areaName)
         {
             if (bool.TryParse(e.Value?.ToString(), out var isChecked))
             {
@@ -5829,13 +5843,13 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleInternshipAreasVisibility()
+        protected void ToggleInternshipAreasVisibility()
         {
             isInternshipAreasVisible = !isInternshipAreasVisible;
             StateHasChanged();
         }
 
-        private async Task ToggleInternshipExpanded(long internshipId)
+        protected async Task ToggleInternshipExpanded(long internshipId)
         {
             Console.WriteLine($"ToggleInternshipExpanded called for internship: {internshipId}");
 
@@ -5864,7 +5878,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ToggleProfessorInternshipExpanded(long internshipId)
+        protected async Task ToggleProfessorInternshipExpanded(long internshipId)
         {
             Console.WriteLine($"ToggleProfessorInternshipExpanded called for internship: {internshipId}");
 
@@ -5891,7 +5905,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task<IEnumerable<InternshipApplied>> GetApplicantsForInternships(long internshipId)
+        protected async Task<IEnumerable<InternshipApplied>> GetApplicantsForInternships(long internshipId)
         {
             var internship = await dbContext.CompanyInternships
                 .Where(i => i.RNGForInternshipUploadedAsCompany == internshipId) // Updated property name
@@ -5909,7 +5923,7 @@ namespace QuizManager.Shared
                 .ToListAsync();
         }
 
-        private void ToggleProfessorInternshipApplicants(long professorinternshipRNG)
+        protected void ToggleProfessorInternshipApplicants(long professorinternshipRNG)
         {
             if (expandedProfessorInternships.ContainsKey(professorinternshipRNG))
             {
@@ -5923,7 +5937,7 @@ namespace QuizManager.Shared
             Console.WriteLine($"Internship ID: {professorinternshipRNG}, Expanded: {expandedProfessorInternships[professorinternshipRNG]}");
         }
 
-        private async Task ToggleProfessorThesisExpanded(long thesisRNG)
+        protected async Task ToggleProfessorThesisExpanded(long thesisRNG)
         {
             Console.WriteLine($"ToggleProfessorThesisExpanded called for thesis: {thesisRNG}");
 
@@ -5950,7 +5964,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadProfessorThesisApplicantData()
+        protected async Task LoadProfessorThesisApplicantData()
         {
             try
             {
@@ -6006,7 +6020,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ToggleJobsExpanded(long positionId)
+        protected async Task ToggleJobsExpanded(long positionId)
         {
             if (expandedJobs.ContainsKey(positionId))
             {
@@ -6033,7 +6047,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ToggleCompanyThesesExpanded(long companyThesisRNG)
+        protected async Task ToggleCompanyThesesExpanded(long companyThesisRNG)
         {
             if (expandedCompanyTheses.ContainsKey(companyThesisRNG))
             {
@@ -6060,7 +6074,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ToggleCompanyThesesExpandedForProfessorInterest(long companythesisRNG)
+        protected async Task ToggleCompanyThesesExpandedForProfessorInterest(long companythesisRNG)
         {
             Console.WriteLine($"ToggleThesesExpandedProfessorInterest called for position: {companythesisRNG}");
 
@@ -6094,7 +6108,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadProfessorDataWhenHeShowsInterestForCompanyTheses(List<CompanyThesis> theses)
+        protected async Task LoadProfessorDataWhenHeShowsInterestForCompanyTheses(List<CompanyThesis> theses)
         {
             try
             {
@@ -6153,7 +6167,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleProfessorThesesExpandedForCompanyInterest(long professorthesisRNG)
+        protected void ToggleProfessorThesesExpandedForCompanyInterest(long professorthesisRNG)
         {
             Console.WriteLine($"ToggleThesesExpandedCompanyInterest called for position: {professorthesisRNG}");
 
@@ -6170,7 +6184,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task<IEnumerable<InternshipApplied>> GetApplicants(long companyInternshipRNG)
+        protected async Task<IEnumerable<InternshipApplied>> GetApplicants(long companyInternshipRNG)
         {
             // Get the internship details including the position information
             var internship = await dbContext.CompanyInternships
@@ -6193,7 +6207,7 @@ namespace QuizManager.Shared
                 .ToListAsync();
         }
 
-        private async Task<IEnumerable<ProfessorInternshipApplied>> GetProfessorInternshipApplicants(long professorInternshipRNG)
+        protected async Task<IEnumerable<ProfessorInternshipApplied>> GetProfessorInternshipApplicants(long professorInternshipRNG)
         {
             // Get the professor internship details including the position information
             var internship = await dbContext.ProfessorInternships
@@ -6219,7 +6233,7 @@ namespace QuizManager.Shared
                 .ToListAsync();
         }
 
-        private async Task<IEnumerable<CompanyJobApplied>> GetApplicantsForJobs(long positionId)
+        protected async Task<IEnumerable<CompanyJobApplied>> GetApplicantsForJobs(long positionId)
         {
             return await dbContext.CompanyJobsApplied
                 .Where(a => a.RNGForCompanyJobApplied == positionId)
@@ -6229,7 +6243,7 @@ namespace QuizManager.Shared
                 .ToListAsync();
         }
 
-        private async Task<IEnumerable<CompanyThesisApplied>> GetApplicantsForCompanyThesis(long companyThesisRNG)
+        protected async Task<IEnumerable<CompanyThesisApplied>> GetApplicantsForCompanyThesis(long companyThesisRNG)
         {
             return await dbContext.CompanyThesesApplied
                 .Where(a => a.RNGForCompanyThesisApplied == companyThesisRNG)
@@ -6239,7 +6253,7 @@ namespace QuizManager.Shared
                 .ToListAsync();
         }
 
-        private async Task<List<ProfessorThesisApplied>> GetApplicantsForProfessorThesis(long thesisRNG)
+        protected async Task<List<ProfessorThesisApplied>> GetApplicantsForProfessorThesis(long thesisRNG)
         {
             return await dbContext.ProfessorThesesApplied
                 .Where(a => a.RNGForProfessorThesisApplied == thesisRNG)
@@ -6249,7 +6263,7 @@ namespace QuizManager.Shared
                 .ToListAsync();
         }
 
-        private async Task AcceptInternshipApplicationAsCompany_MadeByStudent(long internshipRNG, string studentUniqueID)
+        protected async Task AcceptInternshipApplicationAsCompany_MadeByStudent(long internshipRNG, string studentUniqueID)
         {
             try
             {
@@ -6323,7 +6337,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task RejectInternshipApplicationAsCompany_MadeByStudent(long internshipRNG, string studentUniqueID)
+        protected async Task RejectInternshipApplicationAsCompany_MadeByStudent(long internshipRNG, string studentUniqueID)
         {
             try
             {
@@ -6397,7 +6411,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndAcceptInternship(long internshipRNG, string studentUniqueID)
+        protected async Task ConfirmAndAcceptInternship(long internshipRNG, string studentUniqueID)
         {
             bool isConfirmedForInternships = await JS.InvokeAsync<bool>(
                 "confirmActionWithHTML",
@@ -6411,7 +6425,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndRejectInternship(long internshipRNG, string studentUniqueID)
+        protected async Task ConfirmAndRejectInternship(long internshipRNG, string studentUniqueID)
         {
             bool isConfirmedForInternships = await JS.InvokeAsync<bool>(
                 "confirmActionWithHTML",
@@ -6425,7 +6439,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task AcceptJobApplicationAsCompany_MadeByStudent(long jobRNG, string studentUniqueID)
+        protected async Task AcceptJobApplicationAsCompany_MadeByStudent(long jobRNG, string studentUniqueID)
         {
             try
             {
@@ -6507,7 +6521,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task RejectJobApplicationAsCompany_MadeByStudent(long jobRNG, string studentUniqueID)
+        protected async Task RejectJobApplicationAsCompany_MadeByStudent(long jobRNG, string studentUniqueID)
         {
             try
             {
@@ -6589,7 +6603,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndAcceptJob(long jobRNG, string studentUniqueID)
+        protected async Task ConfirmAndAcceptJob(long jobRNG, string studentUniqueID)
         {
             bool isConfirmedForJobs = await JS.InvokeAsync<bool>("confirmActionWithHTML",
                 "- ΑΠΟΔΟΧΗ ΑΙΤΗΣΗΣ - \n Η ενέργεια αυτή δεν θα μπορεί να αναιρεθεί. Είστε σίγουρος/η;");
@@ -6601,7 +6615,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndRejectJob(long jobRNG, string studentUniqueID)
+        protected async Task ConfirmAndRejectJob(long jobRNG, string studentUniqueID)
         {
             bool isConfirmedForJobs = await JS.InvokeAsync<bool>("confirmActionWithHTML",
                 "- ΑΠΟΡΡΙΨΗ ΑΙΤΗΣΗΣ - \n Η ενέργεια αυτή δεν θα μπορεί να αναιρεθεί. Είστε σίγουρος/η;");
@@ -6613,7 +6627,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task AcceptThesisApplicationAsCompany_MadeByStudent(long companythesisId, string studentUniqueID)
+        protected async Task AcceptThesisApplicationAsCompany_MadeByStudent(long companythesisId, string studentUniqueID)
         {
             try
             {
@@ -6690,7 +6704,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task RejectThesisApplicationAsCompany_MadeByStudent(long companythesisId, string studentUniqueID)
+        protected async Task RejectThesisApplicationAsCompany_MadeByStudent(long companythesisId, string studentUniqueID)
         {
             try
             {
@@ -6766,7 +6780,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndAcceptStudentThesisApplicationAsCompany(long companythesisId, string studentUniqueID)
+        protected async Task ConfirmAndAcceptStudentThesisApplicationAsCompany(long companythesisId, string studentUniqueID)
         {
             bool isConfirmedFortStudentThesisApplications = await JS.InvokeAsync<bool>("confirmActionWithHTML", "- ΑΠΟΔΟΧΗ ΑΙΤΗΣΗΣ - \n Η ενέργεια αυτή δεν θα μπορεί να αναιρεθεί. Είστε σίγουρος/η;");
             if (isConfirmedFortStudentThesisApplications)
@@ -6776,7 +6790,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndRejectStudentThesisApplicationAsCompany(long companythesisId, string studentUniqueID)
+        protected async Task ConfirmAndRejectStudentThesisApplicationAsCompany(long companythesisId, string studentUniqueID)
         {
             bool isConfirmedFortStudentThesisApplication = await JS.InvokeAsync<bool>("confirmActionWithHTML", "- ΑΠΟΡΡΙΨΗ ΑΙΤΗΣΗΣ - \n Η ενέργεια αυτή δεν θα μπορεί να αναιρεθεί. Είστε σίγουρος/η;");
             if (isConfirmedFortStudentThesisApplication)
@@ -6786,7 +6800,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task AcceptThesisApplicationAsProfessor_MadeByStudent(long professorThesisId, string studentUniqueID)
+        protected async Task AcceptThesisApplicationAsProfessor_MadeByStudent(long professorThesisId, string studentUniqueID)
         {
             try
             {
@@ -6870,7 +6884,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task RejectThesisApplicationAsProfessor_MadeByStudent(long professorThesisId, string studentUniqueID)
+        protected async Task RejectThesisApplicationAsProfessor_MadeByStudent(long professorThesisId, string studentUniqueID)
         {
             try
             {
@@ -6954,7 +6968,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndAcceptProfessorThesis(long professorthesisId, string studentUniqueID)
+        protected async Task ConfirmAndAcceptProfessorThesis(long professorthesisId, string studentUniqueID)
         {
             bool isConfirmedForProfessorTheses = await JS.InvokeAsync<bool>("confirmActionWithHTML", "- ΑΠΟΔΟΧΗ ΑΙΤΗΣΗΣ - \n Η ενέργεια αυτή δεν θα μπορεί να αναιρεθεί. Είστε σίγουρος/η;");
             if (isConfirmedForProfessorTheses)
@@ -6964,7 +6978,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndRejectProfessorThesis(long professorthesisId, string studentUniqueID)
+        protected async Task ConfirmAndRejectProfessorThesis(long professorthesisId, string studentUniqueID)
         {
             bool isConfirmedForProfessorTheses = await JS.InvokeAsync<bool>("confirmActionWithHTML", "- ΑΠΟΡΡΙΨΗ ΑΙΤΗΣΗΣ - \n Η ενέργεια αυτή δεν θα μπορεί να αναιρεθεί. Είστε σίγουρος/η;");
             if (isConfirmedForProfessorTheses)
@@ -6975,12 +6989,12 @@ namespace QuizManager.Shared
         }
 
 
-        private bool IsComponentActive()
+        protected bool IsComponentActive()
         {
             return JS != null;
         }
 
-        private async Task SafeInvokeJsAsync(Func<Task> jsAction)
+        protected async Task SafeInvokeJsAsync(Func<Task> jsAction)
         {
             try
             {
@@ -6995,35 +7009,35 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CheckCharacterLimitInInternshipFieldUploadAsCompany(ChangeEventArgs e)
+        protected void CheckCharacterLimitInInternshipFieldUploadAsCompany(ChangeEventArgs e)
         {
             // Calculate remaining characters
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInInternshipFieldUploadAsCompany = 120 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInThesisFieldUploadAsCompany(ChangeEventArgs e)
+        protected void CheckCharacterLimitInThesisFieldUploadAsCompany(ChangeEventArgs e)
         {
             // Calculate remaining characters
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInThesisFieldUploadAsCompany = 120 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInThesisFieldUploadAsProfessor(ChangeEventArgs e)
+        protected void CheckCharacterLimitInThesisFieldUploadAsProfessor(ChangeEventArgs e)
         {
             // Calculate remaining characters
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInThesisFieldUploadAsProfessor = 120 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInAnnouncementFieldUploadAsCompany(ChangeEventArgs e)
+        protected void CheckCharacterLimitInAnnouncementFieldUploadAsCompany(ChangeEventArgs e)
         {
             // Calculate remaining characters
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInAnnouncementFieldUploadAsCompany = 120 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInAnnouncementFieldUploadAsProfessor(ChangeEventArgs e)
+        protected void CheckCharacterLimitInAnnouncementFieldUploadAsProfessor(ChangeEventArgs e)
         {
             // Calculate remaining characters
             var inputText = e.Value?.ToString() ?? string.Empty;
@@ -7032,50 +7046,50 @@ namespace QuizManager.Shared
 
 
 
-        private void CheckCharacterLimitInInternshipDescriptionUploadAsCompany(ChangeEventArgs e)
+        protected void CheckCharacterLimitInInternshipDescriptionUploadAsCompany(ChangeEventArgs e)
         {
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInInternshipDescriptionUploadAsCompany = 1000 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInJobFieldUploadAsCompany(ChangeEventArgs e)
+        protected void CheckCharacterLimitInJobFieldUploadAsCompany(ChangeEventArgs e)
         {
             // Calculate remaining characters
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInJobFieldUploadAsCompany = 120 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInJobDescriptionUploadAsCompany(ChangeEventArgs e)
+        protected void CheckCharacterLimitInJobDescriptionUploadAsCompany(ChangeEventArgs e)
         {
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInJobDescriptionUploadAsCompany = 1000 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInThesisDescriptionUploadAsCompany(ChangeEventArgs e)
+        protected void CheckCharacterLimitInThesisDescriptionUploadAsCompany(ChangeEventArgs e)
         {
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInThesisDescriptionUploadAsCompany = 1000 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInAnnouncementDescriptionUploadAsCompany(ChangeEventArgs e)
+        protected void CheckCharacterLimitInAnnouncementDescriptionUploadAsCompany(ChangeEventArgs e)
         {
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInAnnouncementDescriptionUploadAsCompany = 1000 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInThesisDescriptionUploadAsProfessor(ChangeEventArgs e)
+        protected void CheckCharacterLimitInThesisDescriptionUploadAsProfessor(ChangeEventArgs e)
         {
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInThesisDescriptionUploadAsProfessor = 1000 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInAnnouncementDescriptionUploadAsProfessor(ChangeEventArgs e)
+        protected void CheckCharacterLimitInAnnouncementDescriptionUploadAsProfessor(ChangeEventArgs e)
         {
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInAnnouncementDescriptionUploadAsProfessor = 1000 - inputText.Length;
         }
 
-        private async Task CalculateStatusCountsForInternships()
+        protected async Task CalculateStatusCountsForInternships()
         {
             await LoadInternships();
             if (internships == null) return;
@@ -7095,7 +7109,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task CalculateStatusCountsForCompanyTheses()
+        protected async Task CalculateStatusCountsForCompanyTheses()
         {
             await LoadThesesAsCompany();
             if (companytheses == null) return;
@@ -7115,7 +7129,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task CalculateStatusCountsForJobs()
+        protected async Task CalculateStatusCountsForJobs()
         {
             await LoadJobs();
             if (jobs == null) return;
@@ -7135,7 +7149,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task CalculateStatusCountsForAnnouncements()
+        protected async Task CalculateStatusCountsForAnnouncements()
         {
             await LoadUploadedAnnouncementsAsync();
 
@@ -7153,7 +7167,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task CalculateStatusCountsForAnnouncementsAsProfessor()
+        protected async Task CalculateStatusCountsForAnnouncementsAsProfessor()
         {
             await LoadUploadedAnnouncementsAsProfessorAsync();
 
@@ -7171,7 +7185,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task CalculateStatusCountsForThesesAsProfessor()
+        protected async Task CalculateStatusCountsForThesesAsProfessor()
         {
             await LoadUploadedThesesAsProfessorAsync();
 
@@ -7196,26 +7210,26 @@ namespace QuizManager.Shared
         //         CalculateStatusCountsForJobs();
         // }
 
-        private async Task UpdateStatusFilterToCountInternships()
+        protected async Task UpdateStatusFilterToCountInternships()
         {
             await CalculateStatusCountsForInternships();
         }
 
-        private async Task UpdateStatusFilterToCountJobs()
+        protected async Task UpdateStatusFilterToCountJobs()
         {
             await CalculateStatusCountsForJobs();
         }
 
-        private async Task UpdateStatusFilterToCountAnnouncements()
+        protected async Task UpdateStatusFilterToCountAnnouncements()
         {
             await CalculateStatusCountsForAnnouncements();
         }
-        private async Task UpdateStatusFilterToCountCompanyTheses()
+        protected async Task UpdateStatusFilterToCountCompanyTheses()
         {
             await CalculateStatusCountsForCompanyTheses();
         }
 
-        private async Task AcceptInternshipApplicationAsProfessor_MadeByStudent(long internshipRNG, string studentUniqueID)
+        protected async Task AcceptInternshipApplicationAsProfessor_MadeByStudent(long internshipRNG, string studentUniqueID)
         {
             try
             {
@@ -7288,7 +7302,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task RejectInternshipApplicationAsProfessor_MadeByStudent(long internshipRNG, string studentUniqueID)
+        protected async Task RejectInternshipApplicationAsProfessor_MadeByStudent(long internshipRNG, string studentUniqueID)
         {
             try
             {
@@ -7361,7 +7375,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndAcceptProfessorInternship(long professorInternshipId, string studentUniqueID)
+        protected async Task ConfirmAndAcceptProfessorInternship(long professorInternshipId, string studentUniqueID)
         {
             bool isConfirmedForProfessorInternships = await JS.InvokeAsync<bool>(
                 "confirmActionWithHTML",
@@ -7375,7 +7389,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ConfirmAndRejectProfessorInternship(long professorInternshipId, string studentUniqueID)
+        protected async Task ConfirmAndRejectProfessorInternship(long professorInternshipId, string studentUniqueID)
         {
             bool isConfirmedForProfessorInternships = await JS.InvokeAsync<bool>(
                 "confirmActionWithHTML",
@@ -7389,7 +7403,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ShowCompanyDetailsinTitleAsHyperlink(string companyEmail)
+        protected async Task ShowCompanyDetailsinTitleAsHyperlink(string companyEmail)
         {
             try
             {
@@ -7414,7 +7428,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ShowProfessorDetailsinTitleAsHyperlink_StudentInternshipApplicationsShow(string professorEmail)
+        protected async Task ShowProfessorDetailsinTitleAsHyperlink_StudentInternshipApplicationsShow(string professorEmail)
         {
             try
             {
@@ -7464,7 +7478,7 @@ namespace QuizManager.Shared
             }
         }
 
-        // private async Task ShowProfessorDetailsinTitleAsHyperlink_StudentInternshipApplicationsShow(string professorName)
+        // protected async Task ShowProfessorDetailsinTitleAsHyperlink_StudentInternshipApplicationsShow(string professorName)
         // {
         //     // Fetch professor details by professorName from dbContext
         //     selectedProfessor = await dbContext.Professors.FirstOrDefaultAsync(p => p.ProfName == professorName);
@@ -7477,13 +7491,13 @@ namespace QuizManager.Shared
         //     }
         // }
 
-        private void CloseModalforHyperLinkTitle()
+        protected void CloseModalforHyperLinkTitle()
         {
             iscompanyDetailsModalVisible = false;
             StateHasChanged(); // Ensure UI is updated
         }
 
-        private async Task ShowStudentDetailsInNameAsHyperlink(string studentUniqueId)
+        protected async Task ShowStudentDetailsInNameAsHyperlink(string studentUniqueId)
         {
             // First try to find in cache
             selectedStudentFromCache = studentDataCache.Values
@@ -7532,7 +7546,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ShowStudentDetailsInNameAsHyperlink_StudentAppliedinternshipsAtProfessor(string studentUniqueId)
+        protected async Task ShowStudentDetailsInNameAsHyperlink_StudentAppliedinternshipsAtProfessor(string studentUniqueId)
         {
             try
             {
@@ -7598,19 +7612,19 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseModalforHyperLinkTitleStudentName()
+        protected void CloseModalforHyperLinkTitleStudentName()
         {
             isModalVisibleToShowStudentDetailsAsCompanyFromTheirHyperlinkNameInCompanyInternships = false;
             selectedStudentFromCache = null;
             StateHasChanged();
         }
-        private void CloseModalforHyperLinkTitleStudentName_StudentAppliedinternshipsAtProfessor()
+        protected void CloseModalforHyperLinkTitleStudentName_StudentAppliedinternshipsAtProfessor()
         {
             isModalVisibleToShowStudentDetailsAsProfessorFromTheirHyperlinkNameInProfessorInternships = false;
             JS.InvokeVoidAsync("eval", "$('#studentDetailsModal').modal('hide')");
         }
 
-        private async Task WithdrawInternshipApplicationMadeByStudent(InternshipApplied application)
+        protected async Task WithdrawInternshipApplicationMadeByStudent(InternshipApplied application)
         {
             try
             {
@@ -7682,7 +7696,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task WithdrawProfessorInternshipApplicationMadeByStudent(ProfessorInternshipApplied application)
+        protected async Task WithdrawProfessorInternshipApplicationMadeByStudent(ProfessorInternshipApplied application)
         {
             try
             {
@@ -7754,7 +7768,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task WithdrawJobApplicationMadeByStudent(CompanyJobApplied application)
+        protected async Task WithdrawJobApplicationMadeByStudent(CompanyJobApplied application)
         {
             try
             {
@@ -7825,14 +7839,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task WithdrawCompanyThesisApplicationMadeByStudent(CompanyThesisApplied companythesis)
+        protected async Task WithdrawCompanyThesisApplicationMadeByStudent(CompanyThesisApplied companythesis)
         {
             companythesis.CompanyThesisStatusAppliedAtStudentSide = "Αποσύρθηκε από τον φοιτητή";
             companythesis.CompanyThesisStatusAppliedAtCompanySide = "Αποσύρθηκε από τον φοιτητή";
             await dbContext.SaveChangesAsync();
         }
 
-        private async Task WithdrawProfessorThesisApplicationMadeByStudent(ProfessorThesisApplied professorthesis)
+        protected async Task WithdrawProfessorThesisApplicationMadeByStudent(ProfessorThesisApplied professorthesis)
         {
             professorthesis.ProfessorThesisStatusAppliedAtStudentSide = "Αποσύρθηκε από τον φοιτητή";
             professorthesis.ProfessorThesisStatusAppliedAtProfessorSide = "Αποσύρθηκε από τον φοιτητή";
@@ -7840,7 +7854,7 @@ namespace QuizManager.Shared
 
         }
 
-        private async Task DownloadStudentCVFromCompanyInternships(string studentEmail)
+        protected async Task DownloadStudentCVFromCompanyInternships(string studentEmail)
         {
             try
             {
@@ -7873,7 +7887,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ShowCompanyDetailsAsAHyperlinkInInternshipSearchAsStudent(string companyId)
+        protected async Task ShowCompanyDetailsAsAHyperlinkInInternshipSearchAsStudent(string companyId)
         {
             // Fetch the company details based on the Company Name (ENG)
             selectedCompany = await dbContext.Companies.FirstOrDefaultAsync(c => c.CompanyName == companyId);
@@ -7885,14 +7899,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task CloseModalforHyperLinkTitleInSearch()
+        protected async Task CloseModalforHyperLinkTitleInSearch()
         {
             // Close the modal and set the flag to false
             isCompanyDetailsModal2Visible = false;
             await JS.InvokeVoidAsync("eval", "$('#companyDetailsModal2').modal('hide')");
         }
 
-        private async Task ShowCompanyDetailsAsAHyperlinkInJobSearchAsStudent(string companyName)
+        protected async Task ShowCompanyDetailsAsAHyperlinkInJobSearchAsStudent(string companyName)
         {
             // Fetch company details from database
             selectedCompanyDetailsForJobSearch = await dbContext.Companies
@@ -7909,12 +7923,12 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseModalForCompanyNameHyperlinkDetailsInJobSearch()
+        protected void CloseModalForCompanyNameHyperlinkDetailsInJobSearch()
         {
             isCompanyDetailsModalOpenForJobSearch = false;
         }
 
-        private async Task ShowCompanyDetailsAsAHyperlinkInShowJobsAsStudent(string companyEmail)
+        protected async Task ShowCompanyDetailsAsAHyperlinkInShowJobsAsStudent(string companyEmail)
         {
             try
             {
@@ -7944,12 +7958,12 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseModalForCompanyNameHyperlinkDetailsInJobShow()
+        protected void CloseModalForCompanyNameHyperlinkDetailsInJobShow()
         {
             isCompanyDetailsModalOpenForJobShow = false;
         }
 
-        private async Task ShowInternshipDetailsInInternshipTitleAsHyperlink(long internshipId)
+        protected async Task ShowInternshipDetailsInInternshipTitleAsHyperlink(long internshipId)
         {
             currentInternship = await dbContext.CompanyInternships
                 .Include(i => i.Company) // Include company data
@@ -7962,14 +7976,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task CloseInternshipDetailsModal()
+        protected async Task CloseInternshipDetailsModal()
         {
             // Set the flag to hide the modal
             isInternshipDetailsModalVisible = false;
             StateHasChanged();
         }
 
-        private async Task ShowProfessorInternshipDetailsInInternshipTitleAsHyperlink_StudentInternshipApplicationsShow(long internshipId)
+        protected async Task ShowProfessorInternshipDetailsInInternshipTitleAsHyperlink_StudentInternshipApplicationsShow(long internshipId)
         {
             // Fetch the internship details from the database with professor information
             currentProfessorInternship = await dbContext.ProfessorInternships
@@ -7987,14 +8001,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task CloseProfessorInternshipDetailsModal_StudentInternshipApplicationsShow()
+        protected async Task CloseProfessorInternshipDetailsModal_StudentInternshipApplicationsShow()
         {
             // Set the flag to hide the modal
             isInternshipDetailsModalVisible_StudentInternshipApplicationsShow = false;
             StateHasChanged();
         }
 
-        private async Task ShowJobDetailsInJobTitleAsHyperlink_StudentJobApplications(long jobId)
+        protected async Task ShowJobDetailsInJobTitleAsHyperlink_StudentJobApplications(long jobId)
         {
             // Fetch the job details from the database with Company included
             currentJobApplicationMadeAsStudent = await dbContext.CompanyJobs
@@ -8012,19 +8026,19 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseJobDetailsModalInJobTitleAsHyperlink_StudentJobApplications()
+        protected void CloseJobDetailsModalInJobTitleAsHyperlink_StudentJobApplications()
         {
             isJobDetailsModalVisibleToSeeJobApplicationsAsStudent = false;
             StateHasChanged();
         }
 
-        private async Task CloseJobDetailsModal()
+        protected async Task CloseJobDetailsModal()
         {
             isJobDetailsModal2Visible = false;
             await JS.InvokeVoidAsync("eval", "$('#jobDetailsModal2').modal('hide')");
         }
 
-        private async Task DownloadInternshipAttachmentAsStudent(long internshipId)
+        protected async Task DownloadInternshipAttachmentAsStudent(long internshipId)
         {
             var internship = dbContext.CompanyInternships.FirstOrDefault(i => i.Id == internshipId);
             if (internship == null)
@@ -8049,7 +8063,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("downloadInternshipAttachmentAsStudent", fileName, base64String);
         }
 
-        private async Task HandleSaveClickToSaveInternshipsAsCompany()
+        protected async Task HandleSaveClickToSaveInternshipsAsCompany()
         {
             // Call JavaScript function for confirmation with custom HTML and styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -8065,7 +8079,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ChangeInternshipStatusToUnpublished(int internshipId)
+        protected async Task ChangeInternshipStatusToUnpublished(int internshipId)
         {
             // Show custom confirmation dialog with formatted text
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8081,7 +8095,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ChangeProfessorInternshipStatusToUnpublished(int internshipId)
+        protected async Task ChangeProfessorInternshipStatusToUnpublished(int internshipId)
         {
             // Show confirmation dialog
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8094,7 +8108,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ChangeJobStatusToUnpublished(int jobId)
+        protected async Task ChangeJobStatusToUnpublished(int jobId)
         {
             // Show custom confirmation dialog with formatted text
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8110,7 +8124,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ChangeCompanyThesisStatusToUnpublished(int companyThesisId)
+        protected async Task ChangeCompanyThesisStatusToUnpublished(int companyThesisId)
         {
             // Show custom confirmation dialog with formatted text
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8126,7 +8140,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandlePublishClickToSaveInternshipsAsCompany()
+        protected async Task HandlePublishClickToSaveInternshipsAsCompany()
         {
             // Call JavaScript function for confirmation with custom HTML and styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -8145,7 +8159,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void UpdateTownsForSelectedRegion(ChangeEventArgs e)
+        protected void UpdateTownsForSelectedRegion(ChangeEventArgs e)
         {
             selectedRegion = e.Value?.ToString();
             if (!string.IsNullOrEmpty(selectedRegion) && RegionToTownsMap.ContainsKey(selectedRegion))
@@ -8158,12 +8172,12 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnTownChangeForInternships(ChangeEventArgs e)
+        protected void OnTownChangeForInternships(ChangeEventArgs e)
         {
             selectedInternship.CompanyInternshipDimosLocation = e.Value?.ToString();
         }
 
-        private void LogJobLoadingInfo()
+        protected void LogJobLoadingInfo()
         {
             var message = $"Loaded jobs for company: {companyName} \n" +
                           $"Total Jobs: {totalCountJobs} \n" +
@@ -8174,7 +8188,7 @@ namespace QuizManager.Shared
             Console.WriteLine(message); // This writes to the console
         }
 
-        private async Task HandleTemporarySaveJobAsCompany()
+        protected async Task HandleTemporarySaveJobAsCompany()
         {
             // Call JavaScript function for confirmation with HTML content and custom styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -8191,7 +8205,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task HandlePublishSaveJobAsCompany()
+        protected async Task HandlePublishSaveJobAsCompany()
         {
             // Call JavaScript function for confirmation with HTML content and custom styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -8208,7 +8222,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task HandleTemporarySaveThesisAsCompany()
+        protected async Task HandleTemporarySaveThesisAsCompany()
         {
             // Show custom confirmation dialog with formatted text
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8225,7 +8239,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task HandlePublishSaveThesisAsCompany()
+        protected async Task HandlePublishSaveThesisAsCompany()
         {
             // Show custom confirmation dialog with formatted text
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8242,7 +8256,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task SaveAnnouncementAsPublished()
+        protected async Task SaveAnnouncementAsPublished()
         {
             // Validate mandatory fields
             isFormValidToSaveAnnouncementAsCompany = ValidateMandatoryFieldsForUploadAnnouncementAsCompany();
@@ -8267,7 +8281,7 @@ namespace QuizManager.Shared
             await SaveAnnouncementToDatabase();
         }
 
-        private async Task SaveAnnouncementAsUnpublished()
+        protected async Task SaveAnnouncementAsUnpublished()
         {
             // Validate mandatory fields
             isFormValidToSaveAnnouncementAsCompany = ValidateMandatoryFieldsForUploadAnnouncementAsCompany();
@@ -8293,7 +8307,7 @@ namespace QuizManager.Shared
         }
 
         // Method to validate mandatory fields
-        private bool ValidateMandatoryFieldsForUploadAnnouncementAsCompany()
+        protected bool ValidateMandatoryFieldsForUploadAnnouncementAsCompany()
         {
             // Check if mandatory fields are filled, including date validation for today's date
             if (string.IsNullOrWhiteSpace(announcement.CompanyAnnouncementTitle) ||
@@ -8310,7 +8324,7 @@ namespace QuizManager.Shared
             return true;
         }
 
-        private async Task SaveAnnouncementToDatabase()
+        protected async Task SaveAnnouncementToDatabase()
         {
             try
             {
@@ -8357,17 +8371,17 @@ namespace QuizManager.Shared
             NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
         }
 
-        private void TogglePositionAreasVisibility()
+        protected void TogglePositionAreasVisibility()
         {
             isPositionAreasVisible = !isPositionAreasVisible;
         }
 
-        private void ToggleThesisAreasVisibility()
+        protected void ToggleThesisAreasVisibility()
         {
             isThesisAreasVisible = !isThesisAreasVisible;
         }
 
-        private void OnPositionAreaCheckboxChanged(ChangeEventArgs e, string areaName)
+        protected void OnPositionAreaCheckboxChanged(ChangeEventArgs e, string areaName)
         {
             if (e.Value != null && bool.TryParse(e.Value.ToString(), out bool isChecked))
             {
@@ -8385,7 +8399,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnThesisAreaCheckboxChanged(ChangeEventArgs e, string areaName)
+        protected void OnThesisAreaCheckboxChanged(ChangeEventArgs e, string areaName)
         {
             if (e.Value != null && bool.TryParse(e.Value.ToString(), out bool isChecked))
             {
@@ -8413,7 +8427,7 @@ namespace QuizManager.Shared
             await dbContext.SaveChangesAsync();
         }
 
-        private async Task ToggleUploadedAnnouncementsVisibility()
+        protected async Task ToggleUploadedAnnouncementsVisibility()
         {
             isUploadedAnnouncementsVisible = !isUploadedAnnouncementsVisible;
 
@@ -8426,7 +8440,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ToggleUploadedCompanyEventsVisibility()
+        protected async Task ToggleUploadedCompanyEventsVisibility()
         {
             isUploadedEventsVisible = !isUploadedEventsVisible;
 
@@ -8439,7 +8453,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ToggleUploadedProfessorEventsVisibility()
+        protected async Task ToggleUploadedProfessorEventsVisibility()
         {
             isUploadedEventsVisibleAsProfessor = !isUploadedEventsVisibleAsProfessor;
 
@@ -8452,7 +8466,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ToggleUploadedAnnouncementsVisibilityAsProfessor()
+        protected async Task ToggleUploadedAnnouncementsVisibilityAsProfessor()
         {
             isUploadedAnnouncementsVisibleAsProfessor = !isUploadedAnnouncementsVisibleAsProfessor;
 
@@ -8465,25 +8479,25 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ToggleCompanySearchStudentVisible()
+        protected async Task ToggleCompanySearchStudentVisible()
         {
             isCompanySearchStudentVisible = !isCompanySearchStudentVisible;
             StateHasChanged();
         }
 
-        private async Task ToggleCompanySearchProfessorVisible()
+        protected async Task ToggleCompanySearchProfessorVisible()
         {
             isCompanySearchProfessorVisible = !isCompanySearchProfessorVisible;
             StateHasChanged();
         }
 
-        private async Task ToggleRGSearchProfessorVisible()
+        protected async Task ToggleRGSearchProfessorVisible()
         {
             isRGSearchProfessorVisible = !isRGSearchProfessorVisible;
             StateHasChanged();
         }
 
-        private async Task ToggleUploadedThesesVisibilityAsProfessor()
+        protected async Task ToggleUploadedThesesVisibilityAsProfessor()
         {
             isUploadedThesesVisibleAsProfessor = !isUploadedThesesVisibleAsProfessor;
 
@@ -8496,7 +8510,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void ToggleToSearchForUploadedCompanyThesesAsProfessor()
+        protected void ToggleToSearchForUploadedCompanyThesesAsProfessor()
         {
             isUploadedCompanyThesesVisibleAsProfessor = !isUploadedCompanyThesesVisibleAsProfessor;
 
@@ -8508,7 +8522,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleToSearchForUploadedProfessorThesesAsCompany()
+        protected void ToggleToSearchForUploadedProfessorThesesAsCompany()
         {
             isUploadedProfessorThesesVisibleAsCompany = !isUploadedProfessorThesesVisibleAsCompany;
 
@@ -8520,14 +8534,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task<List<AnnouncementAsCompany>> GetUploadedAnnouncements()
+        protected async Task<List<AnnouncementAsCompany>> GetUploadedAnnouncements()
         {
             return await dbContext.AnnouncementsAsCompany
                 .Where(a => a.CompanyAnnouncementCompanyEmail == CurrentUserEmail)
                 .ToListAsync();
         }
 
-        private async Task<List<CompanyEvent>> GetUploadedCompanyEvents()
+        protected async Task<List<CompanyEvent>> GetUploadedCompanyEvents()
         {
             return await dbContext.CompanyEvents
                 .Include(e => e.Company) // Include the Company data
@@ -8535,7 +8549,7 @@ namespace QuizManager.Shared
                 .ToListAsync();
         }
 
-        private async Task<List<ProfessorEvent>> GetUploadedProfessorEvents()
+        protected async Task<List<ProfessorEvent>> GetUploadedProfessorEvents()
         {
             return await dbContext.ProfessorEvents
                 .Include(pe => pe.Professor) // Include the Professor data
@@ -8543,14 +8557,14 @@ namespace QuizManager.Shared
                 .ToListAsync();
         }
 
-        private async Task<List<AnnouncementAsProfessor>> GetUploadedAnnouncementsAsProfessor()
+        protected async Task<List<AnnouncementAsProfessor>> GetUploadedAnnouncementsAsProfessor()
         {
             return await dbContext.AnnouncementsAsProfessor
                 .Where(a => a.ProfessorAnnouncementProfessorEmail == CurrentUserEmail)
                 .ToListAsync();
         }
 
-        private async Task DeleteAnnouncement(int announcementId)
+        protected async Task DeleteAnnouncement(int announcementId)
         {
             // Show custom confirmation dialog with formatted text
             var isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8576,7 +8590,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DeleteCompanyEvent(int companyeventId)
+        protected async Task DeleteCompanyEvent(int companyeventId)
         {
             // Show custom confirmation dialog with formatted text
             var isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8604,7 +8618,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DeleteProfessorEvent(int professoreventId)
+        protected async Task DeleteProfessorEvent(int professoreventId)
         {
             // Show a confirmation dialog
             var isConfirmed = await JS.InvokeAsync<bool>("confirm", new object[] { "Πρόκειται να διαγράψετε οριστικά αυτή την Εκδήλωση είστε σίγουρος/η;" });
@@ -8628,7 +8642,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DeleteAnnouncementAsProfessor(int professorannouncementId)
+        protected async Task DeleteAnnouncementAsProfessor(int professorannouncementId)
         {
             // Delete the selected announcement from the database
             var professorannouncement = await dbContext.AnnouncementsAsProfessor.FindAsync(professorannouncementId);
@@ -8643,7 +8657,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadUploadedAnnouncementsAsync()
+        protected async Task LoadUploadedAnnouncementsAsync()
         {
             try
             {
@@ -8672,7 +8686,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadUploadedAnnouncementsAsProfessorAsync()
+        protected async Task LoadUploadedAnnouncementsAsProfessorAsync()
         {
             try
             {
@@ -8701,7 +8715,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadUploadedEventsAsync()
+        protected async Task LoadUploadedEventsAsync()
         {
             try
             {
@@ -8735,7 +8749,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadUploadedEventsAsyncAsProfessor()
+        protected async Task LoadUploadedEventsAsyncAsProfessor()
         {
             try
             {
@@ -8773,7 +8787,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadUploadedThesesAsProfessorAsync()
+        protected async Task LoadUploadedThesesAsProfessorAsync()
         {
             try
             {
@@ -8814,7 +8828,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadToSeeUploadedCompanyThesesAsProfessorAsync()
+        protected async Task LoadToSeeUploadedCompanyThesesAsProfessorAsync()
         {
             try
             {
@@ -8834,7 +8848,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ChangeAnnouncementStatus(int announcementId, string newStatus)
+        protected async Task ChangeAnnouncementStatus(int announcementId, string newStatus)
         {
             // Show custom confirmation dialog with formatted text
             var isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8858,7 +8872,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ChangeCompanyEventStatus(int companyeventId, string newStatus)
+        protected async Task ChangeCompanyEventStatus(int companyeventId, string newStatus)
         {
             // Show custom confirmation dialog with formatted text
             var isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -8885,7 +8899,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ChangeProfessorEventStatus(int professoreventId, string newStatus)
+        protected async Task ChangeProfessorEventStatus(int professoreventId, string newStatus)
         {
             // Show confirmation dialog
             var isConfirmed = await JS.InvokeAsync<bool>("confirm", new object[]
@@ -8912,7 +8926,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ChangeAnnouncementStatusAsProfessor(int professorannouncementId, string professorannouncementnewStatus)
+        protected async Task ChangeAnnouncementStatusAsProfessor(int professorannouncementId, string professorannouncementnewStatus)
         {
             // Find the announcement by ID and update its status
             var professorannouncement = UploadedAnnouncementsAsProfessor.FirstOrDefault(a => a.Id == professorannouncementId);
@@ -8925,7 +8939,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ChangeThesisStatusAsProfessor(int professorthesisId, string professorthesisnewStatus)
+        protected async Task ChangeThesisStatusAsProfessor(int professorthesisId, string professorthesisnewStatus)
         {
             // Find the announcement by ID and update its status
             var professorthesis = UploadedThesesAsProfessor.FirstOrDefault(a => a.Id == professorthesisId);
@@ -8937,7 +8951,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void OpenEditModal(AnnouncementAsCompany announcement)
+        protected void OpenEditModal(AnnouncementAsCompany announcement)
         {
             currentAnnouncement = new AnnouncementAsCompany
             {
@@ -8952,7 +8966,7 @@ namespace QuizManager.Shared
             isEditModalVisible = true;
         }
 
-        private void OpenEditModalForCompanyEvent(CompanyEvent companyEvent)
+        protected void OpenEditModalForCompanyEvent(CompanyEvent companyEvent)
         {
             currentCompanyEvent = new CompanyEvent
             {
@@ -9000,16 +9014,16 @@ namespace QuizManager.Shared
             isEditModalVisibleForEventsAsCompany = true;
         }
 
-        private List<string> GetTownsForRegionForEditProfessorEvent(string region)
+        protected List<string> GetTownsForRegionForEditProfessorEvent(string region)
         {
             return RegionToTownsMap.ContainsKey(region)
                 ? RegionToTownsMap[region]
                 : new List<string>();
         }
 
-        private List<Area> SelectedAreasToEditForProfessorEvent = new();
-        private List<string> AvailableTownsForEditProfessorEvent = new();
-        private void OpenEditModalForProfessorEvent(ProfessorEvent professorevent)
+        protected List<Area> SelectedAreasToEditForProfessorEvent = new();
+        protected List<string> AvailableTownsForEditProfessorEvent = new();
+        protected void OpenEditModalForProfessorEvent(ProfessorEvent professorevent)
         {
             // Make sure to include Professor when loading the event
             var eventWithProfessor = dbContext.ProfessorEvents
@@ -9067,7 +9081,7 @@ namespace QuizManager.Shared
             isEditModalVisibleForEventsAsProfessor = true;
         }
 
-        private void OpenEditModalAsProfessor(AnnouncementAsProfessor professorAnnouncement)
+        protected void OpenEditModalAsProfessor(AnnouncementAsProfessor professorAnnouncement)
         {
             currentAnnouncementAsProfessor = new AnnouncementAsProfessor
             {
@@ -9116,7 +9130,7 @@ namespace QuizManager.Shared
             isEditModalVisibleForAnnouncementsAsProfessor = true;
         }
 
-        private void OpenEditModalForThesisAsProfessor(ProfessorThesis professorthesis)
+        protected void OpenEditModalForThesisAsProfessor(ProfessorThesis professorthesis)
         {
             try
             {
@@ -9186,32 +9200,32 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseEditModal()
+        protected void CloseEditModal()
         {
             isEditModalVisible = false;
         }
 
-        private void CloseEditModalForCompanyEvent()
+        protected void CloseEditModalForCompanyEvent()
         {
             isEditModalVisibleForEventsAsCompany = false;
         }
 
-        private void CloseEditModalForProfessorEvent()
+        protected void CloseEditModalForProfessorEvent()
         {
             isEditModalVisibleForEventsAsProfessor = false;
         }
 
-        private void CloseEditModalForAnnouncementsAsProfessor()
+        protected void CloseEditModalForAnnouncementsAsProfessor()
         {
             isEditModalVisibleForAnnouncementsAsProfessor = false;
         }
 
-        private void CloseEditModalForThesesAsProfessor()
+        protected void CloseEditModalForThesesAsProfessor()
         {
             isEditModalVisibleForThesesAsProfessor = false;
         }
 
-        private async Task UpdateAnnouncement(AnnouncementAsCompany updatedAnnouncement)
+        protected async Task UpdateAnnouncement(AnnouncementAsCompany updatedAnnouncement)
         {
             var existingAnnouncement = await dbContext.AnnouncementsAsCompany.FindAsync(updatedAnnouncement.Id);
 
@@ -9225,7 +9239,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UpdateCompanyEvent(CompanyEvent updatedCompanyEvent)
+        protected async Task UpdateCompanyEvent(CompanyEvent updatedCompanyEvent)
         {
             var existingCompanyEvent = await dbContext.CompanyEvents.FindAsync(updatedCompanyEvent.Id);
 
@@ -9259,7 +9273,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UpdateProfessorEvent(ProfessorEvent updatedProfessorEvent)
+        protected async Task UpdateProfessorEvent(ProfessorEvent updatedProfessorEvent)
         {
             var existingProfessorEvent = await dbContext.ProfessorEvents.FindAsync(updatedProfessorEvent.Id);
 
@@ -9272,7 +9286,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UpdateAnnouncementAsProfessor(AnnouncementAsProfessor updatedAnnouncementasProfessor)
+        protected async Task UpdateAnnouncementAsProfessor(AnnouncementAsProfessor updatedAnnouncementasProfessor)
         {
             var existingAnnouncementasProfessor = await dbContext.AnnouncementsAsProfessor.FindAsync(updatedAnnouncementasProfessor.Id);
 
@@ -9286,7 +9300,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UpdateThesisAsProfessor(ProfessorThesis updatedThesisProfessor)
+        protected async Task UpdateThesisAsProfessor(ProfessorThesis updatedThesisProfessor)
         {
             try
             {
@@ -9393,7 +9407,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void FilterAnnouncements()
+        protected void FilterAnnouncements()
         {
             // Filter the announcements based on the selected filter
             if (selectedStatusFilterForAnnouncements == "Όλα")
@@ -9422,7 +9436,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void FilterAnnouncementsAsProfessor()
+        protected void FilterAnnouncementsAsProfessor()
         {
             // Filter the announcements based on the selected filter
             if (selectedStatusFilterForAnnouncementsAsProfessor == "Όλα")
@@ -9451,7 +9465,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void FilterThesesAsProfessor()
+        protected void FilterThesesAsProfessor()
         {
             // Filter the announcements based on the selected filter
             if (selectedStatusFilterForThesesAsProfessor == "Όλα")
@@ -9484,7 +9498,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        // private void FilterThesesAsCompany()
+        // protected void FilterThesesAsCompany()
         // {
         //     // Apply filter based on selected status
         //     if (selectedStatusFilterForCompanyTheses == "Όλα")
@@ -9520,7 +9534,7 @@ namespace QuizManager.Shared
         //     StateHasChanged();
         // }
 
-        private void FilterCompanyEvents()
+        protected void FilterCompanyEvents()
         {
             // Filter the announcements based on the selected filter
             if (selectedStatusFilterForEventsAsCompany == "Όλα")
@@ -9549,7 +9563,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void FilterProfessorEvents()
+        protected void FilterProfessorEvents()
         {
             // Filter the announcements based on the selected filter
             if (selectedStatusFilterForEventsAsProfessor == "Όλα")
@@ -9578,43 +9592,43 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void HandleStatusFilterChange(ChangeEventArgs e)
+        protected void HandleStatusFilterChange(ChangeEventArgs e)
         {
             selectedStatusFilterForAnnouncements = e.Value.ToString();
             FilterAnnouncements(); // Call your filtering logic
         }
 
-        private void HandleStatusFilterChangeForCompanyEvents(ChangeEventArgs e)
+        protected void HandleStatusFilterChangeForCompanyEvents(ChangeEventArgs e)
         {
             selectedStatusFilterForEventsAsCompany = e.Value.ToString();
             FilterCompanyEvents(); // Call your filtering logic
         }
 
-        private void HandleStatusFilterChangeForProfessorEvents(ChangeEventArgs e)
+        protected void HandleStatusFilterChangeForProfessorEvents(ChangeEventArgs e)
         {
             selectedStatusFilterForEventsAsProfessor = e.Value.ToString();
             FilterProfessorEvents(); // Call your filtering logic
         }
 
-        private void HandleStatusFilterChangeForAnnouncementsAsProfessor(ChangeEventArgs e)
+        protected void HandleStatusFilterChangeForAnnouncementsAsProfessor(ChangeEventArgs e)
         {
             selectedStatusFilterForAnnouncementsAsProfessor = e.Value.ToString();
             FilterAnnouncementsAsProfessor(); // Call your filtering logic
         }
 
-        private void HandleStatusFilterChangeForThesesAsProfessor(ChangeEventArgs e)
+        protected void HandleStatusFilterChangeForThesesAsProfessor(ChangeEventArgs e)
         {
             selectedStatusFilterForThesesAsProfessor = e.Value.ToString();
             FilterThesesAsProfessor(); // Call your filtering logic
         }
 
-        private void HandleStatusFilterChangeForThesesAsCompany(ChangeEventArgs e)
+        protected void HandleStatusFilterChangeForThesesAsCompany(ChangeEventArgs e)
         {
             selectedStatusFilterForCompanyTheses = e.Value.ToString();
             //FilterThesesAsCompany(); // Trigger filtering and recalculation of counts
         }
 
-        private async Task SaveAnnouncementAsPublishedAsProfessor()
+        protected async Task SaveAnnouncementAsPublishedAsProfessor()
         {
             // Show custom confirmation dialog with HTML styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -9642,7 +9656,7 @@ namespace QuizManager.Shared
             await SaveAnnouncementToDatabaseAsProfessor();
         }
 
-        private async Task SaveAnnouncementAsUnpublishedAsProfessor()
+        protected async Task SaveAnnouncementAsUnpublishedAsProfessor()
         {
             // Show custom confirmation dialog with HTML styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -9670,7 +9684,7 @@ namespace QuizManager.Shared
             await SaveAnnouncementToDatabaseAsProfessor();
         }
 
-        private async Task SaveThesisAsPublishedAsProfessor()
+        protected async Task SaveThesisAsPublishedAsProfessor()
         {
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
             $"Πρόκεται να Δημιουργήσετε μια Πτυχιακή Εργασία με Τίτλο: <strong>{professorthesis.ThesisTitle}</strong> ως '<strong>Δημοσιευμένη</strong>'.<br><br>" +
@@ -9703,7 +9717,7 @@ namespace QuizManager.Shared
             await SaveThesisToDatabaseAsProfessor();
         }
 
-        private async Task SaveThesisAsUnpublishedAsProfessor()
+        protected async Task SaveThesisAsUnpublishedAsProfessor()
         {
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
             $"Πρόκεται να Δημιουργήσετε μια Πτυχιακή Εργασία με Τίτλο: <strong>{professorthesis.ThesisTitle}</strong> ως '<strong>Μη Δημοσιευμένη</strong>'.<br><br>" +
@@ -9735,7 +9749,7 @@ namespace QuizManager.Shared
             await SaveThesisToDatabaseAsProfessor();
         }
 
-        private async Task SaveAnnouncementToDatabaseAsProfessor()
+        protected async Task SaveAnnouncementToDatabaseAsProfessor()
         {
             // Validation logic for professor announcement form
             if (string.IsNullOrWhiteSpace(professorannouncement.ProfessorAnnouncementTitle) ||
@@ -9784,7 +9798,7 @@ namespace QuizManager.Shared
             NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
         }
 
-        private async Task SaveThesisToDatabaseAsProfessor()
+        protected async Task SaveThesisToDatabaseAsProfessor()
         {
             // Validate form data
             if (string.IsNullOrWhiteSpace(professorthesis.ThesisTitle) ||
@@ -9837,7 +9851,7 @@ namespace QuizManager.Shared
         }
 
         // Method to toggle Area selection
-        private void ToggleAreaSelectionForThesisUploadAsProfessor(long areaId, object isChecked)
+        protected void ToggleAreaSelectionForThesisUploadAsProfessor(long areaId, object isChecked)
         {
             if ((bool)isChecked)
             {
@@ -9852,7 +9866,7 @@ namespace QuizManager.Shared
         }
 
         // Method to toggle Skill selection
-        private void ToggleSkillSelectionForThesisUploadAsProfessor(long skillId, object isChecked)
+        protected void ToggleSkillSelectionForThesisUploadAsProfessor(long skillId, object isChecked)
         {
             if ((bool)isChecked)
             {
@@ -9866,17 +9880,17 @@ namespace QuizManager.Shared
             professorthesis.ThesisSkills = string.Join(",", selectedSkillsForProfessorThesis);
         }
 
-        private async Task ToggleCheckboxesForThesisAreasAsProfessor()
+        protected async Task ToggleCheckboxesForThesisAreasAsProfessor()
         {
             await JS.InvokeVoidAsync("toggleProfessorThesisAreasCheckboxes");
         }
 
-        private async Task ToggleCheckboxesForThesisSkillsAsProfessor()
+        protected async Task ToggleCheckboxesForThesisSkillsAsProfessor()
         {
             await JS.InvokeVoidAsync("toggleProfessorThesisSkillsCheckboxes");
         }
 
-        private void OnCheckedChangedForThesisAreasAsProfessor(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForThesisAreasAsProfessor(ChangeEventArgs e, Area area)
         {
             if ((bool)e.Value) // If checked
             {
@@ -9891,7 +9905,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnCheckedChangedForThesisSkillsAsProfessor(ChangeEventArgs e, Skill skill)
+        protected void OnCheckedChangedForThesisSkillsAsProfessor(ChangeEventArgs e, Skill skill)
         {
             if ((bool)e.Value) // If checked
             {
@@ -9906,17 +9920,17 @@ namespace QuizManager.Shared
             }
         }
 
-        private bool IsSelectedForThesisAreasAsProfessor(Area area)
+        protected bool IsSelectedForThesisAreasAsProfessor(Area area)
         {
             return selectedAreasForProfessorThesis.Contains(area.Id);
         }
 
-        private bool IsSelectedForThesisSkillsAsProfessor(Skill skill)
+        protected bool IsSelectedForThesisSkillsAsProfessor(Skill skill)
         {
             return selectedSkillsForProfessorThesis.Contains(skill.Id);
         }
 
-        private async Task DeleteThesisAsProfessor(int professorThesisId)
+        protected async Task DeleteThesisAsProfessor(int professorThesisId)
         {
             // Find the thesis by ID
             var professorthesis = await dbContext.ProfessorTheses.FindAsync(professorThesisId);
@@ -9934,24 +9948,24 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void CloseModalForProfessorThesis()
+        protected void CloseModalForProfessorThesis()
         {
             isModalVisibleToShowProfessorThesisDetails = false; // Hide the modal
         }
 
-        private void ShowProfessorThesisDetailsAsStudent(ProfessorThesisApplied professorthesisdetails)
+        protected void ShowProfessorThesisDetailsAsStudent(ProfessorThesisApplied professorthesisdetails)
         {
             currentProfessorThesisToShowDetailsAsStudent = professorthesisdetails;
             isModalVisibleForProfessorThesisToShowDetailsAsStudent = true;
         }
 
-        private void ShowCompanyThesisDetailsAsStudent(CompanyThesis companythesisdetails)
+        protected void ShowCompanyThesisDetailsAsStudent(CompanyThesis companythesisdetails)
         {
             currentCompanyThesisToShowDetailsAsStudent = companythesisdetails;
             isModalVisibleForCompanyThesisToShowDetailsAsStudent = true;
         }
 
-        private async Task ShowProfessorThesisDetailsAsStudent(long thesisId)
+        protected async Task ShowProfessorThesisDetailsAsStudent(long thesisId)
         {
             // Fetch the thesis details based on the thesisId
             selectedProfessorThesisDetails = await dbContext.ProfessorTheses
@@ -9962,7 +9976,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("showProfessorThesisDetailsModal"); // Show the modal using JS
         }
 
-        private async Task ShowCompanyThesisDetailsAsStudent(long thesisId)
+        protected async Task ShowCompanyThesisDetailsAsStudent(long thesisId)
         {
             // Fetch the company thesis details based on the thesisId
             selectedCompanyThesisDetails = await dbContext.CompanyTheses
@@ -9973,7 +9987,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("showCompanyThesisDetailsModal"); // Show the modal using JS
         }
 
-        private async Task ShowCompanyInternshipDetailsAsStudent(long thesisId)
+        protected async Task ShowCompanyInternshipDetailsAsStudent(long thesisId)
         {
             isModalVisibleForInternshipsAsStudent = true;
             selectedCompanyInternshipDetails = await dbContext.CompanyInternships
@@ -9988,7 +10002,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("showCompanyInternshipDetailsModal"); // Show the modal using JS
         }
 
-        private async Task ShowProfessorInternshipDetailsAsStudent(long thesisId)
+        protected async Task ShowProfessorInternshipDetailsAsStudent(long thesisId)
         {
             try
             {
@@ -10021,27 +10035,27 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseProfessorInternshipDetailsModal()
+        protected void CloseProfessorInternshipDetailsModal()
         {
             isModalVisibleForProfessorInternshipsAsStudent = false;
             StateHasChanged();
         }
 
-        private async Task CloseModalForProfessorThesisDetails()
+        protected async Task CloseModalForProfessorThesisDetails()
         {
             selectedProfessorThesisDetails = null; // Reset the selected thesis details
             await JS.InvokeVoidAsync("hideProfessorThesisDetailsModal"); // Close the modal using JS
             StateHasChanged(); // Update the UI
         }
 
-        private async Task CloseModalForCompanyThesisDetails()
+        protected async Task CloseModalForCompanyThesisDetails()
         {
             selectedCompanyThesisDetails = null; // Reset the selected thesis details
             await JS.InvokeVoidAsync("hideCompanyThesisDetailsModal"); // Close the modal using JS
             StateHasChanged(); // Update the UI
         }
 
-        private async Task CloseModalForCompanyInternshipDetails()
+        protected async Task CloseModalForCompanyInternshipDetails()
         {
             isModalVisibleForInternships = false;
             selectedCompanyInternshipDetails = null; // Reset the selected thesis details
@@ -10049,7 +10063,7 @@ namespace QuizManager.Shared
             StateHasChanged(); // Update the UI
         }
 
-        private async Task ShowProfessorHyperlinkNameDetailsModalInStudentThesis(string professorEmail)
+        protected async Task ShowProfessorHyperlinkNameDetailsModalInStudentThesis(string professorEmail)
         {
             // Fetch professor details based on the professorId
             selectedProfessorDetailsForHyperlinkNameInThesisAsStudent = await dbContext.Professors
@@ -10060,7 +10074,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("showProfessorDetailsModal"); // Show the modal using JS
         }
 
-        private async Task ShowCompanyHyperlinkNameDetailsModalInStudentThesis(string companyEmail)
+        protected async Task ShowCompanyHyperlinkNameDetailsModalInStudentThesis(string companyEmail)
         {
             selectedCompanyDetailsForHyperlinkNameInThesisAsStudent = await dbContext.Companies
                 .FirstOrDefaultAsync(c => c.CompanyEmail == companyEmail);
@@ -10088,7 +10102,7 @@ namespace QuizManager.Shared
             JS.InvokeVoidAsync("hideCompanyDetailsModal"); // Call JS to hide the modal
         }
 
-        private string ShowProfileImage(byte[] imageBytes)
+        protected string ShowProfileImage(byte[] imageBytes)
         {
             if (imageBytes != null)
             {
@@ -10098,7 +10112,7 @@ namespace QuizManager.Shared
             return string.Empty;
         }
 
-        private async Task SearchCompanyThesesAsProfessor()
+        protected async Task SearchCompanyThesesAsProfessor()
         {
             companyThesesResultsToFindThesesAsProfessor = await dbContext.CompanyTheses
                 .Include(t => t.Company) // Include Company for navigation property access
@@ -10126,7 +10140,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task SearchProfessorThesesAsCompany()
+        protected async Task SearchProfessorThesesAsCompany()
         {
             var query = dbContext.ProfessorTheses
                 .Include(t => t.Professor) // Include professor details
@@ -10180,7 +10194,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void ClearSearchFieldsForSearchCompanyThesesAsProfessor()
+        protected void ClearSearchFieldsForSearchCompanyThesesAsProfessor()
         {
             // Reset search input fields
             searchCompanyNameToFindThesesAsProfessor = string.Empty;
@@ -10199,19 +10213,19 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void ShowThesisDetails(CompanyThesis thesis)
+        protected void ShowThesisDetails(CompanyThesis thesis)
         {
             selectedCompanyThesisToSeeDetailsOnEyeIconAsProfessor = thesis;
             isThesisDetailEyeIconModalVisibleToSeeAsProfessor = true; // Assume this boolean controls the modal visibility
         }
 
-        private void ShowThesisDetailsAsCompany(ProfessorThesis thesis)
+        protected void ShowThesisDetailsAsCompany(ProfessorThesis thesis)
         {
             selectedProfessorThesisToSeeDetailsOnEyeIconAsCompany = thesis;
             isThesisDetailEyeIconModalVisibleToSeeAsCompany = true; // Assume this boolean controls the modal visibility
         }
 
-        private async Task ShowCompanyDetailsFromHyperlinkNameToTheProfessor(string companyEmail)
+        protected async Task ShowCompanyDetailsFromHyperlinkNameToTheProfessor(string companyEmail)
         {
             try
             {
@@ -10239,7 +10253,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task CloseCompanyModalToShowCompanyDetailsFromHyperlinkNameToTheProfessor()
+        protected async Task CloseCompanyModalToShowCompanyDetailsFromHyperlinkNameToTheProfessor()
         {
             try
             {
@@ -10259,7 +10273,7 @@ namespace QuizManager.Shared
         }
 
         //EDW PREPEI NA PAIRNEI KAI TA ALLA INFO APO PROFESSOR/TO MODELO EXEI GINIE IDI UPDATE 27/11
-        private async Task MarkInterestInThesisCompanyThesisAsProfessor(CompanyThesis thesis)
+        protected async Task MarkInterestInThesisCompanyThesisAsProfessor(CompanyThesis thesis)
         {
             // First ask for confirmation
             var companyName = thesis.Company?.CompanyName ?? "Άγνωστη Εταιρεία";
@@ -10361,7 +10375,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task MarkInterestInProfessorThesis(ProfessorThesis thesis)
+        protected async Task MarkInterestInProfessorThesis(ProfessorThesis thesis)
         {
             // First ask for confirmation
             var professorName = $"{thesis.Professor?.ProfName} {thesis.Professor?.ProfSurname}" ?? "Άγνωστος Καθηγητής";
@@ -10473,7 +10487,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task<bool> IsProfessorInterestedInThesis(CompanyThesis thesis)
+        protected async Task<bool> IsProfessorInterestedInThesis(CompanyThesis thesis)
         {
             var isInterested = await dbContext.CompanyTheses
                 .AnyAsync(x => x.ProfessorEmailInterestedInCompanyThesis == CurrentUserEmail
@@ -10498,7 +10512,7 @@ namespace QuizManager.Shared
             public bool IsInterested { get; set; }
         }
 
-        private async Task LoadThesisData()
+        protected async Task LoadThesisData()
         {
             var theses = await dbContext.CompanyTheses.ToListAsync();
 
@@ -10510,7 +10524,7 @@ namespace QuizManager.Shared
             }).ToList();
         }
 
-        private async Task LoadProfessorThesisData()
+        protected async Task LoadProfessorThesisData()
         {
             var theses = await dbContext.ProfessorTheses.ToListAsync();
 
@@ -10522,7 +10536,7 @@ namespace QuizManager.Shared
             }).ToList();
         }
 
-        private async Task ShowProfessorDetailsAtCompanyThesisInterest(CompanyThesis companyThesis)
+        protected async Task ShowProfessorDetailsAtCompanyThesisInterest(CompanyThesis companyThesis)
         {
             try
             {
@@ -10558,7 +10572,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ShowCompanyDetailsAtProfessorThesisInterestFromHyperlinkCompanyName(ProfessorThesis professorThesis)
+        protected void ShowCompanyDetailsAtProfessorThesisInterestFromHyperlinkCompanyName(ProfessorThesis professorThesis)
         {
             if (professorThesis?.CompanyInterested != null)
             {
@@ -10591,17 +10605,17 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task CloseModalWhichShowsProfessorDetailsAtCompanyThesisInterest()
+        protected async Task CloseModalWhichShowsProfessorDetailsAtCompanyThesisInterest()
         {
             await JS.InvokeVoidAsync("hideProfessorDetailsModalForThesisInterest");
         }
 
-        private async Task CloseModalWhichShowsCompanyDetailsAtProfessorThesisInterest()
+        protected async Task CloseModalWhichShowsCompanyDetailsAtProfessorThesisInterest()
         {
             await JS.InvokeVoidAsync("hideCompanyDetailsModalForThesisInterest");
         }
 
-        private void ClearSearchFieldsForSearchProfessorThesesAsCompany()
+        protected void ClearSearchFieldsForSearchProfessorThesesAsCompany()
         {
             searchProfessorNameToFindThesesAsCompany = string.Empty;
             searchProfessorThesisTitleToFindThesesAsCompany = string.Empty;
@@ -10616,19 +10630,19 @@ namespace QuizManager.Shared
             searchPerformedToFindThesesAsCompany = false;
         }
 
-        private void CheckCharacterLimitInCompanyEventDescription(ChangeEventArgs e)
+        protected void CheckCharacterLimitInCompanyEventDescription(ChangeEventArgs e)
         {
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInCompanyEventDescription = 1000 - inputText.Length;
         }
 
-        private void CheckCharacterLimitInEventTitleField(ChangeEventArgs e)
+        protected void CheckCharacterLimitInEventTitleField(ChangeEventArgs e)
         {
             var inputText = e.Value?.ToString() ?? string.Empty;
             remainingCharactersInEventTitleField = 120 - inputText.Length;
         }
 
-        private async Task HandleTemporarySaveCompanyEvent()
+        protected async Task HandleTemporarySaveCompanyEvent()
         {
             // Show custom confirmation dialog with formatted text
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -10642,7 +10656,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandlePublishSaveCompanyEvent()
+        protected async Task HandlePublishSaveCompanyEvent()
         {
             // Show custom confirmation dialog with formatted text
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -10656,7 +10670,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task SaveCompanyEvent(bool publishEvent)
+        protected async Task SaveCompanyEvent(bool publishEvent)
         {
             try
             {
@@ -10736,7 +10750,7 @@ namespace QuizManager.Shared
             public List<string> types { get; set; }
         }
 
-        private void SearchStudentsAsCompanyToFindStudent()
+        protected void SearchStudentsAsCompanyToFindStudent()
         {
             var combinedSearchAreas = new List<string>();
 
@@ -10819,7 +10833,7 @@ namespace QuizManager.Shared
                 .ToList();
         }
 
-        private IEnumerable<string> NormalizeAreas(string Areas)
+        protected IEnumerable<string> NormalizeAreas(string Areas)
         {
             if (string.IsNullOrWhiteSpace(Areas))
                 return Array.Empty<string>();
@@ -10832,7 +10846,7 @@ namespace QuizManager.Shared
         }
 
         // Normalize Keywords (convert to lowercase)
-        private IEnumerable<string> NormalizeKeywords(string keywords)
+        protected IEnumerable<string> NormalizeKeywords(string keywords)
         {
             if (string.IsNullOrWhiteSpace(keywords))
                 return Array.Empty<string>();
@@ -10844,7 +10858,7 @@ namespace QuizManager.Shared
                 .Where(keyword => !string.IsNullOrEmpty(keyword));
         }
 
-        private void ClearSearchFieldsAsCompanyToFindStudent()
+        protected void ClearSearchFieldsAsCompanyToFindStudent()
         {
             searchNameOrSurname = string.Empty;
             searchRegNumberAsCompanyToFindStudent = string.Empty;
@@ -10867,7 +10881,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void OnTransportOptionChange(ChangeEventArgs e)
+        protected void OnTransportOptionChange(ChangeEventArgs e)
         {
             if (bool.TryParse(e.Value?.ToString(), out var result))
             {
@@ -10875,7 +10889,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnTransportOptionChangeForProfessorEvent(ChangeEventArgs e)
+        protected void OnTransportOptionChangeForProfessorEvent(ChangeEventArgs e)
         {
             if (bool.TryParse(e.Value?.ToString(), out var result))
             {
@@ -10883,7 +10897,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UploadCompanyEventAttachmentFile(InputFileChangeEventArgs e)
+        protected async Task UploadCompanyEventAttachmentFile(InputFileChangeEventArgs e)
         {
             if (e.File != null)
             {
@@ -10893,7 +10907,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task UploadProfessorEventAttachmentFile(InputFileChangeEventArgs e)
+        protected async Task UploadProfessorEventAttachmentFile(InputFileChangeEventArgs e)
         {
             if (e.File != null)
             {
@@ -10903,7 +10917,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ToggleAndLoadCompanyEventsAsStudent()
+        protected async Task ToggleAndLoadCompanyEventsAsStudent()
         {
             isCompanyEventsVisibleToSeeAsStudent = !isCompanyEventsVisibleToSeeAsStudent;
             Console.WriteLine("Toggle button clicked. Visibility: " + isCompanyEventsVisibleToSeeAsStudent);
@@ -10924,35 +10938,35 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ShowCompanyEventDetails(CompanyEvent eventDetails)
+        protected void ShowCompanyEventDetails(CompanyEvent eventDetails)
         {
             currentCompanyEvent = eventDetails;
             isModalOpenForCompanyEventToSeeAsStudent = true;  // Set the modal open state to true
             StateHasChanged();  // To trigger a re-render and show the modal
         }
 
-        private void CloseModalForCompanyEventToSeeAsStudent()
+        protected void CloseModalForCompanyEventToSeeAsStudent()
         {
             currentCompanyEvent = null;
             isModalOpenForCompanyEventToSeeAsStudent = false; // Set the modal open state to false
             StateHasChanged(); // To trigger a re-render and hide the modal
         }
 
-        private void ShowProfessorEventDetails(ProfessorEvent eventDetails)
+        protected void ShowProfessorEventDetails(ProfessorEvent eventDetails)
         {
             currentProfessorEvent = eventDetails;
             isModalOpenForProfessorEventToSeeAsStudent = true;  // Set the modal open state to true
             StateHasChanged();  // To trigger a re-render and show the modal
         }
 
-        private void CloseModalForProfessorEventToSeeAsStudent()
+        protected void CloseModalForProfessorEventToSeeAsStudent()
         {
             currentProfessorEvent = null;
             isModalOpenForProfessorEventToSeeAsStudent = false; // Set the modal open state to false
             StateHasChanged(); // To trigger a re-render and hide the modal
         }
 
-        private async Task ShowCompanyDetailsModalAtEventsAsStudent(string companyEmail)
+        protected async Task ShowCompanyDetailsModalAtEventsAsStudent(string companyEmail)
         {
             currentCompanyDetailsToShowOnHyperlinkAsStudentForCompanyEvents =
                 await dbContext.Companies.FirstOrDefaultAsync(c => c.CompanyEmail == companyEmail);
@@ -10968,14 +10982,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseCompanyDetailsModalAtEventsAsStudent()
+        protected void CloseCompanyDetailsModalAtEventsAsStudent()
         {
             currentCompanyDetailsToShowOnHyperlinkAsStudentForCompanyEvents = null;
             isModalOpenForCompanyDetailsToSeeAsStudent = false;
             JS.InvokeVoidAsync("hideCompanyDetailsModalForEventsAsStudent");
         }
 
-        private async Task ShowProfessorDetailsModalAtEventsAsStudent(string professorEmail)
+        protected async Task ShowProfessorDetailsModalAtEventsAsStudent(string professorEmail)
         {
             currentProfessorDetailsToShowOnHyperlinkAsStudentForProfessorEvents =
                 await dbContext.Professors.FirstOrDefaultAsync(c => c.ProfEmail == professorEmail);
@@ -10992,14 +11006,14 @@ namespace QuizManager.Shared
         }
 
 
-        private void CloseProfessorDetailsModalAtEventsAsStudent()
+        protected void CloseProfessorDetailsModalAtEventsAsStudent()
         {
             currentProfessorDetailsToShowOnHyperlinkAsStudentForProfessorEvents = null;
             isModalOpenForProfessorDetailsToSeeAsStudent = false;
             JS.InvokeVoidAsync("hideProfessorDetailsModalForEventsAsStudent");
         }
 
-        private async Task<bool> ShowInterestInCompanyEvent(CompanyEvent companyEvent, bool needsTransportForCompanyEvent)
+        protected async Task<bool> ShowInterestInCompanyEvent(CompanyEvent companyEvent, bool needsTransportForCompanyEvent)
         {
             // First ask for confirmation
             var confirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -11149,7 +11163,7 @@ namespace QuizManager.Shared
             return false;
         }
 
-        private async Task<bool> ShowInterestInProfessorEvent(ProfessorEvent professorEvent, bool needsTransportForProfessorEvent)
+        protected async Task<bool> ShowInterestInProfessorEvent(ProfessorEvent professorEvent, bool needsTransportForProfessorEvent)
         {
             // First ask for confirmation - now accessing professor name through navigation property
             var confirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -11302,12 +11316,12 @@ namespace QuizManager.Shared
             return false;
         }
 
-        private async Task ShowAlert(string message)
+        protected async Task ShowAlert(string message)
         {
             await JS.InvokeVoidAsync("alert", message);
         }
 
-        private async Task ShowProfessorDetailsFromHyperlinkName(string professorEmail)
+        protected async Task ShowProfessorDetailsFromHyperlinkName(string professorEmail)
         {
             try
             {
@@ -11329,18 +11343,18 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseProfessorModalFromHyperlinkName()
+        protected void CloseProfessorModalFromHyperlinkName()
         {
             isProfessorDetailModalVisible = false;
             selectedProfessorDetails = null;
         }
 
-        private string GetImageSource(byte[] imageBytes)
+        protected string GetImageSource(byte[] imageBytes)
         {
             return "data:image/png;base64," + Convert.ToBase64String(imageBytes);
         }
 
-        private void SearchStudentsAsProfessorToFindStudent()
+        protected void SearchStudentsAsProfessorToFindStudent()
         {
             var query = dbContext.Students.AsQueryable();
 
@@ -11368,7 +11382,7 @@ namespace QuizManager.Shared
             searchResultsAsProfessorToFindStudent = query.ToList();
         }
 
-        private void ClearSearchFieldsAsProfessorToFindStudent()
+        protected void ClearSearchFieldsAsProfessorToFindStudent()
         {
             // Clear all search fields
             searchEmailAsProfessorToFindStudent = string.Empty;
@@ -11383,7 +11397,7 @@ namespace QuizManager.Shared
             searchResultsAsProfessorToFindStudent = null;
         }
 
-        private void SearchCompaniesAsProfessor()
+        protected void SearchCompaniesAsProfessor()
         {
             var query = dbContext.Companies.AsQueryable();
 
@@ -11411,7 +11425,7 @@ namespace QuizManager.Shared
             searchResultsAsProfessorToFindCompany = query.ToList();
         }
 
-        private void ClearSearchFieldsAsProfessorToFindCompany()
+        protected void ClearSearchFieldsAsProfessorToFindCompany()
         {
             // Clear all search fields
             searchCompanyEmailAsProfessorToFindCompany = string.Empty;
@@ -11426,7 +11440,7 @@ namespace QuizManager.Shared
             searchResultsAsProfessorToFindCompany = null;
         }
 
-        private void SearchCompaniesAsRG()
+        protected void SearchCompaniesAsRG()
         {
             var query = dbContext.Companies.AsQueryable();
 
@@ -11454,7 +11468,7 @@ namespace QuizManager.Shared
             searchResultsAsRGToFindCompany = query.ToList();
         }
 
-        private void ClearSearchFieldsAsRGToFindCompany()
+        protected void ClearSearchFieldsAsRGToFindCompany()
         {
             // Clear all search fields
             searchCompanyEmailAsRGToFindCompany = string.Empty;
@@ -11471,37 +11485,37 @@ namespace QuizManager.Shared
 
         /////////////////
 
-        private void ShowStudentDetailsWhenSearchAsProfessor(Student student)
+        protected void ShowStudentDetailsWhenSearchAsProfessor(Student student)
         {
             selectedStudent = student;
             showStudentDetailsModal = true;
         }
 
-        private void CloseStudentDetailsModalWhenSearchAsProfessor()
+        protected void CloseStudentDetailsModalWhenSearchAsProfessor()
         {
             showStudentDetailsModal = false;
             selectedStudent = null;
         }
 
-        private void ShowCompanyDetailsWhenSearchAsProfessor(Company company)
+        protected void ShowCompanyDetailsWhenSearchAsProfessor(Company company)
         {
             selectedCompany = company;
             showCompanyDetailsModal = true;
         }
 
-        private void ShowCompanyDetailsWhenSearchAsRG(Company company)
+        protected void ShowCompanyDetailsWhenSearchAsRG(Company company)
         {
             selectedCompany = company;
             showCompanyDetailsModal = true;
         }
 
-        private void CloseCompanyDetailsModalWhenSearchAsProfessor()
+        protected void CloseCompanyDetailsModalWhenSearchAsProfessor()
         {
             showCompanyDetailsModal = false;
             selectedCompany = null;
         }
 
-        private async Task ShowStudentDetailsInNameAsHyperlinkForProfessorThesis(string studentUniqueID)
+        protected async Task ShowStudentDetailsInNameAsHyperlinkForProfessorThesis(string studentUniqueID)
         {
             try
             {
@@ -11535,31 +11549,31 @@ namespace QuizManager.Shared
             }
         }
 
-        private void UpdateOrganizerVisibility(bool value)
+        protected void UpdateOrganizerVisibility(bool value)
         {
             companyEvent.CompanyEventOtherOrganizerToBeVisible = value;
             StateHasChanged(); // Ensure the UI is updated
         }
 
-        private void UpdateOrganizerVisibilityForProfessorEvents(bool value)
+        protected void UpdateOrganizerVisibilityForProfessorEvents(bool value)
         {
             professorEvent.ProfessorEventOtherOrganizerToBeVisible = value;
             StateHasChanged(); // Ensure the UI is updated
         }
 
-        private void ShowStudentDetailsOnEyeIconWhenSearchForStudentsAsCompany(Student student)
+        protected void ShowStudentDetailsOnEyeIconWhenSearchForStudentsAsCompany(Student student)
         {
             selectedStudentWhenSearchForStudentsAsCompany = student;
             showStudentDetailsModalWhenSearchForStudentsAsCompany = true;
         }
 
-        private void CloseModalStudentDetailsOnEyeIconWhenSearchForStudentsAsCompany()
+        protected void CloseModalStudentDetailsOnEyeIconWhenSearchForStudentsAsCompany()
         {
             showStudentDetailsModalWhenSearchForStudentsAsCompany = false;
             selectedStudentWhenSearchForStudentsAsCompany = null;
         }
 
-        private void SearchProfessorsAsCompanyToFindProfessor()
+        protected void SearchProfessorsAsCompanyToFindProfessor()
         {
             var professorsQuery = dbContext.Professors.AsQueryable();
 
@@ -11597,7 +11611,7 @@ namespace QuizManager.Shared
                 .ToList();
         }
 
-        private void ClearSearchFieldsAsCompanyToFindProfessor()
+        protected void ClearSearchFieldsAsCompanyToFindProfessor()
         {
             searchNameSurnameAsCompanyToFindProfessor = string.Empty;
             searchSchoolAsCompanyToFindProfessor = string.Empty;
@@ -11608,19 +11622,19 @@ namespace QuizManager.Shared
             selectedAreasOfInterest.Clear();
         }
 
-        private void ShowProfessorDetailsOnEyeIconWhenSearchForProfessorAsCompany(Professor professor)
+        protected void ShowProfessorDetailsOnEyeIconWhenSearchForProfessorAsCompany(Professor professor)
         {
             selectedProfessorWhenSearchForProfessorsAsCompany = professor;
             showProfessorDetailsModalWhenSearchForProfessorsAsCompany = true;
         }
 
-        private void CloseModalProfessorDetailsOnEyeIconWhenSearchForProfessorsAsCompany()
+        protected void CloseModalProfessorDetailsOnEyeIconWhenSearchForProfessorsAsCompany()
         {
             showProfessorDetailsModalWhenSearchForProfessorsAsCompany = false;
             selectedProfessorWhenSearchForProfessorsAsCompany = null;
         }
 
-        private string SearchNameOrSurname
+        protected string SearchNameOrSurname
         {
             get => searchNameOrSurname;
             set
@@ -11630,7 +11644,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void UpdateNameSurnameSuggestions()
+        protected void UpdateNameSurnameSuggestions()
         {
             if (!string.IsNullOrWhiteSpace(searchNameOrSurname) && searchNameOrSurname.Length > 1)
             {
@@ -11651,7 +11665,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void SelectNameSurnameSuggestion(string suggestion)
+        protected void SelectNameSurnameSuggestion(string suggestion)
         {
             if (!string.IsNullOrWhiteSpace(suggestion))
             {
@@ -11660,7 +11674,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleInput(ChangeEventArgs e)
+        protected async Task HandleInput(ChangeEventArgs e)
         {
             searchNameOrSurname = e.Value?.ToString().Trim() ?? string.Empty;
 
@@ -11692,7 +11706,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void HandleProfessorInput(ChangeEventArgs e)
+        protected void HandleProfessorInput(ChangeEventArgs e)
         {
             searchNameSurnameAsCompanyToFindProfessor = e.Value?.ToString();
             if (!string.IsNullOrWhiteSpace(searchNameSurnameAsCompanyToFindProfessor) && searchNameSurnameAsCompanyToFindProfessor.Length >= 2)
@@ -11710,7 +11724,7 @@ namespace QuizManager.Shared
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        private void HandleProfessorInputWhenSearchForProfessorAsRG(ChangeEventArgs e)
+        protected void HandleProfessorInputWhenSearchForProfessorAsRG(ChangeEventArgs e)
         {
             searchNameSurnameAsRGToFindProfessor = e.Value?.ToString();
             if (!string.IsNullOrWhiteSpace(searchNameSurnameAsRGToFindProfessor) && searchNameSurnameAsRGToFindProfessor.Length >= 2)
@@ -11727,13 +11741,13 @@ namespace QuizManager.Shared
             }
         }
 
-        private void SelectProfessorNameSurnameSuggestionAsRG(string suggestion)
+        protected void SelectProfessorNameSurnameSuggestionAsRG(string suggestion)
         {
             searchNameSurnameAsRGToFindProfessor = suggestion;
             professorNameSurnameSuggestionsAsRG.Clear();
         }
 
-        private async Task HandleAreasOfInterestInputAsRG(ChangeEventArgs e)
+        protected async Task HandleAreasOfInterestInputAsRG(ChangeEventArgs e)
         {
             searchAreasOfInterestAsRG = e.Value?.ToString().Trim() ?? string.Empty;
 
@@ -11769,7 +11783,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void SelectAreasOfInterestSuggestionAsRG(string suggestion)
+        protected void SelectAreasOfInterestSuggestionAsRG(string suggestion)
         {
             if (!string.IsNullOrWhiteSpace(suggestion) && !selectedAreasOfInterestAsRG.Contains(suggestion))
             {
@@ -11779,13 +11793,13 @@ namespace QuizManager.Shared
             }
         }
 
-        private void RemoveSelectedAreaOfInterestAsRG(string area)
+        protected void RemoveSelectedAreaOfInterestAsRG(string area)
         {
             selectedAreasOfInterestAsRG.Remove(area); // Remove area
             StateHasChanged(); // Refresh UI
         }
 
-        private void SearchProfessorsAsRGToFindProfessor()
+        protected void SearchProfessorsAsRGToFindProfessor()
         {
             var professorsQuery = dbContext.Professors.AsQueryable();
 
@@ -11822,7 +11836,7 @@ namespace QuizManager.Shared
                 .ToList();
         }
 
-        private void ClearSearchFieldsAsRGToFindProfessor()
+        protected void ClearSearchFieldsAsRGToFindProfessor()
         {
             searchNameSurnameAsRGToFindProfessor = string.Empty;
             searchSchoolAsRGToFindProfessor = string.Empty;
@@ -11833,9 +11847,9 @@ namespace QuizManager.Shared
             selectedAreasOfInterestAsRG.Clear();
         }
 
-        private int ProfessorsPerPage_SearchForProfessorsAsRG = 3; // Default value
-        private int currentProfessorPage_SearchForProfessorsAsRG = 1;
-        private void OnPageSizeChange_SearchForProfessorsAsRG(ChangeEventArgs e)
+        protected int ProfessorsPerPage_SearchForProfessorsAsRG = 3; // Default value
+        protected int currentProfessorPage_SearchForProfessorsAsRG = 1;
+        protected void OnPageSizeChange_SearchForProfessorsAsRG(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -11845,7 +11859,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private IEnumerable<Professor> GetPaginatedProfessorResultsAsRG()
+        protected IEnumerable<Professor> GetPaginatedProfessorResultsAsRG()
         {
             return searchResultsAsRGToFindProfessor?
                 .Skip((currentProfessorPage_SearchForProfessorsAsRG - 1) * ProfessorsPerPage_SearchForProfessorsAsRG)
@@ -11853,22 +11867,22 @@ namespace QuizManager.Shared
                 ?? Enumerable.Empty<Professor>();
         }
 
-        private void ShowProfessorDetailsOnEyeIconWhenSearchForProfessorAsRG(Professor professor)
+        protected void ShowProfessorDetailsOnEyeIconWhenSearchForProfessorAsRG(Professor professor)
         {
             selectedProfessorWhenSearchForProfessorsAsRG = professor;
             showProfessorDetailsModalWhenSearchForProfessorsAsRG = true;
         }
 
-        private void GoToFirstProfessorPageAsRG()
+        protected void GoToFirstProfessorPageAsRG()
         {
             currentProfessorPage_SearchForProfessorsAsRG = 1;
             StateHasChanged();
         }
 
-        private int totalProfessorPages_SearchForProfessorsAsRG => searchResultsAsRGToFindProfessor != null
+        protected int totalProfessorPages_SearchForProfessorsAsRG => searchResultsAsRGToFindProfessor != null
                 ? (int)Math.Ceiling((double)searchResultsAsRGToFindProfessor.Count / ProfessorsPerPage_SearchForProfessorsAsRG)
                 : 1;
-        private List<int> GetVisibleProfessorPagesAsRG()
+        protected List<int> GetVisibleProfessorPagesAsRG()
         {
             var pagesAsRG = new List<int>();
             int currentPageAsRG = currentProfessorPage_SearchForProfessorsAsRG;
@@ -11896,7 +11910,7 @@ namespace QuizManager.Shared
             return pagesAsRG;
         }
 
-        private void GoToProfessorPageAsRG(int pageNumberAsRG)
+        protected void GoToProfessorPageAsRG(int pageNumberAsRG)
         {
             if (pageNumberAsRG >= 1 && pageNumberAsRG <= totalProfessorPages_SearchForProfessorsAsRG)
             {
@@ -11905,7 +11919,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void PreviousProfessorPageAsRG()
+        protected void PreviousProfessorPageAsRG()
         {
             if (currentProfessorPage_SearchForProfessorsAsRG > 1)
             {
@@ -11914,7 +11928,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextProfessorPageAsRG()
+        protected void NextProfessorPageAsRG()
         {
             if (currentProfessorPage_SearchForProfessorsAsRG < totalProfessorPages_SearchForProfessorsAsRG)
             {
@@ -11923,20 +11937,20 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToLastProfessorPageAsRG()
+        protected void GoToLastProfessorPageAsRG()
         {
             currentProfessorPage_SearchForProfessorsAsRG = totalProfessorPages_SearchForProfessorsAsRG;
             StateHasChanged();
         }
 
-        private void CloseModalProfessorDetailsOnEyeIconWhenSearchForProfessorsAsRG()
+        protected void CloseModalProfessorDetailsOnEyeIconWhenSearchForProfessorsAsRG()
         {
             showProfessorDetailsModalWhenSearchForProfessorsAsRG = false;
             selectedProfessorWhenSearchForProfessorsAsRG = null;
         }
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        private void HandleProfessorInputWhenSearchForProfessorThesisAutocompleteNameAsStudent(ChangeEventArgs e)
+        protected void HandleProfessorInputWhenSearchForProfessorThesisAutocompleteNameAsStudent(ChangeEventArgs e)
         {
             searchNameSurnameAsStudentToFindProfessor = e.Value?.ToString();
             if (!string.IsNullOrWhiteSpace(searchNameSurnameAsStudentToFindProfessor) && searchNameSurnameAsStudentToFindProfessor.Length >= 2)
@@ -11954,19 +11968,19 @@ namespace QuizManager.Shared
         }
 
         // Select a suggestion for name and surname
-        private void SelectProfessorNameSurnameSuggestionWhenSearchForProfessorThesisAutocompleteNameAsStudent(string suggestion)
+        protected void SelectProfessorNameSurnameSuggestionWhenSearchForProfessorThesisAutocompleteNameAsStudent(string suggestion)
         {
             searchNameSurnameAsStudentToFindProfessor = suggestion;
             professorNameSurnameSuggestions.Clear();
         }
 
-        private void SelectProfessorNameSurnameSuggestion(string suggestion)
+        protected void SelectProfessorNameSurnameSuggestion(string suggestion)
         {
             searchNameSurnameAsCompanyToFindProfessor = suggestion;
             professorNameSurnameSuggestions.Clear();
         }
 
-        private async Task HandleAreasOfExpertiseInput(ChangeEventArgs e)
+        protected async Task HandleAreasOfExpertiseInput(ChangeEventArgs e)
         {
             searchAreasOfExpertise = e.Value?.ToString().Trim() ?? string.Empty;
 
@@ -12002,7 +12016,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task HandleAreasOfInterestInput(ChangeEventArgs e)
+        protected async Task HandleAreasOfInterestInput(ChangeEventArgs e)
         {
             searchAreasOfInterest = e.Value?.ToString().Trim() ?? string.Empty;
 
@@ -12038,7 +12052,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void SelectAreasOfExpertiseSuggestion(string suggestion)
+        protected void SelectAreasOfExpertiseSuggestion(string suggestion)
         {
             if (!string.IsNullOrWhiteSpace(suggestion) && !selectedAreasOfExpertise.Contains(suggestion))
             {
@@ -12048,7 +12062,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void SelectAreasOfInterestSuggestion(string suggestion)
+        protected void SelectAreasOfInterestSuggestion(string suggestion)
         {
             if (!string.IsNullOrWhiteSpace(suggestion) && !selectedAreasOfInterest.Contains(suggestion))
             {
@@ -12058,19 +12072,19 @@ namespace QuizManager.Shared
             }
         }
 
-        private void RemoveSelectedAreaOfExpertise(string area)
+        protected void RemoveSelectedAreaOfExpertise(string area)
         {
             selectedAreasOfExpertise.Remove(area); // Remove area
             StateHasChanged(); // Refresh UI
         }
 
-        private void RemoveSelectedAreaOfInterest(string area)
+        protected void RemoveSelectedAreaOfInterest(string area)
         {
             selectedAreasOfInterest.Remove(area); // Remove area
             StateHasChanged(); // Refresh UI
         }
 
-        private async Task HandleKeywordsInput(ChangeEventArgs e)
+        protected async Task HandleKeywordsInput(ChangeEventArgs e)
         {
             searchKeywords = e.Value?.ToString().Trim() ?? string.Empty;
 
@@ -12106,7 +12120,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void SelectKeywordsSuggestion(string suggestion)
+        protected void SelectKeywordsSuggestion(string suggestion)
         {
             if (!string.IsNullOrWhiteSpace(suggestion) && !selectedKeywords.Contains(suggestion))
             {
@@ -12116,7 +12130,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void RemoveKeyword(string keyword)
+        protected void RemoveKeyword(string keyword)
         {
             if (selectedKeywords.Contains(keyword))
             {
@@ -12124,7 +12138,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DownloadStudentAttachmentAsCompanyInSearchForStudents(long studentId)
+        protected async Task DownloadStudentAttachmentAsCompanyInSearchForStudents(long studentId)
         {
             var student = await dbContext.Students
                 .Where(s => s.Id == (int)studentId)
@@ -12139,7 +12153,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void LoadEventsForCalendar()
+        protected void LoadEventsForCalendar()
         {
             eventsForDate.Clear();
             eventsForDateForProfessors.Clear();
@@ -12203,7 +12217,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void ShowPreviousMonth()
+        protected void ShowPreviousMonth()
         {
             currentMonth = currentMonth.AddMonths(-1);
             LoadEventsForCalendar();
@@ -12212,7 +12226,7 @@ namespace QuizManager.Shared
 
         }
 
-        private void ShowNextMonth()
+        protected void ShowNextMonth()
         {
             currentMonth = currentMonth.AddMonths(1);
             LoadEventsForCalendar();
@@ -12221,7 +12235,7 @@ namespace QuizManager.Shared
 
         }
 
-        private void OnDateClicked(DateTime clickedDate)
+        protected void OnDateClicked(DateTime clickedDate)
         {
             selectedDay = clickedDate.Day;
             highlightedDay = selectedDay;
@@ -12255,7 +12269,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void CloseModalShowingTheEventsOnCalendar()
+        protected void CloseModalShowingTheEventsOnCalendar()
         {
             isModalVisibleToShowEventsOnCalendarForEachClickedDay = false;
             selectedDateEvents.Clear();
@@ -12266,7 +12280,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void ShowEventsForDate(List<CompanyEvent> events, List<ProfessorEvent> professorevents)
+        protected void ShowEventsForDate(List<CompanyEvent> events, List<ProfessorEvent> professorevents)
         {
             selectedDateEvents = events;
             selectedProfessorDateEvents = professorevents;
@@ -12276,12 +12290,12 @@ namespace QuizManager.Shared
 
         }
 
-        private void CalculateRemainingCells()
+        protected void CalculateRemainingCells()
         {
             remainingCellsValue = totalCellsInGrid - (firstDayOfMonth + daysInCurrentMonth);
         }
 
-        private void ChangeMonth(int monthChange)
+        protected void ChangeMonth(int monthChange)
         {
             currentMonth = currentMonth.AddMonths(monthChange);
 
@@ -12289,19 +12303,19 @@ namespace QuizManager.Shared
             LoadEventsForCalendar();  // This will handle the resetting of highlightedDay
         }
 
-        private async Task<List<CompanyEvent>> FetchCompanyEventsAsync()
+        protected async Task<List<CompanyEvent>> FetchCompanyEventsAsync()
         {
             var companyevents = await dbContext.CompanyEvents.AsNoTracking().ToListAsync();
             return companyevents;
         }
 
-        private async Task<List<ProfessorEvent>> FetchProfessorEventsAsync()
+        protected async Task<List<ProfessorEvent>> FetchProfessorEventsAsync()
         {
             var professorevents = await dbContext.ProfessorEvents.AsNoTracking().ToListAsync();
             return professorevents;
         }
 
-        private async Task ShowInterestedStudentsInCompanyEvent(long eventRNG)
+        protected async Task ShowInterestedStudentsInCompanyEvent(long eventRNG)
         {
             // Toggle the selectedEventIdForStudents to either show or hide the table
             if (selectedEventIdForStudents == eventRNG)
@@ -12381,8 +12395,8 @@ namespace QuizManager.Shared
             StateHasChanged(); // Refresh the UI
         }
 
-        private long? selectedEventIdForProfessorsWhenShowInterestForCompanyEvent;
-        private async Task ShowInterestedProfessorsInCompanyEvent(long companyeventRNG)
+        protected long? selectedEventIdForProfessorsWhenShowInterestForCompanyEvent;
+        protected async Task ShowInterestedProfessorsInCompanyEvent(long companyeventRNG)
         {
             if (selectedEventIdForProfessors == companyeventRNG)
             {
@@ -12428,7 +12442,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ShowInterestedStudentsInProfessorEvent(long professoreventRNG)
+        protected async Task ShowInterestedStudentsInProfessorEvent(long professoreventRNG)
         {
             // Toggle the selectedEventIdForStudents to either show or hide the table
             if (selectedEventIdForStudentsWhenShowInterestForProfessorEvent == professoreventRNG)
@@ -12509,7 +12523,7 @@ namespace QuizManager.Shared
             StateHasChanged(); // Refresh the UI
         }
 
-        private async Task ShowStudentDetailsAtCompanyEventInterest(InterestInCompanyEvent application)
+        protected async Task ShowStudentDetailsAtCompanyEventInterest(InterestInCompanyEvent application)
         {
             // === STUDENT LOOKUP ===
             var studentUniqueId = application.StudentUniqueIDShowInterestForEvent;
@@ -12613,12 +12627,12 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void CloseStudentDetailsModal()
+        protected void CloseStudentDetailsModal()
         {
             showModal = false;
         }
 
-        private bool IsValidEmailForCompanyJobs(string email)
+        protected bool IsValidEmailForCompanyJobs(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
                 return false;
@@ -12628,7 +12642,7 @@ namespace QuizManager.Shared
                 @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
         }
 
-        private bool IsValidEmailForProfessorInternships(string email)
+        protected bool IsValidEmailForProfessorInternships(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
                 return false;
@@ -12638,7 +12652,7 @@ namespace QuizManager.Shared
                 @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
         }
 
-        private bool IsValidPhoneNumber(string phoneNumber)
+        protected bool IsValidPhoneNumber(string phoneNumber)
         {
             // Check if the input is null or empty
             if (string.IsNullOrWhiteSpace(phoneNumber))
@@ -12648,20 +12662,20 @@ namespace QuizManager.Shared
             return System.Text.RegularExpressions.Regex.IsMatch(phoneNumber, @"^\d{10}$");
         }
 
-        private void ValidatePostalCode(ChangeEventArgs e)
+        protected void ValidatePostalCode(ChangeEventArgs e)
         {
             var inputValue = e.Value?.ToString() ?? string.Empty;
             showErrorMessageforPostalCode = !IsValidPostalCodeForCompanyJobs(inputValue);
         }
 
-        private bool IsValidPostalCodeForCompanyJobs(string postalCode)
+        protected bool IsValidPostalCodeForCompanyJobs(string postalCode)
         {
             // Ensure it contains exactly 5 digits
             return !string.IsNullOrWhiteSpace(postalCode) &&
                    System.Text.RegularExpressions.Regex.IsMatch(postalCode, @"^\d{5}$");
         }
 
-        private async Task HandleTemporarySaveProfessorEvent()
+        protected async Task HandleTemporarySaveProfessorEvent()
         {
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
             "Είστε σίγουροι πως θέλετε να υποβάλλετε την <strong>Εκδήλωση</strong>;<br><br>" +
@@ -12674,7 +12688,7 @@ namespace QuizManager.Shared
             await SaveProfessorEvent(false);
         }
 
-        private async Task HandlePublishSaveProfessorEvent()
+        protected async Task HandlePublishSaveProfessorEvent()
         {
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
             "Είστε σίγουροι πως θέλετε να υποβάλλετε την <strong>Εκδήλωση</strong>;<br><br>" +
@@ -12687,7 +12701,7 @@ namespace QuizManager.Shared
             await SaveProfessorEvent(true);
         }
 
-        private async Task SaveProfessorEvent(bool publishEvent)
+        protected async Task SaveProfessorEvent(bool publishEvent)
         {
             try
             {
@@ -12783,7 +12797,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ShowStudentDetailsAtProfessorEventInterest(InterestInProfessorEvent application)
+        protected async Task ShowStudentDetailsAtProfessorEventInterest(InterestInProfessorEvent application)
         {
             // === STUDENT LOOKUP ===
             var studentUniqueId = application.StudentUniqueIDShowInterestForEvent;
@@ -12887,12 +12901,12 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void CloseStudentDetailsModalAtProfessorEventInterest()
+        protected void CloseStudentDetailsModalAtProfessorEventInterest()
         {
             showModalForStudentsAtProfessorEventInterest = false;
         }
 
-        private async Task ToggleAndLoadCompanyAndProfessorEventsAsStudent()
+        protected async Task ToggleAndLoadCompanyAndProfessorEventsAsStudent()
         {
             isCompanyEventsVisibleToSeeAsStudent = !isCompanyEventsVisibleToSeeAsStudent;
             isProfessorEventsVisibleToSeeAsStudent = isCompanyEventsVisibleToSeeAsStudent;
@@ -12918,7 +12932,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleTransport(long rngForEventUploadedAsProfessor, object value)
+        protected void ToggleTransport(long rngForEventUploadedAsProfessor, object value)
         {
             bool isChecked = (bool)value;
 
@@ -12932,17 +12946,17 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseEventDetails()
+        protected void CloseEventDetails()
         {
             selectedEvent = null; // Reset the selected event
         }
 
-        private void ShowEventDetails(object eventDetails)
+        protected void ShowEventDetails(object eventDetails)
         {
             selectedEvent = eventDetails;
         }
 
-        private void CloseModalForCompanyAndProfessorEventTitles()
+        protected void CloseModalForCompanyAndProfessorEventTitles()
         {
             selectedEvent = null; // Reset the selected event
             isModalVisibleToShowEventsOnCalendarForEachClickedDay = false;
@@ -12950,14 +12964,14 @@ namespace QuizManager.Shared
 
         }
 
-        private void CloseModal()
+        protected void CloseModal()
         {
             isModalVisibleToShowEventsOnCalendarForEachClickedDay = false;
             selectedEvent = null; // Reset any selected event
             StateHasChanged();
         }
 
-        private DateTime ProfessorEventDate
+        protected DateTime ProfessorEventDate
         {
             get => _professorEventDate;
             set
@@ -12967,20 +12981,20 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CheckForExistingEventsAsProfessor()
+        protected void CheckForExistingEventsAsProfessor()
         {
             existingEventsCountToCheckAsProfessor = (eventsForDate.ContainsKey(ProfessorEventDate.Day) ? eventsForDate[ProfessorEventDate.Day].Count() : 0) +
                                                     (eventsForDateForProfessors.ContainsKey(ProfessorEventDate.Day) ? eventsForDateForProfessors[ProfessorEventDate.Day].Count() : 0);
         }
 
-        private async Task LoadProfessorInterestsForCompanyEvents()
+        protected async Task LoadProfessorInterestsForCompanyEvents()
         {
             filteredProfessorInterestForCompanyEvents = await dbContext.InterestInCompanyEventsAsProfessor
                 .Where(i => i.ProfessorEmailShowInterestForCompanyEvent == CurrentUserEmail)
                 .ToListAsync();
         }
 
-        private async Task<bool> ShowInterestInCompanyEventAsProfessor(CompanyEvent companyEvent)
+        protected async Task<bool> ShowInterestInCompanyEventAsProfessor(CompanyEvent companyEvent)
         {
             // First ask for confirmation
             var confirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -13114,7 +13128,7 @@ namespace QuizManager.Shared
             return false;
         }
 
-        private async Task<bool> ShowInterestInProfessorEventAsCompany(ProfessorEvent professorEvent)
+        protected async Task<bool> ShowInterestInProfessorEventAsCompany(ProfessorEvent professorEvent)
         {
             // First ask for confirmation - now using navigation property for professor name
             var confirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML",
@@ -13261,7 +13275,7 @@ namespace QuizManager.Shared
             return false;
         }
 
-        private int GetOrAddNumberOfPeople(long eventId)
+        protected int GetOrAddNumberOfPeople(long eventId)
         {
             if (!numberOfCompanyPeopleInputWhenCompanyShowsInterestInProfessorEvent.ContainsKey(eventId))
             {
@@ -13270,7 +13284,7 @@ namespace QuizManager.Shared
             return numberOfCompanyPeopleInputWhenCompanyShowsInterestInProfessorEvent[eventId];
         }
 
-        private void SetNumberOfPeople(long eventId, int value)
+        protected void SetNumberOfPeople(long eventId, int value)
         {
             if (numberOfCompanyPeopleInputWhenCompanyShowsInterestInProfessorEvent.ContainsKey(eventId))
             {
@@ -13282,7 +13296,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileUploadForProfessorInternships(InputFileChangeEventArgs e)
+        protected async Task HandleFileUploadForProfessorInternships(InputFileChangeEventArgs e)
         {
             var file = e.File;
             if (file != null && file.ContentType == "application/pdf")
@@ -13293,7 +13307,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task SaveProfessorInternship(bool isPublished)
+        protected async Task SaveProfessorInternship(bool isPublished)
         {
             Console.WriteLine($"Validation check - Title: {professorInternship.ProfessorInternshipTitle}");
             Console.WriteLine($"Validation check - Type: {professorInternship.ProfessorInternshipType}");
@@ -13371,7 +13385,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleSaveClickToSaveProfessorInternship()
+        protected async Task HandleSaveClickToSaveProfessorInternship()
         {
             // Show custom confirmation dialog with HTML styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -13390,7 +13404,7 @@ namespace QuizManager.Shared
             await SaveProfessorInternship(false);
         }
 
-        private async Task HandlePublishClickToSaveProfessorInternship()
+        protected async Task HandlePublishClickToSaveProfessorInternship()
         {
             // Show custom confirmation dialog with HTML styling
             bool isConfirmed = await JS.InvokeAsync<bool>("confirmActionWithHTML", new object[] {
@@ -13409,7 +13423,7 @@ namespace QuizManager.Shared
             await SaveProfessorInternship(true);
         }
 
-        private CompanyInternship ConvertToCompanyInternship(AllInternships internship)
+        protected CompanyInternship ConvertToCompanyInternship(AllInternships internship)
         {
             return new CompanyInternship
             {
@@ -13422,7 +13436,7 @@ namespace QuizManager.Shared
             };
         }
 
-        private ProfessorInternship ConvertToProfessorInternship(AllInternships internship)
+        protected ProfessorInternship ConvertToProfessorInternship(AllInternships internship)
         {
             return new ProfessorInternship
             {
@@ -13436,7 +13450,7 @@ namespace QuizManager.Shared
             };
         }
 
-        private async Task ShowCompanyDetailsInThesisCompanyName_StudentThesisApplications(string companyEmail)
+        protected async Task ShowCompanyDetailsInThesisCompanyName_StudentThesisApplications(string companyEmail)
         {
             try
             {
@@ -13475,13 +13489,13 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseCompanyDetailsModal_StudentThesisApplications()
+        protected void CloseCompanyDetailsModal_StudentThesisApplications()
         {
             isModalOpenToSeeCompanyDetails_ThesisStudentApplicationsToShow = false;
             StateHasChanged();
         }
 
-        private async Task ShowProfessorDetailsInThesisProfessorName_StudentThesisApplications(string professorEmail)
+        protected async Task ShowProfessorDetailsInThesisProfessorName_StudentThesisApplications(string professorEmail)
         {
             try
             {
@@ -13520,19 +13534,19 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseProfessorDetailsModal_StudentThesisApplications()
+        protected void CloseProfessorDetailsModal_StudentThesisApplications()
         {
             isModalOpenToSeeProfessorDetails_ThesisStudentApplicationsToShow = false;
             StateHasChanged();
         }
 
-        private void CloseProfessorDetailsModal_StudentInternshipApplications()
+        protected void CloseProfessorDetailsModal_StudentInternshipApplications()
         {
             isProfessorDetailsModalVisible_StudentInternshipApplicationsShow = false;
             StateHasChanged();
         }
 
-        private async Task ShowCompanyThesisDetailsModal_StudentThesisApplications(long thesisRNG)
+        protected async Task ShowCompanyThesisDetailsModal_StudentThesisApplications(long thesisRNG)
         {
             // Fetch the company thesis details asynchronously
             selectedCompanyThesisDetails_ThesisStudentApplicationsToShow = await dbContext.CompanyTheses
@@ -13551,14 +13565,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseCompanyThesisDetailsModal_StudentThesisApplications()
+        protected void CloseCompanyThesisDetailsModal_StudentThesisApplications()
         {
             // Close the modal and reset the thesis details
             isModalOpenToSeeCompanyThesisDetails_ThesisStudentApplicationsToShow = false;
             StateHasChanged(); // Update the UI
         }
 
-        private async Task ShowProfessorThesisDetailsModal_StudentThesisApplications(long thesisRNG)
+        protected async Task ShowProfessorThesisDetailsModal_StudentThesisApplications(long thesisRNG)
         {
             // Fetch the professor thesis details asynchronously
             selectedProfessorThesisDetails_ThesisStudentApplicationsToShow = await dbContext.ProfessorTheses
@@ -13577,18 +13591,18 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseProfessorThesisDetailsModal_StudentThesisApplications()
+        protected void CloseProfessorThesisDetailsModal_StudentThesisApplications()
         {
             isModalOpenToSeeProfessorThesisDetails_ThesisStudentApplicationsToShow = false;
             StateHasChanged();
         }
 
-        private void CloseCompanyThesisEditModal()
+        protected void CloseCompanyThesisEditModal()
         {
             isModalVisibleToEditCompanyThesisDetails = false;
         }
 
-        private async Task SaveEditedCompanyThesis()
+        protected async Task SaveEditedCompanyThesis()
         {
             try
             {
@@ -13666,7 +13680,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task FilterThesisApplications(ChangeEventArgs e)
+        protected async Task FilterThesisApplications(ChangeEventArgs e)
         {
 
             filterValue = e.Value?.ToString() ?? "all"; // Ensure "all" is the default
@@ -13692,7 +13706,7 @@ namespace QuizManager.Shared
             StateHasChanged(); // Update UI
         }
 
-        private async Task OnFilterChange(ChangeEventArgs e)
+        protected async Task OnFilterChange(ChangeEventArgs e)
         {
             // Update the selected filter value
             selectedThesisFilter = e.Value.ToString();
@@ -13710,7 +13724,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task FilterThesisApplicationsToSearchAsStudent()
+        protected async Task FilterThesisApplicationsToSearchAsStudent()
         {
             var filteredTheses = sumUpThesesFromBothCompanyAndProfessor
                 ?.Where(thesis =>
@@ -13729,22 +13743,22 @@ namespace QuizManager.Shared
             StateHasChanged(); // Trigger UI update
         }
 
-        private int currentPageForThesisToSee = 1;
-        private int pageSizeForThesisToSee = 3; // Show only 3 thesis per page
-        private int totalThesisCountForThesisToSee = 4; // For example, set to 4 total thesis
-        private int totalPagesForThesisToSee = 1; // Initialize to 1 to avoid divide by zero error
+        protected int currentPageForThesisToSee = 1;
+        protected int pageSizeForThesisToSee = 3; // Show only 3 thesis per page
+        protected int totalThesisCountForThesisToSee = 4; // For example, set to 4 total thesis
+        protected int totalPagesForThesisToSee = 1; // Initialize to 1 to avoid divide by zero error
 
         // Method to set the thesis count and calculate total pages
-        private void SetTotalThesisCount(int count)
+        protected void SetTotalThesisCount(int count)
         {
             totalThesisCountForThesisToSee = count;
             totalPagesForThesisToSee = (int)Math.Ceiling((double)totalThesisCountForThesisToSee / pageSizeForThesisToSee);
         }
 
-        private bool IsPreviousDisabled => currentPageForThesisToSee == 1;
-        private bool IsNextDisabled => currentPageForThesisToSee >= totalPagesForThesisToSee; // Disable if on the last page
+        protected bool IsPreviousDisabled => currentPageForThesisToSee == 1;
+        protected bool IsNextDisabled => currentPageForThesisToSee >= totalPagesForThesisToSee; // Disable if on the last page
 
-        private void PreviousPageForThesisToSee()
+        protected void PreviousPageForThesisToSee()
         {
             if (currentPageForThesisToSee > 1)
             {
@@ -13752,7 +13766,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForThesisToSee()
+        protected void NextPageForThesisToSee()
         {
             if (currentPageForThesisToSee < totalPagesForThesisToSee)
             {
@@ -13760,13 +13774,13 @@ namespace QuizManager.Shared
             }
         }
 
-        private void UpdatePagination()
+        protected void UpdatePagination()
         {
             totalPagesForThesisToSee = (int)Math.Ceiling((double)totalThesisCountForThesisToSee / pageSizeForThesisToSee);
             StateHasChanged(); // Triggers a re-render to apply changes
         }
 
-        private string GetThesisRowColor(object thesis)
+        protected string GetThesisRowColor(object thesis)
         {
             if (thesis is CompanyThesisApplied companyThesis)
             {
@@ -13793,7 +13807,7 @@ namespace QuizManager.Shared
             return "transparent";
         }
 
-        private async Task WithdrawThesisApplication(object thesis)
+        protected async Task WithdrawThesisApplication(object thesis)
         {
             try
             {
@@ -13925,7 +13939,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileUploadToEditCompanyAnnouncementAttachment(InputFileChangeEventArgs e)
+        protected async Task HandleFileUploadToEditCompanyAnnouncementAttachment(InputFileChangeEventArgs e)
         {
             var file = e.File;
             if (file != null)
@@ -13955,7 +13969,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileUploadToEditProfessorAnnouncementAttachment(InputFileChangeEventArgs e)
+        protected async Task HandleFileUploadToEditProfessorAnnouncementAttachment(InputFileChangeEventArgs e)
         {
             var file = e.File;  // Access the selected file
             if (file != null)
@@ -13986,7 +14000,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileUploadToEditCompanyJobAttachment(InputFileChangeEventArgs e)
+        protected async Task HandleFileUploadToEditCompanyJobAttachment(InputFileChangeEventArgs e)
         {
             Console.WriteLine("File upload method triggered.");
 
@@ -14019,7 +14033,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileUploadToEditCompanyInternshipAttachment(InputFileChangeEventArgs e)
+        protected async Task HandleFileUploadToEditCompanyInternshipAttachment(InputFileChangeEventArgs e)
         {
             Console.WriteLine("File upload method triggered.");
 
@@ -14052,7 +14066,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnCheckedChangedForEditCompanyJobAreas(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForEditCompanyJobAreas(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -14071,7 +14085,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void OnCheckedChangedForEditCompanyInternshipAreas(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForEditCompanyInternshipAreas(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -14090,7 +14104,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void OnCheckedChangedForEditCompanyThesisAreas(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForEditCompanyThesisAreas(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -14109,7 +14123,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void OnCheckedChangedForEditCompanyThesisSkills(ChangeEventArgs e, Skill skill)
+        protected void OnCheckedChangedForEditCompanyThesisSkills(ChangeEventArgs e, Skill skill)
         {
             if (e.Value is bool isChecked)
             {
@@ -14128,7 +14142,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task ShowProfessorDetailsAtCompanyEventInterest(InterestInCompanyEventAsProfessor interest)
+        protected async Task ShowProfessorDetailsAtCompanyEventInterest(InterestInCompanyEventAsProfessor interest)
         {
             try
             {
@@ -14167,12 +14181,12 @@ namespace QuizManager.Shared
 
 
 
-        private void CloseProfessorDetailsModal()
+        protected void CloseProfessorDetailsModal()
         {
             showProfessorModal = false;
         }
 
-        private async Task UploadFileToUpdateCompanyEventAttachment(ChangeEventArgs e)
+        protected async Task UploadFileToUpdateCompanyEventAttachment(ChangeEventArgs e)
         {
             var file = (IBrowserFile)e.Value;
             var buffer = new byte[file.Size];
@@ -14182,7 +14196,7 @@ namespace QuizManager.Shared
 
 
 
-        private void OnCheckedChangedForEditCompanyEventAreas(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForEditCompanyEventAreas(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -14201,20 +14215,20 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void UpdateSelectedAreasForCompanyEvent()
+        protected void UpdateSelectedAreasForCompanyEvent()
         {
             currentCompanyEvent.CompanyEventAreasOfInterest = string.Join(", ", SelectedAreasToEditForCompanyEvent.Select(a => a.AreaName));
         }
 
-        private void OnRegionChangedForEditCompanyEvent(string selectedRegion)
+        protected void OnRegionChangedForEditCompanyEvent(string selectedRegion)
         {
             AvailableTownsForEditCompanyEvent = GetTownsForRegionForEditCompanyEvent(selectedRegion);
             currentCompanyEvent.CompanyEventDimosLocation = ""; // Reset town when region changes
         }
 
-        private List<string> AvailableTownsForEditCompanyEvent = new List<string>();
+        protected List<string> AvailableTownsForEditCompanyEvent = new List<string>();
 
-        private List<string> GetTownsForRegionForEditCompanyEvent(string region)
+        protected List<string> GetTownsForRegionForEditCompanyEvent(string region)
         {
             if (string.IsNullOrEmpty(region) || !RegionToTownsMap.ContainsKey(region))
             {
@@ -14224,9 +14238,9 @@ namespace QuizManager.Shared
             return RegionToTownsMap[region];
         }
 
-        private string _selectedRegion;
+        protected string _selectedRegion;
 
-        private string SelectedRegion
+        protected string SelectedRegion
         {
             get => _selectedRegion;
             set
@@ -14236,7 +14250,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ClearField(int fieldIndex)
+        protected void ClearField(int fieldIndex)
         {
             switch (fieldIndex)
             {
@@ -14252,7 +14266,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DownloadStudentListForInterestInCompanyEventAsCompany()
+        protected async Task DownloadStudentListForInterestInCompanyEventAsCompany()
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
@@ -14333,7 +14347,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("saveStudentShownInterestForCompanyEventAsExcelListFile", fileName, Convert.ToBase64String(fileBytes));
         }
 
-        private async Task DownloadStudentListForInterestInProfessorEventAsProfessor()
+        protected async Task DownloadStudentListForInterestInProfessorEventAsProfessor()
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
@@ -14416,7 +14430,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("saveStudentShownInterestForProfessorEventAsExcelListFile", fileName, Convert.ToBase64String(fileBytes));
         }
 
-        private async Task DownloadProfessorListForInterestInCompanyEventAsCompany()
+        protected async Task DownloadProfessorListForInterestInCompanyEventAsCompany()
         {
             // 🔹 Set the License Context BEFORE using ExcelPackage
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -14478,7 +14492,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("saveProfessorShownInterestForCompanyEventAsExcelListFile", fileName, Convert.ToBase64String(fileBytes));
         }
 
-        private async Task DownloadCompanyListForInterestInProfessorEventAsProfessor()
+        protected async Task DownloadCompanyListForInterestInProfessorEventAsProfessor()
         {
             // 🔹 Set the License Context BEFORE using ExcelPackage
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -14539,7 +14553,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("saveCompanyShownInterestForProfessorEventAsExcelListFile", fileName, Convert.ToBase64String(fileBytes));
         }
 
-        private void HandleNumberChangeForParticipantsWhenShowInterestAsACompanyForAProfessorEvent(ChangeEventArgs e, long professorEventId)
+        protected void HandleNumberChangeForParticipantsWhenShowInterestAsACompanyForAProfessorEvent(ChangeEventArgs e, long professorEventId)
         {
             if (int.TryParse(e.Value?.ToString(), out int number))
             {
@@ -14551,68 +14565,68 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleThesisApplicationsVisibility()
+        protected void ToggleThesisApplicationsVisibility()
         {
             isThesisApplicationsVisible = !isThesisApplicationsVisible;
             StateHasChanged();
         }
 
-        private void ToggleAnnouncementsAsStudentVisibility()
+        protected void ToggleAnnouncementsAsStudentVisibility()
         {
             isAnnouncementsAsStudentVisible = !isAnnouncementsAsStudentVisible;
             StateHasChanged();
         }
 
-        private void ToggleAnnouncementsAsRGVisibility()
+        protected void ToggleAnnouncementsAsRGVisibility()
         {
             isAnnouncementsAsRGVisible = !isAnnouncementsAsRGVisible;
             StateHasChanged();
         }
 
-        private void ToggleAnnouncementsAsProfessorVisibility()
+        protected void ToggleAnnouncementsAsProfessorVisibility()
         {
             isAnnouncementsAsProfessorVisible = !isAnnouncementsAsProfessorVisible;
             StateHasChanged();
         }
 
-        private void ToggleSearchInternshipsAsStudentFiltersVisibility()
+        protected void ToggleSearchInternshipsAsStudentFiltersVisibility()
         {
             isSearchInternshipsAsStudentFiltersVisible = !isSearchInternshipsAsStudentFiltersVisible;
             StateHasChanged();
         }
 
-        private void ToggleJobApplicationsAsStudentVisibility()
+        protected void ToggleJobApplicationsAsStudentVisibility()
         {
             isJobApplicationsAsStudentVisible = !isJobApplicationsAsStudentVisible;
             StateHasChanged();
         }
 
-        private void ToggleJobPositionAsStudentFiltersVisibility()
+        protected void ToggleJobPositionAsStudentFiltersVisibility()
         {
             isJobPositionAsStudentFiltersVisible = !isJobPositionAsStudentFiltersVisible;
             StateHasChanged();
         }
 
-        private void ToggleInternshipApplicationsAsStudentVisibility()
+        protected void ToggleInternshipApplicationsAsStudentVisibility()
         {
             isInternshipApplicationsAsStudentVisible = !isInternshipApplicationsAsStudentVisible;
             StateHasChanged();
         }
 
-        private void ToggleInternshipSearchAsStudentFiltersVisibility()
+        protected void ToggleInternshipSearchAsStudentFiltersVisibility()
         {
             isInternshipSearchAsStudentFiltersVisible = !isInternshipSearchAsStudentFiltersVisible;
             StateHasChanged();
         }
 
-        private void ToggleEventSearchAsStudentVisibility()
+        protected void ToggleEventSearchAsStudentVisibility()
         {
             isEventSearchAsStudentVisible = !isEventSearchAsStudentVisible;
             StateHasChanged();
         }
 
 
-        private async Task HandleThesisTitleInputForBothCompaniesAndProfessorsWhenSearchForThesisAsStudent(ChangeEventArgs e)
+        protected async Task HandleThesisTitleInputForBothCompaniesAndProfessorsWhenSearchForThesisAsStudent(ChangeEventArgs e)
         {
             thesisSearchForThesesAsStudent = e.Value?.ToString();
 
@@ -14663,14 +14677,14 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void SelectThesisTitleSuggestionForBothCompaniesAndProfessorsWhenSearchForThesisAsStudent(string suggestion)
+        protected void SelectThesisTitleSuggestionForBothCompaniesAndProfessorsWhenSearchForThesisAsStudent(string suggestion)
         {
             thesisSearchForThesesAsStudent = suggestion;
             thesisTitleSuggestions.Clear();
             StateHasChanged();
         }
 
-        private async Task HandleCompanyNameInputWhenSearchForProfessorThesisAutocompleteNameAsStudent(ChangeEventArgs e)
+        protected async Task HandleCompanyNameInputWhenSearchForProfessorThesisAutocompleteNameAsStudent(ChangeEventArgs e)
         {
             companyNameSearchForThesesAsStudent = e.Value?.ToString();
 
@@ -14694,14 +14708,14 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task SelectCompanyNameSuggestionWhenSearchForProfessorThesisAutocompleteNameAsStudent(string suggestion)
+        protected async Task SelectCompanyNameSuggestionWhenSearchForProfessorThesisAutocompleteNameAsStudent(string suggestion)
         {
             companyNameSearchForThesesAsStudent = suggestion;
             companyNameSuggestionsWhenSearchForProfessorThesisAutocompleteNameAsStudent.Clear();
             StateHasChanged();
         }
 
-        private async Task HandleJobTitleAutocompleteInputWhenSearchCompanyJobsAsStudent(ChangeEventArgs e)
+        protected async Task HandleJobTitleAutocompleteInputWhenSearchCompanyJobsAsStudent(ChangeEventArgs e)
         {
             jobSearch = e.Value?.ToString();
 
@@ -14724,14 +14738,14 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task SelectJobTitleAutocompleteSuggestionWhenSearchCompanyJobsAsStudent(string suggestion)
+        protected async Task SelectJobTitleAutocompleteSuggestionWhenSearchCompanyJobsAsStudent(string suggestion)
         {
             jobSearch = suggestion;
             jobTitleAutocompleteSuggestionsWhenSearchForCompanyJobsAsStudent.Clear();
             StateHasChanged();
         }
 
-        private async Task HandleCompanyNameAutocompleteInputWhenSearchCompanyJobsAsStudent(ChangeEventArgs e)
+        protected async Task HandleCompanyNameAutocompleteInputWhenSearchCompanyJobsAsStudent(ChangeEventArgs e)
         {
             companyNameSearch = e.Value?.ToString();
 
@@ -14755,14 +14769,14 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task SelectCompanyNameAutocompleteSuggestionWhenSearchCompanyJobsAsStudent(string suggestion)
+        protected async Task SelectCompanyNameAutocompleteSuggestionWhenSearchCompanyJobsAsStudent(string suggestion)
         {
             companyNameSearch = suggestion;
             companyNameAutocompleteSuggestionsWhenSearchForCompanyJobsAsStudent.Clear();
             StateHasChanged();
         }
 
-        private async Task HandleInternshipTitleAutocompleteInputWhenSearchInternshipAsStudent(ChangeEventArgs e)
+        protected async Task HandleInternshipTitleAutocompleteInputWhenSearchInternshipAsStudent(ChangeEventArgs e)
         {
             companyinternshipSearch = e.Value?.ToString();
 
@@ -14815,7 +14829,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void SelectInternshipTitleAutocompleteSuggestionWhenSearchInternshipAsStudent(string suggestion)
+        protected void SelectInternshipTitleAutocompleteSuggestionWhenSearchInternshipAsStudent(string suggestion)
         {
             companyinternshipSearch = suggestion;
             internshipTitleAutocompleteSuggestionsWhenSearchInternshipAsStudent.Clear();
@@ -14838,7 +14852,7 @@ namespace QuizManager.Shared
             public WeatherData current { get; set; }
         }
 
-        private void ToggleDescriptionForCompanyEvent(int companyeventId)
+        protected void ToggleDescriptionForCompanyEvent(int companyeventId)
         {
             if (expandedCompanyEventId == companyeventId)
             {
@@ -14852,7 +14866,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleDescriptionForProfessorEvent(int professoreventId)
+        protected void ToggleDescriptionForProfessorEvent(int professoreventId)
         {
             if (expandedProfessorEventId == professoreventId)
             {
@@ -14867,7 +14881,7 @@ namespace QuizManager.Shared
         }
 
 
-        private async Task<List<AnnouncementAsCompany>> FetchAnnouncementsAsync()
+        protected async Task<List<AnnouncementAsCompany>> FetchAnnouncementsAsync()
         {
             var announcements = await dbContext.AnnouncementsAsCompany
                 .AsNoTracking()
@@ -14876,7 +14890,7 @@ namespace QuizManager.Shared
             return announcements;
         }
 
-        private async Task<List<NewsArticle>> FetchNewsArticlesAsync()
+        protected async Task<List<NewsArticle>> FetchNewsArticlesAsync()
         {
             try
             {
@@ -14928,7 +14942,7 @@ namespace QuizManager.Shared
 
         }
 
-        private async Task<List<NewsArticle>> FetchSVSENewsArticlesAsync()
+        protected async Task<List<NewsArticle>> FetchSVSENewsArticlesAsync()
         {
             try
             {
@@ -14978,7 +14992,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleDescription(int announcementId)
+        protected void ToggleDescription(int announcementId)
         {
             if (expandedAnnouncementId == announcementId)
             {
@@ -14990,12 +15004,12 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleContainer()
+        protected void ToggleContainer()
         {
             isHidden = !isHidden;
         }
 
-        private async Task DownloadAnnouncementAttachmentFrontPage(byte[] attachmentData, string fileName)
+        protected async Task DownloadAnnouncementAttachmentFrontPage(byte[] attachmentData, string fileName)
         {
             if (attachmentData != null && attachmentData.Length > 0)
             {
@@ -15004,7 +15018,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ChangePage(int pageNumber)
+        protected void ChangePage(int pageNumber)
         {
             if (pageNumber >= 1 && pageNumber <= totalPagesForCompanyAnnouncements)
             {
@@ -15013,7 +15027,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void ToggleDescriptionForProfessorAnnouncements(int announcementId)
+        protected void ToggleDescriptionForProfessorAnnouncements(int announcementId)
         {
             if (expandedProfessorAnnouncementId == announcementId)
             {
@@ -15027,7 +15041,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DownloadProfessorAnnouncementAttachmentFrontPage(byte[] attachmentData, string fileName)
+        protected async Task DownloadProfessorAnnouncementAttachmentFrontPage(byte[] attachmentData, string fileName)
         {
             if (attachmentData != null && attachmentData.Length > 0)
             {
@@ -15043,7 +15057,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ChangePageForProfessorAnnouncements(int pageNumberForProfessorAnnouncements)
+        protected void ChangePageForProfessorAnnouncements(int pageNumberForProfessorAnnouncements)
         {
             if (pageNumberForProfessorAnnouncements >= 1 && pageNumberForProfessorAnnouncements <= totalPagesForProfessorAnnouncements)
             {
@@ -15052,7 +15066,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task<List<AnnouncementAsProfessor>> FetchProfessorAnnouncementsAsync()
+        protected async Task<List<AnnouncementAsProfessor>> FetchProfessorAnnouncementsAsync()
         {
             var professorannouncements = await dbContext.AnnouncementsAsProfessor
                 .Include(a => a.Professor)  // Eager load professor data
@@ -15062,7 +15076,7 @@ namespace QuizManager.Shared
             return professorannouncements;
         }
 
-        private async Task<List<AnnouncementAsCompany>> FetchCompanyAnnouncementsAsync()
+        protected async Task<List<AnnouncementAsCompany>> FetchCompanyAnnouncementsAsync()
         {
             var companyannouncements = await dbContext.AnnouncementsAsCompany
                 .Include(a => a.Company)  // Eager load company data
@@ -15072,7 +15086,7 @@ namespace QuizManager.Shared
             return companyannouncements;
         }
 
-        private async Task DownloadCompanyEventAttachmentFrontPage(byte[] attachmentData, string fileName)
+        protected async Task DownloadCompanyEventAttachmentFrontPage(byte[] attachmentData, string fileName)
         {
             if (attachmentData != null && attachmentData.Length > 0)
             {
@@ -15083,7 +15097,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task DownloadProfessorEventAttachmentFrontPage(byte[] attachmentData, string fileName)
+        protected async Task DownloadProfessorEventAttachmentFrontPage(byte[] attachmentData, string fileName)
         {
             if (attachmentData != null && attachmentData.Length > 0)
             {
@@ -15094,7 +15108,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ChangePageForCompanyEvents(int pageNumberForCompanyEvents)
+        protected void ChangePageForCompanyEvents(int pageNumberForCompanyEvents)
         {
             if (pageNumberForCompanyEvents >= 1 && pageNumberForCompanyEvents <= totalPagesForCompanyEvents)
             {
@@ -15103,7 +15117,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void ChangePageForProfessorEvents(int pageNumberForProfessorEvents)
+        protected void ChangePageForProfessorEvents(int pageNumberForProfessorEvents)
         {
             if (pageNumberForProfessorEvents >= 1 && pageNumberForProfessorEvents <= totalPagesForProfessorEvents)
             {
@@ -15112,67 +15126,67 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private bool isUniversityNewsVisible = false; // Default to visible
-        private void ToggleUniversityNewsVisibility()
+        protected bool isUniversityNewsVisible = false; // Default to visible
+        protected void ToggleUniversityNewsVisibility()
         {
             isUniversityNewsVisible = !isUniversityNewsVisible;
             StateHasChanged();
         }
 
-        private bool isSvseNewsVisible = false;
-        private void ToggleSvseNewsVisibility()
+        protected bool isSvseNewsVisible = false;
+        protected void ToggleSvseNewsVisibility()
         {
             isSvseNewsVisible = !isSvseNewsVisible;
             StateHasChanged();
         }
 
-        private bool isCompanyAnnouncementsVisible = false;
-        private void ToggleCompanyAnnouncementsVisibility()
+        protected bool isCompanyAnnouncementsVisible = false;
+        protected void ToggleCompanyAnnouncementsVisibility()
         {
             isCompanyAnnouncementsVisible = !isCompanyAnnouncementsVisible;
             StateHasChanged();
         }
 
-        private bool isProfessorAnnouncementsVisible = false;
-        private void ToggleProfessorAnnouncementsVisibility()
+        protected bool isProfessorAnnouncementsVisible = false;
+        protected void ToggleProfessorAnnouncementsVisibility()
         {
             isProfessorAnnouncementsVisible = !isProfessorAnnouncementsVisible;
             StateHasChanged();
         }
 
-        private bool isCompanyEventsVisible = false;
-        private void ToggleCompanyEventsVisibility()
+        protected bool isCompanyEventsVisible = false;
+        protected void ToggleCompanyEventsVisibility()
         {
             isCompanyEventsVisible = !isCompanyEventsVisible;
             StateHasChanged();
         }
 
-        private bool isProfessorEventsVisible = false;
-        private void ToggleProfessorEventsVisibility()
+        protected bool isProfessorEventsVisible = false;
+        protected void ToggleProfessorEventsVisibility()
         {
             isProfessorEventsVisible = !isProfessorEventsVisible;
             StateHasChanged();
         }
 
-        private async Task ScrollToElementById(string elementId)
+        protected async Task ScrollToElementById(string elementId)
         {
             await JS.InvokeVoidAsync("scrollToElementById", elementId);
         }
 
-        private bool IsTimeInRestrictedRangeWhenUploadEventAsCompany(TimeOnly time)
+        protected bool IsTimeInRestrictedRangeWhenUploadEventAsCompany(TimeOnly time)
         {
             // Check if time is before 06:00 or after 22:00
             return time < new TimeOnly(6, 0) || time > new TimeOnly(22, 0);
         }
 
-        private bool HasAtLeastOneStartingPointWhenUploadEventAsCompany()
+        protected bool HasAtLeastOneStartingPointWhenUploadEventAsCompany()
         {
             return !string.IsNullOrWhiteSpace(companyEvent.CompanyEventStartingPointLocationToTransportPeopleToEvent1) ||
                    !string.IsNullOrWhiteSpace(companyEvent.CompanyEventStartingPointLocationToTransportPeopleToEvent2) ||
                    !string.IsNullOrWhiteSpace(companyEvent.CompanyEventStartingPointLocationToTransportPeopleToEvent3);
         }
 
-        private async Task HandleAreasInputToFindThesesAsCompany(ChangeEventArgs e)
+        protected async Task HandleAreasInputToFindThesesAsCompany(ChangeEventArgs e)
         {
             searchAreasInputToFindThesesAsCompany = e.Value?.ToString().Trim() ?? string.Empty;
             areaSuggestionsToFindThesesAsCompany = new();
@@ -15203,7 +15217,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void SelectAreaSuggestionToFindThesesAsCompany(string suggestion)
+        protected void SelectAreaSuggestionToFindThesesAsCompany(string suggestion)
         {
             if (!string.IsNullOrWhiteSpace(suggestion) && !selectedAreasToFindThesesAsCompany.Contains(suggestion))
             {
@@ -15213,13 +15227,13 @@ namespace QuizManager.Shared
             }
         }
 
-        private void RemoveSelectedAreaToFindThesesAsCompany(string area)
+        protected void RemoveSelectedAreaToFindThesesAsCompany(string area)
         {
             selectedAreasToFindThesesAsCompany.Remove(area);
             StateHasChanged();
         }
 
-        private async Task DownloadProfessorThesisAttachmentWhenSearchForProfessorThesisAsCompany(int thesisId)
+        protected async Task DownloadProfessorThesisAttachmentWhenSearchForProfessorThesisAsCompany(int thesisId)
         {
             var thesis = dbContext.ProfessorTheses.FirstOrDefault(t => t.Id == thesisId);
             if (thesis == null)
@@ -15242,20 +15256,20 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("downloadInternshipAttachmentAsStudent", fileName, base64String); // Reusing the same JS function
         }
 
-        private async Task ScrollToAlertWhenNoJobsFoundWhenSearchAsStudent()
+        protected async Task ScrollToAlertWhenNoJobsFoundWhenSearchAsStudent()
         {
             await JS.InvokeVoidAsync("scrollToElement", "noJobsFoundAlert");
         }
-        private async Task ScrollToAlertWhenNoThesesFoundWhenSearchAsStudent()
+        protected async Task ScrollToAlertWhenNoThesesFoundWhenSearchAsStudent()
         {
             await JS.InvokeVoidAsync("scrollToElement", "noThesesFoundAlert");
         }
-        private async Task ScrollToAlertWhenNoInternshipsFoundWhenSearchAsStudent()
+        protected async Task ScrollToAlertWhenNoInternshipsFoundWhenSearchAsStudent()
         {
             await JS.InvokeVoidAsync("scrollToElement", "noInternshipsFoundAlert");
         }
 
-        private async Task ShowProfessorHyperlinkNameDetailsModalInStudentInternship(string professorEmail)
+        protected async Task ShowProfessorHyperlinkNameDetailsModalInStudentInternship(string professorEmail)
         {
             selectedProfessorDetailsForHyperlinkNameInInternshipAsStudent = await dbContext.Professors
                 .FirstOrDefaultAsync(p => p.ProfEmail == professorEmail);
@@ -15265,7 +15279,7 @@ namespace QuizManager.Shared
             await JS.InvokeVoidAsync("showProfessorDetailsModal"); // Show the modal using JS
         }
 
-        private async Task ShowCompanyHyperlinkNameDetailsModalInStudentInternship(string companyEmail)
+        protected async Task ShowCompanyHyperlinkNameDetailsModalInStudentInternship(string companyEmail)
         {
             selectedCompanyDetailsForHyperlinkNameInInternshipAsStudent = await dbContext.Companies
                 .FirstOrDefaultAsync(c => c.CompanyEmail == companyEmail);
@@ -15293,7 +15307,7 @@ namespace QuizManager.Shared
             JS.InvokeVoidAsync("hideCompanyDetailsModal");
         }
 
-        private void OnInternshipFilterChange(ChangeEventArgs e)
+        protected void OnInternshipFilterChange(ChangeEventArgs e)
         {
             var filterValue = e.Value?.ToString();
 
@@ -15314,7 +15328,7 @@ namespace QuizManager.Shared
         }
 
         // Filtering logic for internships
-        private async Task FilterInternshipApplications(ChangeEventArgs e)
+        protected async Task FilterInternshipApplications(ChangeEventArgs e)
         {
             filterValueForInternships = e.Value?.ToString()?.ToLower() ?? "all";
 
@@ -15332,17 +15346,17 @@ namespace QuizManager.Shared
             }
         }
 
-        private void SetTotalInternshipCount(int count)
+        protected void SetTotalInternshipCount(int count)
         {
             totalInternshipCount = count;
             totalPagesForInternshipsToSee = (int)Math.Ceiling((double)totalInternshipCount / pageSizeForInternshipsToSee);
         }
 
-        private bool IsPreviousDisabledForInternships => currentPageForInternshipsToSee == 1;
-        private bool IsNextDisabledForInternships => currentPageForInternshipsToSee == totalPagesForInternshipsToSee;
+        protected bool IsPreviousDisabledForInternships => currentPageForInternshipsToSee == 1;
+        protected bool IsNextDisabledForInternships => currentPageForInternshipsToSee == totalPagesForInternshipsToSee;
 
         // Helper method to get row color
-        private string GetInternshipRowColor(object application)
+        protected string GetInternshipRowColor(object application)
         {
             if (application is InternshipApplied companyApp)
             {
@@ -15370,11 +15384,11 @@ namespace QuizManager.Shared
         }
 
         // Pagination variables
-        private int currentThesisPage = 1;
-        private int thesisPageSize = 3; // Adjust as needed
+        protected int currentThesisPage = 1;
+        protected int thesisPageSize = 3; // Adjust as needed
 
         // Method to reset to first page when filtering
-        private async Task OnFilterChange_PaginationForStudentThesisSearch(ChangeEventArgs e)
+        protected async Task OnFilterChange_PaginationForStudentThesisSearch(ChangeEventArgs e)
         {
             currentThesisPage = 1; // Reset to first page when filter changes
             filterValue = e.Value?.ToString() ?? "all";
@@ -15383,9 +15397,9 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private int currentJobPage = 1;
-        private int jobPageSize = 3; // Adjust as needed
-        private void ChangeJobPage(int newPage)
+        protected int currentJobPage = 1;
+        protected int jobPageSize = 3; // Adjust as needed
+        protected void ChangeJobPage(int newPage)
         {
             var totalPages = (int)Math.Ceiling((double)jobApplications.Count / jobPageSize);
             if (newPage > 0 && newPage <= totalPages)
@@ -15394,9 +15408,9 @@ namespace QuizManager.Shared
             }
         }
 
-        private int currentJobPositionPage = 1;
-        private int jobPositionPageSize = 3; // Adjust as needed
-        private void ChangeJobPositionPage(int newPage)
+        protected int currentJobPositionPage = 1;
+        protected int jobPositionPageSize = 3; // Adjust as needed
+        protected void ChangeJobPositionPage(int newPage)
         {
             var publishedJobs = jobs?.Where(i => i.PositionStatus == "Δημοσιευμένη").ToList();
             if (publishedJobs != null)
@@ -15409,22 +15423,22 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToFirstPage()
+        protected void GoToFirstPage()
         {
             currentPageForThesisToSee = 1;
         }
 
-        private void GoToLastPage()
+        protected void GoToLastPage()
         {
             currentPageForThesisToSee = totalPagesForThesisToSee;
         }
 
-        private void GoToPage(int pageNumber)
+        protected void GoToPage(int pageNumber)
         {
             currentPageForThesisToSee = pageNumber;
         }
 
-        private List<int> GetVisiblePages()
+        protected List<int> GetVisiblePages()
         {
             var pages = new List<int>();
             int current = currentPageForThesisToSee;
@@ -15458,14 +15472,14 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private string GetPageButtonStyle(int pageNumber)
+        protected string GetPageButtonStyle(int pageNumber)
         {
             return pageNumber == currentPageForThesisToSee
                 ? "background-color: #0056b3; color: white;"
                 : "background-color: #007bff; color: white;";
         }
 
-        private List<int> GetVisiblePages(int currentPage, int totalPages)
+        protected List<int> GetVisiblePages(int currentPage, int totalPages)
         {
             var pages = new List<int>();
 
@@ -15491,8 +15505,8 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private int totalThesisPages_SearchThesisAsStudent => (int)Math.Ceiling((double)publishedTheses.Count / thesisPageSize);
-        private void ChangeThesisPage(int newPage)
+        protected int totalThesisPages_SearchThesisAsStudent => (int)Math.Ceiling((double)publishedTheses.Count / thesisPageSize);
+        protected void ChangeThesisPage(int newPage)
         {
             if (newPage > 0 && newPage <= totalThesisPages_SearchThesisAsStudent)
             {
@@ -15501,19 +15515,19 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToFirstPageForInternships()
+        protected void GoToFirstPageForInternships()
         {
             currentPageForInternshipsToSee = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPageForInternships()
+        protected void GoToLastPageForInternships()
         {
             currentPageForInternshipsToSee = totalPagesForInternshipsToSee;
             StateHasChanged();
         }
 
-        private void GoToPageForInternships(int page)
+        protected void GoToPageForInternships(int page)
         {
             if (page > 0 && page <= totalPagesForInternshipsToSee)
             {
@@ -15522,7 +15536,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private List<int> GetVisiblePagesForInternships()
+        protected List<int> GetVisiblePagesForInternships()
         {
             var pages = new List<int>();
             int current = currentPageForInternshipsToSee;
@@ -15551,7 +15565,7 @@ namespace QuizManager.Shared
         }
 
         // Keep your existing methods
-        private void PreviousPageForInternshipsToSee()
+        protected void PreviousPageForInternshipsToSee()
         {
             if (currentPageForInternshipsToSee > 1)
             {
@@ -15560,7 +15574,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForInternshipsToSee()
+        protected void NextPageForInternshipsToSee()
         {
             if (currentPageForInternshipsToSee < totalPagesForInternshipsToSee)
             {
@@ -15572,19 +15586,19 @@ namespace QuizManager.Shared
         // Pagination methods for internships
 
         // Pagination methods
-        private void GoToFirstInternshipPage()
+        protected void GoToFirstInternshipPage()
         {
             currentInternshipPage = 1;
             StateHasChanged();
         }
 
-        private void GoToLastInternshipPage()
+        protected void GoToLastInternshipPage()
         {
             currentInternshipPage = totalInternshipPages;
             StateHasChanged();
         }
 
-        private void GoToInternshipPage(int page)
+        protected void GoToInternshipPage(int page)
         {
             if (page > 0 && page <= totalInternshipPages)
             {
@@ -15593,7 +15607,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void PreviousInternshipPage()
+        protected void PreviousInternshipPage()
         {
             if (currentInternshipPage > 1)
             {
@@ -15602,7 +15616,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextInternshipPage()
+        protected void NextInternshipPage()
         {
             if (currentInternshipPage < totalInternshipPages)
             {
@@ -15611,7 +15625,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private List<int> GetVisibleInternshipPages()
+        protected List<int> GetVisibleInternshipPages()
         {
             var pages = new List<int>();
             int current = currentInternshipPage;
@@ -15640,24 +15654,24 @@ namespace QuizManager.Shared
         }
 
         // Method to get paginated internships (3 per page)
-        private IEnumerable<AllInternships> GetPaginatedInternships()
+        protected IEnumerable<AllInternships> GetPaginatedInternships()
         {
             return publishedInternships?
                 .Skip((currentInternshipPage - 1) * InternshipsPerPage)
                 .Take(InternshipsPerPage);
         }
 
-        private int currentPageForAnnouncements = 1;
-        private int pageSizeForAnnouncements = 3;
-        private int totalPagesForAnnouncements => (int)Math.Ceiling((double)(FilteredAnnouncements?.Count ?? 0) / pageSizeForAnnouncements);
-        private IEnumerable<AnnouncementAsCompany> GetPaginatedAnnouncements()
+        protected int currentPageForAnnouncements = 1;
+        protected int pageSizeForAnnouncements = 3;
+        protected int totalPagesForAnnouncements => (int)Math.Ceiling((double)(FilteredAnnouncements?.Count ?? 0) / pageSizeForAnnouncements);
+        protected IEnumerable<AnnouncementAsCompany> GetPaginatedAnnouncements()
         {
             return FilteredAnnouncements?
                 .Skip((currentPageForAnnouncements - 1) * pageSizeForAnnouncements)
                 .Take(pageSizeForAnnouncements) ?? Enumerable.Empty<AnnouncementAsCompany>();
         }
 
-        private List<int> GetVisiblePagesForAnnouncements()
+        protected List<int> GetVisiblePagesForAnnouncements()
         {
             var pages = new List<int>();
             int current = currentPageForAnnouncements;
@@ -15677,12 +15691,12 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPageForAnnouncements() => ChangePageForAnnouncements(1);
-        private void GoToLastPageForAnnouncements() => ChangePageForAnnouncements(totalPagesForAnnouncements);
-        private void PreviousPageForAnnouncements() => ChangePageForAnnouncements(currentPageForAnnouncements - 1);
-        private void NextPageForAnnouncements() => ChangePageForAnnouncements(currentPageForAnnouncements + 1);
+        protected void GoToFirstPageForAnnouncements() => ChangePageForAnnouncements(1);
+        protected void GoToLastPageForAnnouncements() => ChangePageForAnnouncements(totalPagesForAnnouncements);
+        protected void PreviousPageForAnnouncements() => ChangePageForAnnouncements(currentPageForAnnouncements - 1);
+        protected void NextPageForAnnouncements() => ChangePageForAnnouncements(currentPageForAnnouncements + 1);
 
-        private void GoToPageForAnnouncements(int page)
+        protected void GoToPageForAnnouncements(int page)
         {
             if (page > 0 && page <= totalPagesForAnnouncements)
             {
@@ -15691,7 +15705,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ChangePageForAnnouncements(int newPage)
+        protected void ChangePageForAnnouncements(int newPage)
         {
             if (newPage > 0 && newPage <= totalPagesForAnnouncements)
             {
@@ -15701,13 +15715,13 @@ namespace QuizManager.Shared
         }
 
         // Pagination variables for jobs
-        private int currentPageForJobs = 1;
-        private int JobsPerPage = 3;
-        private int totalPagesForJobs =>
+        protected int currentPageForJobs = 1;
+        protected int JobsPerPage = 3;
+        protected int totalPagesForJobs =>
             (int)Math.Ceiling((double)(GetFilteredJobs()?.Count() ?? 0) / JobsPerPage);
 
         // Get filtered jobs based on status
-        private IEnumerable<CompanyJob> GetFilteredJobs()
+        protected IEnumerable<CompanyJob> GetFilteredJobs()
         {
             return jobs?
                 .Where(j => selectedStatusFilterForJobs == "Όλα" || j.PositionStatus == selectedStatusFilterForJobs)
@@ -15715,7 +15729,7 @@ namespace QuizManager.Shared
         }
 
         // Get paginated jobs
-        private IEnumerable<CompanyJob> GetPaginatedJobs()
+        protected IEnumerable<CompanyJob> GetPaginatedJobs()
         {
             return GetFilteredJobs()
                 .Skip((currentPageForJobs - 1) * JobsPerPage)
@@ -15723,19 +15737,19 @@ namespace QuizManager.Shared
         }
 
         // Navigation methods
-        private void GoToFirstPageForJobs()
+        protected void GoToFirstPageForJobs()
         {
             currentPageForJobs = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPageForJobs()
+        protected void GoToLastPageForJobs()
         {
             currentPageForJobs = totalPagesForJobs;
             StateHasChanged();
         }
 
-        private void PreviousPageForJobs()
+        protected void PreviousPageForJobs()
         {
             if (currentPageForJobs > 1)
             {
@@ -15744,7 +15758,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForJobs()
+        protected void NextPageForJobs()
         {
             if (currentPageForJobs < totalPagesForJobs)
             {
@@ -15753,7 +15767,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPageForJobs(int page)
+        protected void GoToPageForJobs(int page)
         {
             if (page > 0 && page <= totalPagesForJobs)
             {
@@ -15762,7 +15776,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private List<int> GetVisiblePagesForJobs()
+        protected List<int> GetVisiblePagesForJobs()
         {
             var pages = new List<int>();
             int current = currentPageForJobs;
@@ -15783,13 +15797,13 @@ namespace QuizManager.Shared
         }
 
         // Pagination variables for company internships
-        private int currentPageForCompanyInternships = 1;
-        private int companyInternshipsPerPage = 3;
-        private int totalPagesForCompanyInternships =>
+        protected int currentPageForCompanyInternships = 1;
+        protected int companyInternshipsPerPage = 3;
+        protected int totalPagesForCompanyInternships =>
             (int)Math.Ceiling((double)(GetFilteredCompanyInternships()?.Count() ?? 0) / companyInternshipsPerPage);
 
         // Get filtered company internships based on status
-        private IEnumerable<CompanyInternship> GetFilteredCompanyInternships()
+        protected IEnumerable<CompanyInternship> GetFilteredCompanyInternships()
         {
             return internships?
                 .Where(i => selectedStatusFilterForInternships == "Όλα" || i.CompanyUploadedInternshipStatus == selectedStatusFilterForInternships)
@@ -15797,7 +15811,7 @@ namespace QuizManager.Shared
         }
 
         // Get paginated company internships
-        private IEnumerable<CompanyInternship> GetPaginatedCompanyInternships()
+        protected IEnumerable<CompanyInternship> GetPaginatedCompanyInternships()
         {
             return GetFilteredCompanyInternships()
                 .Skip((currentPageForCompanyInternships - 1) * companyInternshipsPerPage)
@@ -15805,19 +15819,19 @@ namespace QuizManager.Shared
         }
 
         // Navigation methods
-        private void GoToFirstPageForCompanyInternships()
+        protected void GoToFirstPageForCompanyInternships()
         {
             currentPageForCompanyInternships = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPageForCompanyInternships()
+        protected void GoToLastPageForCompanyInternships()
         {
             currentPageForCompanyInternships = totalPagesForCompanyInternships;
             StateHasChanged();
         }
 
-        private void PreviousPageForCompanyInternships()
+        protected void PreviousPageForCompanyInternships()
         {
             if (currentPageForCompanyInternships > 1)
             {
@@ -15826,7 +15840,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForCompanyInternships()
+        protected void NextPageForCompanyInternships()
         {
             if (currentPageForCompanyInternships < totalPagesForCompanyInternships)
             {
@@ -15835,7 +15849,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPageForCompanyInternships(int page)
+        protected void GoToPageForCompanyInternships(int page)
         {
             if (page > 0 && page <= totalPagesForCompanyInternships)
             {
@@ -15844,7 +15858,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private List<int> GetVisiblePagesForCompanyInternships()
+        protected List<int> GetVisiblePagesForCompanyInternships()
         {
             var pages = new List<int>();
             int current = currentPageForCompanyInternships;
@@ -15865,13 +15879,13 @@ namespace QuizManager.Shared
         }
 
         // Pagination variables for company theses
-        private int currentPageForCompanyTheses = 1;
-        private int CompanyThesesPerPage = 3;
-        private int totalPagesForCompanyTheses =>
+        protected int currentPageForCompanyTheses = 1;
+        protected int CompanyThesesPerPage = 3;
+        protected int totalPagesForCompanyTheses =>
             (int)Math.Ceiling((double)(GetFilteredCompanyTheses()?.Count() ?? 0) / CompanyThesesPerPage);
 
         // Get filtered company theses based on status
-        private IEnumerable<CompanyThesis> GetFilteredCompanyTheses()
+        protected IEnumerable<CompanyThesis> GetFilteredCompanyTheses()
         {
             return companytheses?
                 .Where(j => selectedStatusFilterForCompanyTheses == "Όλα" || j.CompanyThesisStatus == selectedStatusFilterForCompanyTheses)
@@ -15879,7 +15893,7 @@ namespace QuizManager.Shared
         }
 
         // Get paginated company theses
-        private IEnumerable<CompanyThesis> GetPaginatedCompanyTheses()
+        protected IEnumerable<CompanyThesis> GetPaginatedCompanyTheses()
         {
             return GetFilteredCompanyTheses()
                 .Skip((currentPageForCompanyTheses - 1) * CompanyThesesPerPage)
@@ -15887,19 +15901,19 @@ namespace QuizManager.Shared
         }
 
         // Navigation methods
-        private void GoToFirstPageForCompanyTheses()
+        protected void GoToFirstPageForCompanyTheses()
         {
             currentPageForCompanyTheses = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPageForCompanyTheses()
+        protected void GoToLastPageForCompanyTheses()
         {
             currentPageForCompanyTheses = totalPagesForCompanyTheses;
             StateHasChanged();
         }
 
-        private void PreviousPageForCompanyTheses()
+        protected void PreviousPageForCompanyTheses()
         {
             if (currentPageForCompanyTheses > 1)
             {
@@ -15908,7 +15922,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForCompanyTheses()
+        protected void NextPageForCompanyTheses()
         {
             if (currentPageForCompanyTheses < totalPagesForCompanyTheses)
             {
@@ -15917,7 +15931,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPageForCompanyTheses(int page)
+        protected void GoToPageForCompanyTheses(int page)
         {
             if (page > 0 && page <= totalPagesForCompanyTheses)
             {
@@ -15927,14 +15941,14 @@ namespace QuizManager.Shared
         }
 
         // Make sure to reset to page 1 when filter changes
-        private void HandleStatusFilterChangeForCompanyTheses(ChangeEventArgs e)
+        protected void HandleStatusFilterChangeForCompanyTheses(ChangeEventArgs e)
         {
             selectedStatusFilterForCompanyTheses = e.Value.ToString();
             currentPageForCompanyTheses = 1; // Reset to first page
             StateHasChanged();
         }
 
-        private List<int> GetVisiblePagesForCompanyTheses()
+        protected List<int> GetVisiblePagesForCompanyTheses()
         {
             var pages = new List<int>();
             int current = currentPageForCompanyTheses;
@@ -15955,20 +15969,20 @@ namespace QuizManager.Shared
         }
 
         // Pagination variables for company events
-        private int currentPageForCompanyEvents = 1;
-        private int CompanyEventsPerPage = 3;
-        private int totalPagesForCompanyEvents_CompanyEventsToSee =>
+        protected int currentPageForCompanyEvents = 1;
+        protected int CompanyEventsPerPage = 3;
+        protected int totalPagesForCompanyEvents_CompanyEventsToSee =>
             (int)Math.Ceiling((double)(FilteredCompanyEvents?.Count ?? 0) / CompanyEventsPerPage);
 
         // Get paginated company events
-        private IEnumerable<CompanyEvent> GetPaginatedCompanyEvents()
+        protected IEnumerable<CompanyEvent> GetPaginatedCompanyEvents()
         {
             return FilteredCompanyEvents?
                 .Skip((currentPageForCompanyEvents - 1) * CompanyEventsPerPage)
                 .Take(CompanyEventsPerPage) ?? Enumerable.Empty<CompanyEvent>();
         }
 
-        private List<int> GetVisiblePagesForCompanyEvents()
+        protected List<int> GetVisiblePagesForCompanyEvents()
         {
             var pages = new List<int>();
             int current = currentPageForCompanyEvents;
@@ -15989,19 +16003,19 @@ namespace QuizManager.Shared
         }
 
         // Navigation methods
-        private void GoToFirstPageForCompanyEvents()
+        protected void GoToFirstPageForCompanyEvents()
         {
             currentPageForCompanyEvents = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPageForCompanyEvents()
+        protected void GoToLastPageForCompanyEvents()
         {
             currentPageForCompanyEvents = totalPagesForCompanyEvents_CompanyEventsToSee;
             StateHasChanged();
         }
 
-        private void PreviousPageForCompanyEvents()
+        protected void PreviousPageForCompanyEvents()
         {
             if (currentPageForCompanyEvents > 1)
             {
@@ -16010,7 +16024,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForCompanyEvents()
+        protected void NextPageForCompanyEvents()
         {
             if (currentPageForCompanyEvents < totalPagesForCompanyEvents_CompanyEventsToSee)
             {
@@ -16019,7 +16033,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPageForCompanyEvents(int page)
+        protected void GoToPageForCompanyEvents(int page)
         {
             if (page > 0 && page <= totalPagesForCompanyEvents_CompanyEventsToSee)
             {
@@ -16029,20 +16043,20 @@ namespace QuizManager.Shared
         }
 
         // Renamed pagination variables
-        private int currentPageForProfessorAnnouncements_ProfessorAnnouncements = 1;
-        private int professorAnnouncementsPerPage_SeeMyUploadedAnnouncementsAsProfessor = 3; // Default value
-        private int totalPagesForProfessorAnnouncements_ProfessorAnnouncements =>
+        protected int currentPageForProfessorAnnouncements_ProfessorAnnouncements = 1;
+        protected int professorAnnouncementsPerPage_SeeMyUploadedAnnouncementsAsProfessor = 3; // Default value
+        protected int totalPagesForProfessorAnnouncements_ProfessorAnnouncements =>
             (int)Math.Ceiling((double)(FilteredAnnouncementsAsProfessor?.Count ?? 0) / professorAnnouncementsPerPage_SeeMyUploadedAnnouncementsAsProfessor);
 
         // Renamed methods
-        private IEnumerable<AnnouncementAsProfessor> GetPaginatedProfessorAnnouncements_ProfessorAnnouncements()
+        protected IEnumerable<AnnouncementAsProfessor> GetPaginatedProfessorAnnouncements_ProfessorAnnouncements()
         {
             return FilteredAnnouncementsAsProfessor?
                 .Skip((currentPageForProfessorAnnouncements_ProfessorAnnouncements - 1) * professorAnnouncementsPerPage_SeeMyUploadedAnnouncementsAsProfessor)
                 .Take(professorAnnouncementsPerPage_SeeMyUploadedAnnouncementsAsProfessor) ?? Enumerable.Empty<AnnouncementAsProfessor>();
         }
 
-        private List<int> GetVisiblePagesForProfessorAnnouncements_ProfessorAnnouncements()
+        protected List<int> GetVisiblePagesForProfessorAnnouncements_ProfessorAnnouncements()
         {
             var pages = new List<int>();
             int current = currentPageForProfessorAnnouncements_ProfessorAnnouncements;
@@ -16082,19 +16096,19 @@ namespace QuizManager.Shared
         }
 
         // Renamed navigation methods
-        private void GoToFirstPageForProfessorAnnouncements_ProfessorAnnouncements()
+        protected void GoToFirstPageForProfessorAnnouncements_ProfessorAnnouncements()
         {
             currentPageForProfessorAnnouncements_ProfessorAnnouncements = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPageForProfessorAnnouncements_ProfessorAnnouncements()
+        protected void GoToLastPageForProfessorAnnouncements_ProfessorAnnouncements()
         {
             currentPageForProfessorAnnouncements_ProfessorAnnouncements = totalPagesForProfessorAnnouncements_ProfessorAnnouncements;
             StateHasChanged();
         }
 
-        private void PreviousPageForProfessorAnnouncements_ProfessorAnnouncements()
+        protected void PreviousPageForProfessorAnnouncements_ProfessorAnnouncements()
         {
             if (currentPageForProfessorAnnouncements_ProfessorAnnouncements > 1)
             {
@@ -16103,7 +16117,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForProfessorAnnouncements_ProfessorAnnouncements()
+        protected void NextPageForProfessorAnnouncements_ProfessorAnnouncements()
         {
             if (currentPageForProfessorAnnouncements_ProfessorAnnouncements < totalPagesForProfessorAnnouncements_ProfessorAnnouncements)
             {
@@ -16112,7 +16126,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPageForProfessorAnnouncements_ProfessorAnnouncements(int page)
+        protected void GoToPageForProfessorAnnouncements_ProfessorAnnouncements(int page)
         {
             if (page > 0 && page <= totalPagesForProfessorAnnouncements_ProfessorAnnouncements)
             {
@@ -16122,7 +16136,7 @@ namespace QuizManager.Shared
         }
 
         // Renamed filter handler
-        private void HandleStatusFilterChangeForProfessorAnnouncements_ProfessorAnnouncements(ChangeEventArgs e)
+        protected void HandleStatusFilterChangeForProfessorAnnouncements_ProfessorAnnouncements(ChangeEventArgs e)
         {
             // Your existing filter logic
             currentPageForProfessorAnnouncements_ProfessorAnnouncements = 1;
@@ -16130,13 +16144,13 @@ namespace QuizManager.Shared
         }
 
         // Pagination variables for professor theses
-        private int currentPageForProfessorTheses = 1;
-        private int ProfessorThesesPerPage = 3;
-        private int totalPagesForProfessorTheses =>
+        protected int currentPageForProfessorTheses = 1;
+        protected int ProfessorThesesPerPage = 3;
+        protected int totalPagesForProfessorTheses =>
             (int)Math.Ceiling((double)(GetFilteredProfessorTheses()?.Count() ?? 0) / ProfessorThesesPerPage);
 
         // Get filtered professor theses based on status
-        private IEnumerable<ProfessorThesis> GetFilteredProfessorTheses()
+        protected IEnumerable<ProfessorThesis> GetFilteredProfessorTheses()
         {
             return FilteredThesesAsProfessor?
                 .Where(j => selectedStatusFilterForThesesAsProfessor == "Όλα" || j.ThesisStatus == selectedStatusFilterForThesesAsProfessor)
@@ -16144,14 +16158,14 @@ namespace QuizManager.Shared
         }
 
         // Get paginated professor theses
-        private IEnumerable<ProfessorThesis> GetPaginatedProfessorTheses()
+        protected IEnumerable<ProfessorThesis> GetPaginatedProfessorTheses()
         {
             return GetFilteredProfessorTheses()
                 .Skip((currentPageForProfessorTheses - 1) * ProfessorThesesPerPage)
                 .Take(ProfessorThesesPerPage);
         }
 
-        private List<int> GetVisiblePagesForProfessorTheses()
+        protected List<int> GetVisiblePagesForProfessorTheses()
         {
             var pages = new List<int>();
             int current = currentPageForProfessorTheses;
@@ -16172,19 +16186,19 @@ namespace QuizManager.Shared
         }
 
         // Navigation methods
-        private void GoToFirstPageForProfessorTheses()
+        protected void GoToFirstPageForProfessorTheses()
         {
             currentPageForProfessorTheses = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPageForProfessorTheses()
+        protected void GoToLastPageForProfessorTheses()
         {
             currentPageForProfessorTheses = totalPagesForProfessorTheses;
             StateHasChanged();
         }
 
-        private void PreviousPageForProfessorTheses()
+        protected void PreviousPageForProfessorTheses()
         {
             if (currentPageForProfessorTheses > 1)
             {
@@ -16193,7 +16207,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForProfessorTheses()
+        protected void NextPageForProfessorTheses()
         {
             if (currentPageForProfessorTheses < totalPagesForProfessorTheses)
             {
@@ -16202,7 +16216,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPageForProfessorTheses(int page)
+        protected void GoToPageForProfessorTheses(int page)
         {
             if (page > 0 && page <= totalPagesForProfessorTheses)
             {
@@ -16212,26 +16226,26 @@ namespace QuizManager.Shared
         }
 
         // Make sure to reset to page 1 when filter changes
-        private void HandleStatusFilterChangeForProfessorTheses(ChangeEventArgs e)
+        protected void HandleStatusFilterChangeForProfessorTheses(ChangeEventArgs e)
         {
             selectedStatusFilterForThesesAsProfessor = e.Value.ToString();
             currentPageForProfessorTheses = 1; // Reset to first page
             StateHasChanged();
         }
 
-        private int currentPage_CompanyTheses = 1;
-        private int itemsPerPage_CompanyTheses = 3; // adjust as needed
-        private int totalPages_CompanyTheses =>
+        protected int currentPage_CompanyTheses = 1;
+        protected int itemsPerPage_CompanyTheses = 3; // adjust as needed
+        protected int totalPages_CompanyTheses =>
             (int)Math.Ceiling((double)(companyThesesResultsToFindThesesAsProfessor?.Count ?? 0) / itemsPerPage_CompanyTheses);
 
-        private IEnumerable<CompanyThesis> GetPaginatedCompanyTheses_AsProfessor()
+        protected IEnumerable<CompanyThesis> GetPaginatedCompanyTheses_AsProfessor()
         {
             return companyThesesResultsToFindThesesAsProfessor?
                 .Skip((currentPage_CompanyTheses - 1) * itemsPerPage_CompanyTheses)
                 .Take(itemsPerPage_CompanyTheses) ?? Enumerable.Empty<CompanyThesis>();
         }
 
-        private List<int> GetVisiblePages_CompanyTheses_AsProfessor()
+        protected List<int> GetVisiblePages_CompanyTheses_AsProfessor()
         {
             var pages = new List<int>();
             int current = currentPage_CompanyTheses;
@@ -16250,35 +16264,35 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPage_CompanyTheses() => currentPage_CompanyTheses = 1;
-        private void GoToLastPage_CompanyTheses() => currentPage_CompanyTheses = totalPages_CompanyTheses;
-        private void PreviousPage_CompanyTheses()
+        protected void GoToFirstPage_CompanyTheses() => currentPage_CompanyTheses = 1;
+        protected void GoToLastPage_CompanyTheses() => currentPage_CompanyTheses = totalPages_CompanyTheses;
+        protected void PreviousPage_CompanyTheses()
         {
             if (currentPage_CompanyTheses > 1) currentPage_CompanyTheses--;
         }
-        private void NextPage_CompanyTheses()
+        protected void NextPage_CompanyTheses()
         {
             if (currentPage_CompanyTheses < totalPages_CompanyTheses) currentPage_CompanyTheses++;
         }
-        private void GoToPage_CompanyTheses(int page)
+        protected void GoToPage_CompanyTheses(int page)
         {
             if (page >= 1 && page <= totalPages_CompanyTheses)
                 currentPage_CompanyTheses = page;
         }
 
-        private int currentPage_ProfessorInternships = 1;
-        private int itemsPerPage_ProfessorInternships = 3;
-        private int totalPages_ProfessorInternships =>
+        protected int currentPage_ProfessorInternships = 1;
+        protected int itemsPerPage_ProfessorInternships = 3;
+        protected int totalPages_ProfessorInternships =>
             (int)Math.Ceiling((double)(professorInternships?.Count ?? 0) / itemsPerPage_ProfessorInternships);
 
-        private IEnumerable<ProfessorInternship> GetPaginatedProfessorInternships()
+        protected IEnumerable<ProfessorInternship> GetPaginatedProfessorInternships()
         {
             return professorInternships?
                 .Skip((currentPage_ProfessorInternships - 1) * itemsPerPage_ProfessorInternships)
                 .Take(itemsPerPage_ProfessorInternships) ?? Enumerable.Empty<ProfessorInternship>();
         }
 
-        private List<int> GetVisiblePages_ProfessorInternships()
+        protected List<int> GetVisiblePages_ProfessorInternships()
         {
             var pages = new List<int>();
             int current = currentPage_ProfessorInternships;
@@ -16297,35 +16311,35 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPage_ProfessorInternships() => currentPage_ProfessorInternships = 1;
-        private void GoToLastPage_ProfessorInternships() => currentPage_ProfessorInternships = totalPages_ProfessorInternships;
-        private void PreviousPage_ProfessorInternships()
+        protected void GoToFirstPage_ProfessorInternships() => currentPage_ProfessorInternships = 1;
+        protected void GoToLastPage_ProfessorInternships() => currentPage_ProfessorInternships = totalPages_ProfessorInternships;
+        protected void PreviousPage_ProfessorInternships()
         {
             if (currentPage_ProfessorInternships > 1) currentPage_ProfessorInternships--;
         }
-        private void NextPage_ProfessorInternships()
+        protected void NextPage_ProfessorInternships()
         {
             if (currentPage_ProfessorInternships < totalPages_ProfessorInternships) currentPage_ProfessorInternships++;
         }
-        private void GoToPage_ProfessorInternships(int page)
+        protected void GoToPage_ProfessorInternships(int page)
         {
             if (page >= 1 && page <= totalPages_ProfessorInternships)
                 currentPage_ProfessorInternships = page;
         }
 
-        private int currentPage_ProfessorEvents = 1;
-        private int itemsPerPage_ProfessorEvents = 3;
-        private int totalPages_ProfessorEvents =>
+        protected int currentPage_ProfessorEvents = 1;
+        protected int itemsPerPage_ProfessorEvents = 3;
+        protected int totalPages_ProfessorEvents =>
             (int)Math.Ceiling((double)(FilteredProfessorEvents?.Count ?? 0) / itemsPerPage_ProfessorEvents);
 
-        private IEnumerable<ProfessorEvent> GetPaginatedProfessorEvents()
+        protected IEnumerable<ProfessorEvent> GetPaginatedProfessorEvents()
         {
             return FilteredProfessorEvents?
                 .Skip((currentPage_ProfessorEvents - 1) * itemsPerPage_ProfessorEvents)
                 .Take(itemsPerPage_ProfessorEvents) ?? Enumerable.Empty<ProfessorEvent>();
         }
 
-        private List<int> GetVisiblePages_ProfessorEvents()
+        protected List<int> GetVisiblePages_ProfessorEvents()
         {
             var pages = new List<int>();
             int current = currentPage_ProfessorEvents;
@@ -16344,35 +16358,35 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPage_ProfessorEvents() => currentPage_ProfessorEvents = 1;
-        private void GoToLastPage_ProfessorEvents() => currentPage_ProfessorEvents = totalPages_ProfessorEvents;
-        private void PreviousPage_ProfessorEvents()
+        protected void GoToFirstPage_ProfessorEvents() => currentPage_ProfessorEvents = 1;
+        protected void GoToLastPage_ProfessorEvents() => currentPage_ProfessorEvents = totalPages_ProfessorEvents;
+        protected void PreviousPage_ProfessorEvents()
         {
             if (currentPage_ProfessorEvents > 1) currentPage_ProfessorEvents--;
         }
-        private void NextPage_ProfessorEvents()
+        protected void NextPage_ProfessorEvents()
         {
             if (currentPage_ProfessorEvents < totalPages_ProfessorEvents) currentPage_ProfessorEvents++;
         }
-        private void GoToPage_ProfessorEvents(int page)
+        protected void GoToPage_ProfessorEvents(int page)
         {
             if (page >= 1 && page <= totalPages_ProfessorEvents)
                 currentPage_ProfessorEvents = page;
         }
 
-        private int currentPage_ProfessorTheses = 1;
-        private int itemsPerPage_ProfessorTheses = 3; // Adjust as needed
-        private int totalPages_ProfessorTheses =>
+        protected int currentPage_ProfessorTheses = 1;
+        protected int itemsPerPage_ProfessorTheses = 3; // Adjust as needed
+        protected int totalPages_ProfessorTheses =>
             (int)Math.Ceiling((double)(professorThesesResultsToFindThesesAsCompany?.Count ?? 0) / itemsPerPage_ProfessorTheses);
 
-        private IEnumerable<ProfessorThesis> GetPaginatedProfessorTheses_AsCompany()
+        protected IEnumerable<ProfessorThesis> GetPaginatedProfessorTheses_AsCompany()
         {
             return professorThesesResultsToFindThesesAsCompany?
                 .Skip((currentPage_ProfessorTheses - 1) * itemsPerPage_ProfessorTheses)
                 .Take(itemsPerPage_ProfessorTheses) ?? Enumerable.Empty<ProfessorThesis>();
         }
 
-        private List<int> GetVisiblePages_ProfessorTheses_AsCompany()
+        protected List<int> GetVisiblePages_ProfessorTheses_AsCompany()
         {
             var pages = new List<int>();
             int current = currentPage_ProfessorTheses;
@@ -16391,30 +16405,30 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPage_ProfessorTheses() => currentPage_ProfessorTheses = 1;
-        private void GoToLastPage_ProfessorTheses() => currentPage_ProfessorTheses = totalPages_ProfessorTheses;
-        private void PreviousPage_ProfessorTheses()
+        protected void GoToFirstPage_ProfessorTheses() => currentPage_ProfessorTheses = 1;
+        protected void GoToLastPage_ProfessorTheses() => currentPage_ProfessorTheses = totalPages_ProfessorTheses;
+        protected void PreviousPage_ProfessorTheses()
         {
             if (currentPage_ProfessorTheses > 1) currentPage_ProfessorTheses--;
         }
-        private void NextPage_ProfessorTheses()
+        protected void NextPage_ProfessorTheses()
         {
             if (currentPage_ProfessorTheses < totalPages_ProfessorTheses) currentPage_ProfessorTheses++;
         }
-        private void GoToPage_ProfessorTheses(int page)
+        protected void GoToPage_ProfessorTheses(int page)
         {
             if (page >= 1 && page <= totalPages_ProfessorTheses)
                 currentPage_ProfessorTheses = page;
         }
 
         // Pagination variables for events
-        private int currentPageForEvents = 1;
-        private int itemsPerPageForEvents = 3; // Adjust as needed
-        private int totalPagesForEvents =>
+        protected int currentPageForEvents = 1;
+        protected int itemsPerPageForEvents = 3; // Adjust as needed
+        protected int totalPagesForEvents =>
             (int)Math.Ceiling((double)GetFilteredEventsCount() / itemsPerPageForEvents);
 
         // Helper methods for pagination
-        private IEnumerable<CompanyEvent> GetPaginatedCompanyEvents_StudentSearchEvents()
+        protected IEnumerable<CompanyEvent> GetPaginatedCompanyEvents_StudentSearchEvents()
         {
             if (selectedEventType == "professor") return Enumerable.Empty<CompanyEvent>();
 
@@ -16428,7 +16442,7 @@ namespace QuizManager.Shared
             return Enumerable.Empty<CompanyEvent>();
         }
 
-        private IEnumerable<ProfessorEvent> GetPaginatedProfessorEvents_StudentSearchEvents()
+        protected IEnumerable<ProfessorEvent> GetPaginatedProfessorEvents_StudentSearchEvents()
         {
             if (selectedEventType == "company") return Enumerable.Empty<ProfessorEvent>();
 
@@ -16442,7 +16456,7 @@ namespace QuizManager.Shared
             return Enumerable.Empty<ProfessorEvent>();
         }
 
-        private int GetFilteredEventsCount()
+        protected int GetFilteredEventsCount()
         {
             int count = 0;
 
@@ -16460,7 +16474,7 @@ namespace QuizManager.Shared
         }
 
         // Pagination methods
-        private List<int> GetVisiblePagesForEvents()
+        protected List<int> GetVisiblePagesForEvents()
         {
             var pages = new List<int>();
             int current = currentPageForEvents;
@@ -16480,13 +16494,13 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPageForEvents() => currentPageForEvents = 1;
-        private void PreviousPageForEvents() => currentPageForEvents = Math.Max(1, currentPageForEvents - 1);
-        private void NextPageForEvents() => currentPageForEvents = Math.Min(totalPagesForEvents, currentPageForEvents + 1);
-        private void GoToLastPageForEvents() => currentPageForEvents = totalPagesForEvents;
-        private void GoToPageForEvents(int page) => currentPageForEvents = page;
+        protected void GoToFirstPageForEvents() => currentPageForEvents = 1;
+        protected void PreviousPageForEvents() => currentPageForEvents = Math.Max(1, currentPageForEvents - 1);
+        protected void NextPageForEvents() => currentPageForEvents = Math.Min(totalPagesForEvents, currentPageForEvents + 1);
+        protected void GoToLastPageForEvents() => currentPageForEvents = totalPagesForEvents;
+        protected void GoToPageForEvents(int page) => currentPageForEvents = page;
 
-        private void OnPageSizeChange_SearchForThesisAsStudent(ChangeEventArgs e)
+        protected void OnPageSizeChange_SearchForThesisAsStudent(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16496,7 +16510,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChangeForApplications_SeeMyThesisApplicationsAsStudent(ChangeEventArgs e)
+        protected void OnPageSizeChangeForApplications_SeeMyThesisApplicationsAsStudent(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16506,7 +16520,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnJobPageSizeChange_SeeMyJobApplicationsAsStudent(ChangeEventArgs e)
+        protected void OnJobPageSizeChange_SeeMyJobApplicationsAsStudent(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16516,7 +16530,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnJobPageSizeChange_SearchForJobsAsStudent(ChangeEventArgs e)
+        protected void OnJobPageSizeChange_SearchForJobsAsStudent(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16526,7 +16540,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SeeMyInternshipApplicationsAsStudent(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyInternshipApplicationsAsStudent(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16536,7 +16550,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SearchForInternshipsAsStudent(ChangeEventArgs e)
+        protected void OnPageSizeChange_SearchForInternshipsAsStudent(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16546,7 +16560,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SearchForEventsAsStudent(ChangeEventArgs e)
+        protected void OnPageSizeChange_SearchForEventsAsStudent(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16556,7 +16570,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SeeMyUploadedAnnouncementsAsCompany(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyUploadedAnnouncementsAsCompany(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16566,7 +16580,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SeeMyUploadedJobsAsCompany(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyUploadedJobsAsCompany(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16576,7 +16590,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SeeMyUploadedInternshipsAsCompany(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyUploadedInternshipsAsCompany(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16586,7 +16600,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SeeMyUploadedThesesAsCompany(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyUploadedThesesAsCompany(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16596,7 +16610,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SearchForProfessorThesesAsCompany(ChangeEventArgs e)
+        protected void OnPageSizeChange_SearchForProfessorThesesAsCompany(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16606,7 +16620,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SeeMyUploadedEventsAsCompany(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyUploadedEventsAsCompany(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16617,13 +16631,13 @@ namespace QuizManager.Shared
         }
 
         // Pagination variables for students search
-        private int currentPageForStudents_SearchForStudentsAsCompany = 1;
-        private int StudentsPerPage_SearchForStudentsAsCompany = 3; // Na einai initiated me 3 stoixeia ana selida tou pinaka
-        private int totalPagesForStudents_SearchForStudentsAsCompany =>
+        protected int currentPageForStudents_SearchForStudentsAsCompany = 1;
+        protected int StudentsPerPage_SearchForStudentsAsCompany = 3; // Na einai initiated me 3 stoixeia ana selida tou pinaka
+        protected int totalPagesForStudents_SearchForStudentsAsCompany =>
             (int)Math.Ceiling((double)(searchResultsAsCompanyToFindStudent?.Count() ?? 0) / StudentsPerPage_SearchForStudentsAsCompany);
 
         // Get paginated students
-        private IEnumerable<Student> GetPaginatedStudents_SearchForStudentsAsCompany()
+        protected IEnumerable<Student> GetPaginatedStudents_SearchForStudentsAsCompany()
         {
             return searchResultsAsCompanyToFindStudent?
                 .Skip((currentPageForStudents_SearchForStudentsAsCompany - 1) * StudentsPerPage_SearchForStudentsAsCompany)
@@ -16632,19 +16646,19 @@ namespace QuizManager.Shared
         }
 
         // Navigation methods
-        private void GoToFirstPageForStudents_SearchForStudentsAsCompany()
+        protected void GoToFirstPageForStudents_SearchForStudentsAsCompany()
         {
             currentPageForStudents_SearchForStudentsAsCompany = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPageForStudents_SearchForStudentsAsCompany()
+        protected void GoToLastPageForStudents_SearchForStudentsAsCompany()
         {
             currentPageForStudents_SearchForStudentsAsCompany = totalPagesForStudents_SearchForStudentsAsCompany;
             StateHasChanged();
         }
 
-        private void PreviousPageForStudents_SearchForStudentsAsCompany()
+        protected void PreviousPageForStudents_SearchForStudentsAsCompany()
         {
             if (currentPageForStudents_SearchForStudentsAsCompany > 1)
             {
@@ -16653,7 +16667,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForStudents_SearchForStudentsAsCompany()
+        protected void NextPageForStudents_SearchForStudentsAsCompany()
         {
             if (currentPageForStudents_SearchForStudentsAsCompany < totalPagesForStudents_SearchForStudentsAsCompany)
             {
@@ -16662,7 +16676,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPageForStudents_SearchForStudentsAsCompany(int page)
+        protected void GoToPageForStudents_SearchForStudentsAsCompany(int page)
         {
             if (page > 0 && page <= totalPagesForStudents_SearchForStudentsAsCompany)
             {
@@ -16671,7 +16685,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private List<int> GetVisiblePagesForStudents_SearchForStudentsAsCompany()
+        protected List<int> GetVisiblePagesForStudents_SearchForStudentsAsCompany()
         {
             var pages = new List<int>();
             int current = currentPageForStudents_SearchForStudentsAsCompany;
@@ -16691,7 +16705,7 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void OnPageSizeChange_SearchForStudentsAsCompany(ChangeEventArgs e)
+        protected void OnPageSizeChange_SearchForStudentsAsCompany(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16701,10 +16715,10 @@ namespace QuizManager.Shared
             }
         }
 
-        private int ProfessorsPerPage_SearchForProfessorsAsStudent = 3; // Default value
-        private int currentProfessorPage_SearchForProfessorsAsStudent = 1;
+        protected int ProfessorsPerPage_SearchForProfessorsAsStudent = 3; // Default value
+        protected int currentProfessorPage_SearchForProfessorsAsStudent = 1;
 
-        private void OnPageSizeChange_SearchForProfessorsAsStudent(ChangeEventArgs e)
+        protected void OnPageSizeChange_SearchForProfessorsAsStudent(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16714,7 +16728,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private IEnumerable<Professor> GetPaginatedProfessorResults()
+        protected IEnumerable<Professor> GetPaginatedProfessorResults()
         {
             return searchResultsAsCompanyToFindProfessor?
                 .Skip((currentProfessorPage_SearchForProfessorsAsStudent - 1) * ProfessorsPerPage_SearchForProfessorsAsStudent)
@@ -16722,12 +16736,12 @@ namespace QuizManager.Shared
                 ?? Enumerable.Empty<Professor>();
         }
 
-        private int totalProfessorPages_SearchForProfessorsAsStudent =>
+        protected int totalProfessorPages_SearchForProfessorsAsStudent =>
             searchResultsAsCompanyToFindProfessor != null
                 ? (int)Math.Ceiling((double)searchResultsAsCompanyToFindProfessor.Count / ProfessorsPerPage_SearchForProfessorsAsStudent)
                 : 1;
 
-        private List<int> GetVisibleProfessorPages()
+        protected List<int> GetVisibleProfessorPages()
         {
             var pages = new List<int>();
             int currentPage = currentProfessorPage_SearchForProfessorsAsStudent;
@@ -16755,13 +16769,13 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstProfessorPage()
+        protected void GoToFirstProfessorPage()
         {
             currentProfessorPage_SearchForProfessorsAsStudent = 1;
             StateHasChanged();
         }
 
-        private void PreviousProfessorPage()
+        protected void PreviousProfessorPage()
         {
             if (currentProfessorPage_SearchForProfessorsAsStudent > 1)
             {
@@ -16770,7 +16784,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextProfessorPage()
+        protected void NextProfessorPage()
         {
             if (currentProfessorPage_SearchForProfessorsAsStudent < totalProfessorPages_SearchForProfessorsAsStudent)
             {
@@ -16779,13 +16793,13 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToLastProfessorPage()
+        protected void GoToLastProfessorPage()
         {
             currentProfessorPage_SearchForProfessorsAsStudent = totalProfessorPages_SearchForProfessorsAsStudent;
             StateHasChanged();
         }
 
-        private void GoToProfessorPage(int pageNumber)
+        protected void GoToProfessorPage(int pageNumber)
         {
             if (pageNumber >= 1 && pageNumber <= totalProfessorPages_SearchForProfessorsAsStudent)
             {
@@ -16794,7 +16808,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SeeMyUploadedAnnouncementsAsProfessor(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyUploadedAnnouncementsAsProfessor(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16804,7 +16818,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SeeMyUploadedThesesAsProfessor(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyUploadedThesesAsProfessor(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16814,7 +16828,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SearchForCompanyThesesAsProfessor(ChangeEventArgs e)
+        protected void OnPageSizeChange_SearchForCompanyThesesAsProfessor(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16824,7 +16838,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OnPageSizeChange_SeeMyUploadedInternshipsAsProfessor(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyUploadedInternshipsAsProfessor(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -16834,13 +16848,13 @@ namespace QuizManager.Shared
             }
         }
 
-        private void HandleStatusFilterChangeForProfessorInternships(ChangeEventArgs e)
+        protected void HandleStatusFilterChangeForProfessorInternships(ChangeEventArgs e)
         {
             selectedStatusFilterForProfessorInternships = e.Value.ToString();
             FilterProfessorInternships();
         }
 
-        private void FilterProfessorInternships()
+        protected void FilterProfessorInternships()
         {
             // Filter the internships based on the selected filter
             if (selectedStatusFilterForProfessorInternships == "Όλα")
@@ -16866,7 +16880,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void OnPageSizeChange_SeeMyUploadedEventsAsProfessor(ChangeEventArgs e)
+        protected void OnPageSizeChange_SeeMyUploadedEventsAsProfessor(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value.ToString(), out int newSize))
             {
@@ -16876,8 +16890,8 @@ namespace QuizManager.Shared
             }
         }
 
-        private List<string> companyNameSuggestions = new List<string>();
-        private void HandleCompanyInput(ChangeEventArgs e)
+        protected List<string> companyNameSuggestions = new List<string>();
+        protected void HandleCompanyInput(ChangeEventArgs e)
         {
             searchCompanyNameENGAsProfessorToFindCompany = e.Value?.ToString();
             if (!string.IsNullOrWhiteSpace(searchCompanyNameENGAsProfessorToFindCompany) && searchCompanyNameENGAsProfessorToFindCompany.Length >= 2)
@@ -16894,15 +16908,15 @@ namespace QuizManager.Shared
             }
         }
 
-        private void SelectCompanyNameSuggestion(string suggestion)
+        protected void SelectCompanyNameSuggestion(string suggestion)
         {
             searchCompanyNameENGAsProfessorToFindCompany = suggestion;
             companyNameSuggestions.Clear();
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        private List<string> companyNameSuggestionsAsRG = new List<string>();
-        private void HandleCompanyInputAsRG(ChangeEventArgs e)
+        protected List<string> companyNameSuggestionsAsRG = new List<string>();
+        protected void HandleCompanyInputAsRG(ChangeEventArgs e)
         {
             searchCompanyNameENGAsRGToFindCompany = e.Value?.ToString();
             if (!string.IsNullOrWhiteSpace(searchCompanyNameENGAsRGToFindCompany) && searchCompanyNameENGAsRGToFindCompany.Length >= 2)
@@ -16919,14 +16933,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private void SelectCompanyNameSuggestionAsRG(string suggestion)
+        protected void SelectCompanyNameSuggestionAsRG(string suggestion)
         {
             searchCompanyNameENGAsRGToFindCompany = suggestion;
             companyNameSuggestionsAsRG.Clear();
         }
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        private async Task HandleAreasOfInterestInput_WhenSearchForCompanyAsProfessor(ChangeEventArgs e)
+        protected async Task HandleAreasOfInterestInput_WhenSearchForCompanyAsProfessor(ChangeEventArgs e)
         {
             searchCompanyAreasAsProfessorToFindCompany = e.Value?.ToString().Trim() ?? string.Empty;
 
@@ -16962,7 +16976,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task HandleAreasOfInterestInput_WhenSearchForCompanyAsRG(ChangeEventArgs e)
+        protected async Task HandleAreasOfInterestInput_WhenSearchForCompanyAsRG(ChangeEventArgs e)
         {
             searchCompanyAreasAsRGToFindCompany = e.Value?.ToString().Trim() ?? string.Empty;
 
@@ -16998,7 +17012,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void SelectAreasOfInterestSuggestion_WhenSearchForCompanyAsProfessor(string suggestion)
+        protected void SelectAreasOfInterestSuggestion_WhenSearchForCompanyAsProfessor(string suggestion)
         {
             if (!string.IsNullOrWhiteSpace(suggestion))
             {
@@ -17009,7 +17023,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void SelectAreasOfInterestSuggestion_WhenSearchForCompanyAsRG(string suggestion)
+        protected void SelectAreasOfInterestSuggestion_WhenSearchForCompanyAsRG(string suggestion)
         {
             if (!string.IsNullOrWhiteSpace(suggestion))
             {
@@ -17020,27 +17034,27 @@ namespace QuizManager.Shared
             }
         }
 
-        private void RemoveSelectedAreaOfInterest_WhenSearchForCompanyAsProfessor(string area)
+        protected void RemoveSelectedAreaOfInterest_WhenSearchForCompanyAsProfessor(string area)
         {
             selectedAreasOfInterest.Remove(area);
             StateHasChanged();
         }
 
-        private void RemoveSelectedAreaOfInterest_WhenSearchForCompanyAsRG(string area)
+        protected void RemoveSelectedAreaOfInterest_WhenSearchForCompanyAsRG(string area)
         {
             selectedAreasOfInterest.Remove(area);
             StateHasChanged();
         }
 
         // Pagination variables for student search as Professor
-        private int currentPage_StudentSearch = 1;
-        private int StudentSearchPerPage = 3; // Default value
+        protected int currentPage_StudentSearch = 1;
+        protected int StudentSearchPerPage = 3; // Default value
 
         // Total pages calculation
-        private int totalPages_StudentSearch =>
+        protected int totalPages_StudentSearch =>
             (int)Math.Ceiling((double)(searchResultsAsProfessorToFindStudent?.Count ?? 0) / StudentSearchPerPage);
 
-        private void OnPageSizeChangeForStudentSearch(ChangeEventArgs e)
+        protected void OnPageSizeChangeForStudentSearch(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -17050,14 +17064,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private IEnumerable<Student> GetPaginatedStudentSearchResults()
+        protected IEnumerable<Student> GetPaginatedStudentSearchResults()
         {
             return searchResultsAsProfessorToFindStudent?
                 .Skip((currentPage_StudentSearch - 1) * StudentSearchPerPage)
                 .Take(StudentSearchPerPage) ?? Enumerable.Empty<Student>();
         }
 
-        private List<int> GetVisiblePages_StudentSearch()
+        protected List<int> GetVisiblePages_StudentSearch()
         {
             var pages = new List<int>();
             int current = currentPage_StudentSearch;
@@ -17076,19 +17090,19 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPage_StudentSearch()
+        protected void GoToFirstPage_StudentSearch()
         {
             currentPage_StudentSearch = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPage_StudentSearch()
+        protected void GoToLastPage_StudentSearch()
         {
             currentPage_StudentSearch = totalPages_StudentSearch;
             StateHasChanged();
         }
 
-        private void PreviousPage_StudentSearch()
+        protected void PreviousPage_StudentSearch()
         {
             if (currentPage_StudentSearch > 1)
             {
@@ -17097,7 +17111,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPage_StudentSearch()
+        protected void NextPage_StudentSearch()
         {
             if (currentPage_StudentSearch < totalPages_StudentSearch)
             {
@@ -17106,7 +17120,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPage_StudentSearch(int page)
+        protected void GoToPage_StudentSearch(int page)
         {
             if (page > 0 && page <= totalPages_StudentSearch)
             {
@@ -17116,20 +17130,20 @@ namespace QuizManager.Shared
         }
 
         // Pagination variables for company search
-        private int currentPage_CompanySearch = 1;
-        private int CompanySearchPerPage = 3; // Default value
+        protected int currentPage_CompanySearch = 1;
+        protected int CompanySearchPerPage = 3; // Default value
                                               // Total pages calculation
-        private int totalPages_CompanySearch =>
+        protected int totalPages_CompanySearch =>
             (int)Math.Ceiling((double)(searchResultsAsProfessorToFindCompany?.Count ?? 0) / CompanySearchPerPage);
 
         // Pagination variables for company search as Research Group
-        private int currentPage_CompanySearchAsRG = 1;
-        private int CompanySearchPerPageAsRG = 3; // Default value
+        protected int currentPage_CompanySearchAsRG = 1;
+        protected int CompanySearchPerPageAsRG = 3; // Default value
                                                   // Total pages calculation
-        private int totalPages_CompanySearchAsRG =>
+        protected int totalPages_CompanySearchAsRG =>
             (int)Math.Ceiling((double)(searchResultsAsRGToFindCompany?.Count ?? 0) / CompanySearchPerPageAsRG);
 
-        private void OnPageSizeChangeForCompanySearch(ChangeEventArgs e)
+        protected void OnPageSizeChangeForCompanySearch(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -17139,14 +17153,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private IEnumerable<Company> GetPaginatedCompanySearchResults()
+        protected IEnumerable<Company> GetPaginatedCompanySearchResults()
         {
             return searchResultsAsProfessorToFindCompany?
                 .Skip((currentPage_CompanySearch - 1) * CompanySearchPerPage)
                 .Take(CompanySearchPerPage) ?? Enumerable.Empty<Company>();
         }
 
-        private List<int> GetVisiblePages_CompanySearch()
+        protected List<int> GetVisiblePages_CompanySearch()
         {
             var pages = new List<int>();
             int current = currentPage_CompanySearch;
@@ -17165,19 +17179,19 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPage_CompanySearch()
+        protected void GoToFirstPage_CompanySearch()
         {
             currentPage_CompanySearch = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPage_CompanySearch()
+        protected void GoToLastPage_CompanySearch()
         {
             currentPage_CompanySearch = totalPages_CompanySearch;
             StateHasChanged();
         }
 
-        private void PreviousPage_CompanySearch()
+        protected void PreviousPage_CompanySearch()
         {
             if (currentPage_CompanySearch > 1)
             {
@@ -17186,7 +17200,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPage_CompanySearch()
+        protected void NextPage_CompanySearch()
         {
             if (currentPage_CompanySearch < totalPages_CompanySearch)
             {
@@ -17195,7 +17209,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPage_CompanySearch(int page)
+        protected void GoToPage_CompanySearch(int page)
         {
             if (page > 0 && page <= totalPages_CompanySearch)
             {
@@ -17205,7 +17219,7 @@ namespace QuizManager.Shared
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
-        private void OnPageSizeChangeForCompanySearchAsRG(ChangeEventArgs e)
+        protected void OnPageSizeChangeForCompanySearchAsRG(ChangeEventArgs e)
         {
             if (int.TryParse(e.Value?.ToString(), out int newSize) && newSize > 0)
             {
@@ -17215,14 +17229,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private IEnumerable<Company> GetPaginatedCompanySearchResultsAsRG()
+        protected IEnumerable<Company> GetPaginatedCompanySearchResultsAsRG()
         {
             return searchResultsAsRGToFindCompany?
                 .Skip((currentPage_CompanySearchAsRG - 1) * CompanySearchPerPageAsRG)
                 .Take(CompanySearchPerPageAsRG) ?? Enumerable.Empty<Company>();
         }
         ///
-        private List<int> GetVisiblePages_CompanySearchAsRG()
+        protected List<int> GetVisiblePages_CompanySearchAsRG()
         {
             var pages = new List<int>();
             int current = currentPage_CompanySearchAsRG;
@@ -17241,19 +17255,19 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPage_CompanySearchAsRG()
+        protected void GoToFirstPage_CompanySearchAsRG()
         {
             currentPage_CompanySearchAsRG = 1;
             StateHasChanged();
         }
 
-        private void GoToLastPage_CompanySearchAsRG()
+        protected void GoToLastPage_CompanySearchAsRG()
         {
             currentPage_CompanySearchAsRG = totalPages_CompanySearchAsRG;
             StateHasChanged();
         }
 
-        private void PreviousPage_CompanySearchAsRG()
+        protected void PreviousPage_CompanySearchAsRG()
         {
             if (currentPage_CompanySearchAsRG > 1)
             {
@@ -17262,7 +17276,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPage_CompanySearchAsRG()
+        protected void NextPage_CompanySearchAsRG()
         {
             if (currentPage_CompanySearchAsRG < totalPages_CompanySearchAsRG)
             {
@@ -17271,7 +17285,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToPage_CompanySearchAsRG(int page)
+        protected void GoToPage_CompanySearchAsRG(int page)
         {
             if (page > 0 && page <= totalPages_CompanySearchAsRG)
             {
@@ -17281,18 +17295,18 @@ namespace QuizManager.Shared
         }
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        private AnnouncementAsProfessor? selectedProfessorAnnouncementToSeeDetails;
-        private void OpenProfessorAnnouncementDetailsModal(AnnouncementAsProfessor currentAnnouncement)
+        protected AnnouncementAsProfessor? selectedProfessorAnnouncementToSeeDetails;
+        protected void OpenProfessorAnnouncementDetailsModal(AnnouncementAsProfessor currentAnnouncement)
         {
             selectedProfessorAnnouncementToSeeDetails = currentAnnouncement;
         }
 
-        private void CloseProfessorAnnouncementDetailsModal()
+        protected void CloseProfessorAnnouncementDetailsModal()
         {
             selectedProfessorAnnouncementToSeeDetails = null;
         }
 
-        private async Task HandleProfessorThesisFileUpload(InputFileChangeEventArgs e)
+        protected async Task HandleProfessorThesisFileUpload(InputFileChangeEventArgs e)
         {
             var file = e.File;  // Access the selected file
             if (file != null)
@@ -17323,18 +17337,18 @@ namespace QuizManager.Shared
             }
         }
 
-        private bool showExpandedAreasInProfessorThesisEditModal = false;
-        private bool showExpandedSkillsInProfessorThesisEditModal = false;
-        private List<Area> SelectedAreasToEditForProfessorThesis = new List<Area>();
-        private List<Skill> SelectedSkillsToEditForProfessorThesis = new List<Skill>();
+        protected bool showExpandedAreasInProfessorThesisEditModal = false;
+        protected bool showExpandedSkillsInProfessorThesisEditModal = false;
+        protected List<Area> SelectedAreasToEditForProfessorThesis = new List<Area>();
+        protected List<Skill> SelectedSkillsToEditForProfessorThesis = new List<Skill>();
 
-        private void ToggleAreasInEditProfessorThesisModal() =>
+        protected void ToggleAreasInEditProfessorThesisModal() =>
             showExpandedAreasInProfessorThesisEditModal = !showExpandedAreasInProfessorThesisEditModal;
 
-        private void ToggleSkillsInEditProfessorThesisModal() =>
+        protected void ToggleSkillsInEditProfessorThesisModal() =>
             showExpandedSkillsInProfessorThesisEditModal = !showExpandedSkillsInProfessorThesisEditModal;
 
-        private void OnCheckedChangedForEditProfessorThesisAreas(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForEditProfessorThesisAreas(ChangeEventArgs e, Area area)
         {
             if (e.Value is bool isChecked)
             {
@@ -17356,7 +17370,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void OnCheckedChangedForEditProfessorThesisSkills(ChangeEventArgs e, Skill skill)
+        protected void OnCheckedChangedForEditProfessorThesisSkills(ChangeEventArgs e, Skill skill)
         {
             if (e.Value is bool isChecked)
             {
@@ -17378,7 +17392,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private void OpenUrl(string url)
+        protected void OpenUrl(string url)
         {
             if (!string.IsNullOrWhiteSpace(url))
             {
@@ -17390,7 +17404,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void OpenMap(string location)
+        protected void OpenMap(string location)
         {
             if (!string.IsNullOrWhiteSpace(location))
             {
@@ -17399,7 +17413,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task<IEnumerable<ProfessorInternshipApplied>> GetApplicantsForProfessorInternship(long professorInternshipRNG)
+        protected async Task<IEnumerable<ProfessorInternshipApplied>> GetApplicantsForProfessorInternship(long professorInternshipRNG)
         {
             // Get the professor internship details with professor information
             var internship = await dbContext.ProfessorInternships
@@ -17426,16 +17440,16 @@ namespace QuizManager.Shared
 
         }
 
-        private bool showExpandedAreasInProfessorInternshipEditModal = false;
-        private List<Area> SelectedAreasToEditForProfessorInternship = new List<Area>();
-        private bool showExpandedAreasInProfessorEventEditModal = false;
+        protected bool showExpandedAreasInProfessorInternshipEditModal = false;
+        protected List<Area> SelectedAreasToEditForProfessorInternship = new List<Area>();
+        protected bool showExpandedAreasInProfessorEventEditModal = false;
         // Method to close the edit popup
-        private void CloseEditPopupForProfessorInternships()
+        protected void CloseEditPopupForProfessorInternships()
         {
             isEditPopupVisibleForProfessorInternships = false;
         }
 
-        private async Task SaveEditedProfessorInternship()
+        protected async Task SaveEditedProfessorInternship()
         {
             try
             {
@@ -17514,7 +17528,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileUploadToEditProfessorInternshipAttachment(InputFileChangeEventArgs e)
+        protected async Task HandleFileUploadToEditProfessorInternshipAttachment(InputFileChangeEventArgs e)
         {
             var file = e.File;  // Access the selected file
             if (file != null)
@@ -17555,13 +17569,13 @@ namespace QuizManager.Shared
         }
 
         // Method to toggle areas visibility in edit modal
-        private void ToggleAreasInEditProfessorInternshipModal()
+        protected void ToggleAreasInEditProfessorInternshipModal()
         {
             showExpandedAreasInProfessorInternshipEditModal = !showExpandedAreasInProfessorInternshipEditModal;
         }
 
         // Method to handle area selection changes
-        private void OnCheckedChangedForEditProfessorInternshipAreas(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForEditProfessorInternshipAreas(ChangeEventArgs e, Area area)
         {
             var isChecked = (bool)e.Value;
 
@@ -17583,7 +17597,7 @@ namespace QuizManager.Shared
         }
 
 
-        private void ClearProfessorEventField(int fieldNumber)
+        protected void ClearProfessorEventField(int fieldNumber)
         {
             switch (fieldNumber)
             {
@@ -17599,12 +17613,12 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ToggleAreasInEditProfessorEventModal()
+        protected void ToggleAreasInEditProfessorEventModal()
         {
             showExpandedAreasInProfessorEventEditModal = !showExpandedAreasInProfessorEventEditModal;
         }
 
-        private void OnCheckedChangedForEditProfessorEventAreas(ChangeEventArgs e, Area area)
+        protected void OnCheckedChangedForEditProfessorEventAreas(ChangeEventArgs e, Area area)
         {
             var isChecked = (bool)e.Value;
 
@@ -17625,7 +17639,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task HandleFileUploadToEditProfessorEventAttachment(InputFileChangeEventArgs e)
+        protected async Task HandleFileUploadToEditProfessorEventAttachment(InputFileChangeEventArgs e)
         {
             var file = e.File;
             if (file != null)
@@ -17641,9 +17655,9 @@ namespace QuizManager.Shared
             }
         }
 
-        private List<InterestInProfessorEventAsCompany> InterestedCompaniesForProfessorEvent = new();
-        private long? selectedEventIdForCompaniesWhenShowInterestForProfessorEvent;
-        private async Task ShowInterestedCompaniesInProfessorEvent(long professoreventRNG)
+        protected List<InterestInProfessorEventAsCompany> InterestedCompaniesForProfessorEvent = new();
+        protected long? selectedEventIdForCompaniesWhenShowInterestForProfessorEvent;
+        protected async Task ShowInterestedCompaniesInProfessorEvent(long professoreventRNG)
         {
             if (selectedEventIdForCompaniesWhenShowInterestForProfessorEvent == professoreventRNG)
             {
@@ -17679,31 +17693,31 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private bool showModalForCompaniesAtProfessorEventInterest = false;
-        private InterestInProfessorEventAsCompany selectedCompanyToShowDetailsForInterestinProfessorEvent;
+        protected bool showModalForCompaniesAtProfessorEventInterest = false;
+        protected InterestInProfessorEventAsCompany selectedCompanyToShowDetailsForInterestinProfessorEvent;
 
-        private void ShowCompanyDetailsAtProfessorEventInterest(InterestInProfessorEventAsCompany company)
+        protected void ShowCompanyDetailsAtProfessorEventInterest(InterestInProfessorEventAsCompany company)
         {
             selectedCompanyToShowDetailsForInterestinProfessorEvent = company;
             showModalForCompaniesAtProfessorEventInterest = true;
             StateHasChanged();
         }
 
-        private void CloseCompanyDetailsModalAtProfessorEventInterest()
+        protected void CloseCompanyDetailsModalAtProfessorEventInterest()
         {
             showModalForCompaniesAtProfessorEventInterest = false;
             selectedCompanyToShowDetailsForInterestinProfessorEvent = null;
         }
 
-        private async Task ToggleFormVisibilityToShowStudentStatsAsAdmin()
+        protected async Task ToggleFormVisibilityToShowStudentStatsAsAdmin()
         {
             isStudentStatsFormVisibleToShowStudentStatsAsAdmin = !isStudentStatsFormVisibleToShowStudentStatsAsAdmin;
             StateHasChanged();
         }
 
-        private Dictionary<string, int> areaDistribution = new();
-        private Dictionary<string, int> skillDistributionforadmin = new();
-        private void ToggleAnalyticsVisibility()
+        protected Dictionary<string, int> areaDistribution = new();
+        protected Dictionary<string, int> skillDistributionforadmin = new();
+        protected void ToggleAnalyticsVisibility()
         {
             isAnalyticsVisible = !isAnalyticsVisible;
             if (isAnalyticsVisible)
@@ -17712,7 +17726,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void LoadAnalytics()
+        protected void LoadAnalytics()
         {
             areaDistribution.Clear();
             skillDistributionforadmin.Clear();
@@ -17745,7 +17759,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadStudentsWithAuth0DetailsAsync()
+        protected async Task LoadStudentsWithAuth0DetailsAsync()
         {
             var students = await dbContext.Students.ToListAsync();
             var studentsWithDetails = new List<StudentWithAuth0Details>();
@@ -17808,13 +17822,13 @@ namespace QuizManager.Shared
             StudentsWithAuth0Details = results.ToList();
         }
 
-        private async Task<CompanyJob> GetJobDetails(long rngForJob)
+        protected async Task<CompanyJob> GetJobDetails(long rngForJob)
         {
             return await dbContext.CompanyJobs
                 .FirstOrDefaultAsync(j => j.RNGForPositionUploaded == rngForJob);
         }
 
-        private async Task LoadCompanyJobData()
+        protected async Task LoadCompanyJobData()
         {
             try
             {
@@ -17848,7 +17862,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task LoadAllStudentData()
+        protected async Task LoadAllStudentData()
         {
             try
             {
@@ -17883,7 +17897,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private string GetStatusColor(string status)
+        protected string GetStatusColor(string status)
         {
             return status switch
             {
@@ -17895,7 +17909,7 @@ namespace QuizManager.Shared
             };
         }
 
-        private async Task HandleProfessorDateChange(ChangeEventArgs e)
+        protected async Task HandleProfessorDateChange(ChangeEventArgs e)
         {
             if (DateTime.TryParse(e.Value?.ToString(), out DateTime newDate))
             {
@@ -17904,8 +17918,8 @@ namespace QuizManager.Shared
             }
         }
 
-        private bool hasExistingEventsOnSelectedDateForProfessor = false;
-        private async Task CheckExistingEventsForProfessorDate()
+        protected bool hasExistingEventsOnSelectedDateForProfessor = false;
+        protected async Task CheckExistingEventsForProfessorDate()
         {
             if (professorEvent.ProfessorEventActiveDate.Date >= DateTime.Today.Date)
             {
@@ -17931,7 +17945,7 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
-        private async Task LoadResearchGroupStatistics()
+        protected async Task LoadResearchGroupStatistics()
         {
             try
             {
@@ -17984,7 +17998,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task FetchPublicationsFromGoogleScholar()
+        protected async Task FetchPublicationsFromGoogleScholar()
         {
             try
             {
@@ -18063,10 +18077,10 @@ namespace QuizManager.Shared
         }
 
         // Add these fields to your component
-        private bool showFacultyMembersModal = false;
-        private bool showNonFacultyMembersModal = false;
-        private List<FacultyMemberDetail> facultyMembersDetails = new();
-        private List<NonFacultyMemberDetail> nonFacultyMembersDetails = new();
+        protected bool showFacultyMembersModal = false;
+        protected bool showNonFacultyMembersModal = false;
+        protected List<FacultyMemberDetail> facultyMembersDetails = new();
+        protected List<NonFacultyMemberDetail> nonFacultyMembersDetails = new();
 
         // Add these classes for the modal data
         public class FacultyMemberDetail
@@ -18091,7 +18105,7 @@ namespace QuizManager.Shared
         }
 
         // Add these methods
-        private async Task ShowFacultyMembersDetails()
+        protected async Task ShowFacultyMembersDetails()
         {
             try
             {
@@ -18123,7 +18137,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private async Task ShowNonFacultyMembersDetails()
+        protected async Task ShowNonFacultyMembersDetails()
         {
             try
             {
@@ -18156,20 +18170,20 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseFacultyMembersModal()
+        protected void CloseFacultyMembersModal()
         {
             showFacultyMembersModal = false;
             StateHasChanged();
         }
 
-        private void CloseNonFacultyMembersModal()
+        protected void CloseNonFacultyMembersModal()
         {
             showNonFacultyMembersModal = false;
             StateHasChanged();
         }
 
-        private bool showResearchActionsModal = false;
-        private List<ResearchActionDetail> researchActionsDetails = new();
+        protected bool showResearchActionsModal = false;
+        protected List<ResearchActionDetail> researchActionsDetails = new();
         public class ResearchActionDetail
         {
             public string ProjectTitle { get; set; } = string.Empty;
@@ -18183,7 +18197,7 @@ namespace QuizManager.Shared
             public string ProjectStatus { get; set; } = string.Empty; // Use the actual status field
         }
 
-        private async Task ShowResearchActionsDetails()
+        protected async Task ShowResearchActionsDetails()
         {
             try
             {
@@ -18215,14 +18229,14 @@ namespace QuizManager.Shared
             }
         }
 
-        private void CloseResearchActionsModal()
+        protected void CloseResearchActionsModal()
         {
             showResearchActionsModal = false;
             StateHasChanged();
         }
 
-        private bool showPatentsModal = false;
-        private List<PatentDetail> patentsDetails = new();
+        protected bool showPatentsModal = false;
+        protected List<PatentDetail> patentsDetails = new();
         public class PatentDetail
         {
             public string PatentTitle { get; set; } = string.Empty;
@@ -18233,7 +18247,7 @@ namespace QuizManager.Shared
             public string PatentStatus { get; set; } = string.Empty;
         }
 
-        private async Task ShowPatentsDetails()
+        protected async Task ShowPatentsDetails()
         {
             try
             {
@@ -18261,13 +18275,13 @@ namespace QuizManager.Shared
             }
         }
 
-        private void ClosePatentsModal()
+        protected void ClosePatentsModal()
         {
             showPatentsModal = false;
             StateHasChanged();
         }
 
-        private List<int> GetVisiblePagesForCompanyAnnouncements()
+        protected List<int> GetVisiblePagesForCompanyAnnouncements()
         {
             var pages = new List<int>();
             int current = currentPageForCompanyAnnouncements;
@@ -18301,12 +18315,12 @@ namespace QuizManager.Shared
             return pages;
         }
 
-        private void GoToFirstPageForCompanyAnnouncements()
+        protected void GoToFirstPageForCompanyAnnouncements()
         {
             currentPageForCompanyAnnouncements = 1;
         }
 
-        private void PreviousPageForCompanyAnnouncements()
+        protected void PreviousPageForCompanyAnnouncements()
         {
             if (currentPageForCompanyAnnouncements > 1)
             {
@@ -18314,7 +18328,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForCompanyAnnouncements()
+        protected void NextPageForCompanyAnnouncements()
         {
             if (currentPageForCompanyAnnouncements < totalPagesForCompanyAnnouncements)
             {
@@ -18322,22 +18336,22 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToLastPageForCompanyAnnouncements()
+        protected void GoToLastPageForCompanyAnnouncements()
         {
             currentPageForCompanyAnnouncements = totalPagesForCompanyAnnouncements;
         }
 
-        private void GoToPageForCompanyAnnouncements(int pageNumber)
+        protected void GoToPageForCompanyAnnouncements(int pageNumber)
         {
             currentPageForCompanyAnnouncements = pageNumber;
         }
 
-        private void GoToFirstPageForProfessorAnnouncements()
+        protected void GoToFirstPageForProfessorAnnouncements()
         {
             currentPageForProfessorAnnouncements = 1;
         }
 
-        private void PreviousPageForProfessorAnnouncements()
+        protected void PreviousPageForProfessorAnnouncements()
         {
             if (currentPageForProfessorAnnouncements > 1)
             {
@@ -18345,7 +18359,7 @@ namespace QuizManager.Shared
             }
         }
 
-        private void NextPageForProfessorAnnouncements()
+        protected void NextPageForProfessorAnnouncements()
         {
             if (currentPageForProfessorAnnouncements < totalPagesForProfessorAnnouncements)
             {
@@ -18353,17 +18367,17 @@ namespace QuizManager.Shared
             }
         }
 
-        private void GoToLastPageForProfessorAnnouncements()
+        protected void GoToLastPageForProfessorAnnouncements()
         {
             currentPageForProfessorAnnouncements = totalPagesForProfessorAnnouncements;
         }
 
-        private void GoToPageForProfessorAnnouncements(int pageNumber)
+        protected void GoToPageForProfessorAnnouncements(int pageNumber)
         {
             currentPageForProfessorAnnouncements = pageNumber;
         }
 
-        private List<int> GetVisiblePagesForProfessorAnnouncements()
+        protected List<int> GetVisiblePagesForProfessorAnnouncements()
         {
             var pages = new List<int>();
             int current = currentPageForProfessorAnnouncements;
@@ -18405,31 +18419,31 @@ namespace QuizManager.Shared
         string SelectedSkillDepartment = "";
 
         // Event handlers for dropdowns
-        private void FilterAreasBySchool(ChangeEventArgs e)
+        protected void FilterAreasBySchool(ChangeEventArgs e)
         {
             SelectedAreaSchool = e.Value?.ToString();
             UpdateAreasChart();
         }
 
-        private void FilterAreasByDepartment(ChangeEventArgs e)
+        protected void FilterAreasByDepartment(ChangeEventArgs e)
         {
             SelectedAreaDepartment = e.Value?.ToString();
             UpdateAreasChart();
         }
 
-        private void FilterSkillsBySchool(ChangeEventArgs e)
+        protected void FilterSkillsBySchool(ChangeEventArgs e)
         {
             SelectedSkillSchool = e.Value?.ToString();
             UpdateSkillsChart();
         }
 
-        private void FilterSkillsByDepartment(ChangeEventArgs e)
+        protected void FilterSkillsByDepartment(ChangeEventArgs e)
         {
             SelectedSkillDepartment = e.Value?.ToString();
             UpdateSkillsChart();
         }
 
-        private void UpdateAreasChart()
+        protected void UpdateAreasChart()
         {
             var filtered = StudentsWithAuth0Details
                 .Where(s => (string.IsNullOrEmpty(SelectedAreaSchool) || s.School == SelectedAreaSchool) &&
@@ -18462,7 +18476,7 @@ namespace QuizManager.Shared
                 null); // null means don't update skills
         }
 
-        private void UpdateSkillsChart()
+        protected void UpdateSkillsChart()
         {
             var filtered = StudentsWithAuth0Details
                 .Where(s => (string.IsNullOrEmpty(SelectedSkillSchool) || s.School == SelectedSkillSchool) &&
@@ -18496,7 +18510,7 @@ namespace QuizManager.Shared
         }
 
         // Add this method to update both charts when needed
-        private void UpdateBothCharts()
+        protected void UpdateBothCharts()
         {
             UpdateAreasChart();
             UpdateSkillsChart();
