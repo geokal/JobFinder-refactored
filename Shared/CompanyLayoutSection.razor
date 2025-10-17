@@ -3430,7 +3430,7 @@
                                                     <td style="color: #9D00FF;">
                                                         @companythesis.RNGForThesisUploadedAsCompany_HashedAsUniqueID
                                                     </td>
-                                                    <td @onclick="() => ToggleCompanyThesesExpanded(companythesis.RNGForThesisUploadedAsCompany)" style="cursor: pointer;" title="Κλικ για εμφάνιση λεπτομερειών">
+                                                    <td @onclick="() => InvokeToggleCompanyThesesExpandedAsync(companythesis.RNGForThesisUploadedAsCompany)" style="cursor: pointer;" title="Κλικ για εμφάνιση λεπτομερειών">
                                                         @companythesis.CompanyThesisTitle
                                                     </td>
                                                     <td>@companythesis.CompanyThesisStatus</td>
@@ -3446,16 +3446,16 @@
                                                             </button>                                                                                                                                                                       
                                                             @if (companythesis.CompanyThesisStatus != "Δημοσιευμένη")
                                                             {
-                                                                 <button class="btn btn-secondary" @onclick="() => EditCompanyThesisDetails(companythesis)" title="Επεξεργασία Θέσης">
+                                                                <button class="btn btn-secondary" @onclick="() => InvokeEditCompanyThesisDetailsAsync(companythesis)" title="Επεξεργασία Θέσης">
                                                                     <i class="fas fa-pencil-alt icon-button"></i>
                                                                 </button>
-                                                                <button class="btn btn-secondary" @onclick='async () => await UpdateThesisStatusAsCompany(companythesis.Id, "Δημοσιευμένη")' title="Δημοσίευση Θέσης">
+                                                                <button class="btn btn-secondary" @onclick='async () => await InvokeUpdateThesisStatusAsCompanyAsync(companythesis.Id, "Δημοσιευμένη")' title="Δημοσίευση Θέσης">
                                                                     <i class="fas fa-arrow-up icon-button" style="color: cornflowerblue;"></i>
                                                                 </button>
                                                             }
                                                             else
                                                             {
-                                                                <button class="btn btn-secondary" @onclick='async () => await UpdateThesisStatusAsCompany(companythesis.Id, "Αποσυρμένη")' title="Απόσυρση Θέσης">
+                                                                <button class="btn btn-secondary" @onclick='async () => await InvokeUpdateThesisStatusAsCompanyAsync(companythesis.Id, "Αποσυρμένη")' title="Απόσυρση Θέσης">
                                                                     <i class="fas fa-times icon-button" style="color: red;"></i>
                                                                 </button>
                                                             }
@@ -3465,11 +3465,11 @@
                                                                     <i class="fas fa-arrow-down icon-button" style="color: yellow;"></i>
                                                                 </button>
                                                             }
-                                                                <button class="btn btn-secondary" @onclick="() => ToggleCompanyThesesExpanded(companythesis.RNGForThesisUploadedAsCompany)" title="Εμφάνιση Υποψηφίων">
+                                                                <button class="btn btn-secondary" @onclick="() => InvokeToggleCompanyThesesExpandedAsync(companythesis.RNGForThesisUploadedAsCompany)" title="Εμφάνιση Υποψηφίων">
                                                                     <i class="fa-solid fa-graduation-cap icon-button"></i>
                                                                 </button>
 
-                                                                <button class="btn btn-info ml-2" @onclick="() => ToggleCompanyThesesExpandedForProfessorInterest(companythesis.RNGForThesisUploadedAsCompany)" title="Καθηγητής που Ενδιαφέρθηκε">
+                                                                <button class="btn btn-info ml-2" @onclick="() => InvokeToggleCompanyThesesExpandedForProfessorInterestAsync(companythesis.RNGForThesisUploadedAsCompany)" title="Καθηγητής που Ενδιαφέρθηκε">
                                                                     <i class="fa-solid fa-user-tie icon-button"></i>
                                                                 </button>
 
@@ -3562,10 +3562,10 @@
                                                                         </td>
                                                                     </tr>
                                                                 }
-                                                                else if (companyThesisApplicantsMap.ContainsKey(companythesis.RNGForThesisUploadedAsCompany) 
-                                                                         && companyThesisApplicantsMap[companythesis.RNGForThesisUploadedAsCompany].Any())
+                                                                else if (CompanyThesisApplicantsMap.ContainsKey(companythesis.RNGForThesisUploadedAsCompany)
+                                                                         && CompanyThesisApplicantsMap[companythesis.RNGForThesisUploadedAsCompany].Any())
                                                                 {
-                                                                    @foreach (var applicant in companyThesisApplicantsMap[companythesis.RNGForThesisUploadedAsCompany])
+                                                                    @foreach (var applicant in CompanyThesisApplicantsMap[companythesis.RNGForThesisUploadedAsCompany])
                                                                     {
                                                                         var student = studentDataCache.TryGetValue(applicant.StudentEmailAppliedForThesis, out var s) ? s : null;
                                                                         var status = applicant.CompanyThesisStatusAppliedAtStudentSide ?? "N/A";
@@ -3600,7 +3600,7 @@
                                                                                 @if (status == "Σε Επεξεργασία")
                                                                                 {
                                                                                     <div style="display: flex; gap: 10px; justify-content: center;">
-                                                                                        <span @onclick="() => ConfirmAndAcceptStudentThesisApplicationAsCompany(applicant.RNGForCompanyThesisApplied, applicant.StudentUniqueIDAppliedForThesis)" 
+                                                                                        <span @onclick="() => InvokeConfirmAndAcceptStudentThesisApplicationAsCompanyAsync(applicant.RNGForCompanyThesisApplied, applicant.StudentUniqueIDAppliedForThesis)"
                                                                                               title="Αποδοχή Αίτησης" style="cursor: pointer;">
                                                                                             <i class="fas fa-check" style="color: green; font-size: 24px;"></i>
                                                                                         </span>
@@ -3699,7 +3699,7 @@
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                @if (professorDataCache == null)
+                                                                @if (ProfessorDataCache == null)
                                                                 {
                                                                     <!-- Loading state -->
                                                                     <tr>
@@ -3713,7 +3713,7 @@
                                                                 }
                                                                 else if (companythesis.IsProfessorInteresetedInCompanyThesis)
                                                                 {
-                                                                    var professor = professorDataCache.TryGetValue(companythesis.ProfessorEmailInterestedInCompanyThesis, out var p) ? p : null;
+                                                                        var professor = (ProfessorDataCache != null && ProfessorDataCache.TryGetValue(companythesis.ProfessorEmailInterestedInCompanyThesis, out var p)) ? p : null;
         
                                                                     <tr>
                                                                         <td>
@@ -3801,37 +3801,37 @@
 
 
 
-                                            @if (isModalVisibleToEditCompanyThesisDetails)
+                                            @if (IsModalVisibleToEditCompanyThesisDetails && SelectedCompanyThesis != null)
                                             {
                                                 <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog" aria-modal="true">
                                                     <div class="modal-dialog modal-lg" role="document">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h5 class="modal-title" style="color: #007BFF;">@selectedCompanyThesis.CompanyThesisTitle</h5>
+                                                                <h5 class="modal-title" style="color: #007BFF;">@SelectedCompanyThesis.CompanyThesisTitle</h5>
                                                                 <button type="button" class="close" @onclick="CloseCompanyThesisEditModal">&times;</button>
                                                             </div>
                                                             <div class="modal-body">
                                                                 <div class="form-group">
                                                                     <label for="editThesisTitle"><strong>Τίτλος Θέσης</strong></label>
-                                                                    <input type="text" id="editThesisTitle" class="form-control" @bind="selectedCompanyThesis.CompanyThesisTitle" />
+                                                                    <input type="text" id="editThesisTitle" class="form-control" @bind="SelectedCompanyThesis.CompanyThesisTitle" />
                                                                 </div>
 
                                                                 <div class="form-group">
                                                                     <label for="editSupervisor"><strong>Υπεύθυνος</strong></label>
-                                                                    <input type="text" id="editSupervisor" class="form-control" @bind="selectedCompanyThesis.CompanyThesisCompanySupervisorFullName" />
+                                                                    <input type="text" id="editSupervisor" class="form-control" @bind="SelectedCompanyThesis.CompanyThesisCompanySupervisorFullName" />
                                                                 </div>
 
                                                                 <div class="form-group">
                                                                     <label for="editThesisDescription"><strong>Περιγραφή</strong></label>
-                                                                    <textarea id="editThesisDescription" class="form-control" rows="4" @bind="selectedCompanyThesis.CompanyThesisDescriptionsUploaded"></textarea>
+                                                                    <textarea id="editThesisDescription" class="form-control" rows="4" @bind="SelectedCompanyThesis.CompanyThesisDescriptionsUploaded"></textarea>
                                                                 </div>
                                                                 <br/>
                                                                 <div class="form-group">
                                                                     <label for="editjobAreas" @onclick="ToggleAreasInEditCompanyThesisModalAsCompany" style="cursor: pointer;">
-                                                                        <strong>Τομείς Πτυχιακής</strong> 
-                                                                        <i class="fas @(showExpandedAreasInCompanyThesisEditModalAsCompany ? "fa-chevron-up" : "fa-chevron-down")"></i>
+                                                                        <strong>Τομείς Πτυχιακής</strong>
+                                                                        <i class="fas @(ShowExpandedAreasInCompanyThesisEditModalAsCompany ? "fa-chevron-up" : "fa-chevron-down")"></i>
                                                                     </label>
-                                                                    @if (showExpandedAreasInCompanyThesisEditModalAsCompany)
+                                                                    @if (ShowExpandedAreasInCompanyThesisEditModalAsCompany)
                                                                     {
                                                                         <div id="toggleCheckboxes" class="checkbox-container">
                                                                             @foreach (var area in Areas)
@@ -3841,7 +3841,7 @@
                                                                                            id="area_@area.Id"
                                                                                            class="form-check-input"
                                                                                            @onchange="(e) => OnCheckedChangedForEditCompanyThesisAreas(e, area)"
-                                                                                           checked="@(selectedCompanyThesis.CompanyThesisAreasUpload.Contains(area.AreaName))" />
+                                                                                           checked="@(SelectedCompanyThesis.CompanyThesisAreasUpload.Contains(area.AreaName))" />
                                                                                     <label class="form-check-label" for="area_@area.Id">@area.AreaName</label>
                                                                                 </div>
                                                                             }
@@ -3857,14 +3857,14 @@
                                                                     @if (showExpandedSkillsInCompanyThesisEditModalAsCompany)
                                                                     {
                                                                         <div id="toggleCheckboxesSkills" class="checkbox-container">
-                                                                            @foreach (var skill in Skills) 
+                                                                            @foreach (var skill in Skills)
                                                                             {
                                                                                 <div class="form-check">
                                                                                     <input type="checkbox"
                                                                                            id="skill_@skill.Id"
                                                                                            class="form-check-input"
                                                                                            @onchange="(e) => OnCheckedChangedForEditCompanyThesisSkills(e, skill)"
-                                                                                           checked="@(selectedCompanyThesis.CompanyThesisSkillsNeeded.Contains(skill.SkillName))" />
+                                                                                           checked="@(SelectedCompanyThesis.CompanyThesisSkillsNeeded.Contains(skill.SkillName))" />
                                                                                     <label class="form-check-label" for="skill_@skill.Id">@skill.SkillName</label>
                                                                                 </div>
                                                                             }
@@ -3875,22 +3875,22 @@
 
                                                                 <div class="form-group">
                                                                     <label for="editThesisDepartment"><strong>Τμήμα</strong></label>
-                                                                    <input type="text" id="editThesisDepartment" class="form-control" @bind="selectedCompanyThesis.CompanyThesisDepartment" />
+                                                                    <input type="text" id="editThesisDepartment" class="form-control" @bind="SelectedCompanyThesis.CompanyThesisDepartment" />
                                                                 </div>
 
                                                                 <div class="form-group">
                                                                     <label for="editThesisStartDate"><strong>Ημερομηνία Έναρξης</strong></label>
-                                                                    <input type="date" id="editThesisStartDate" class="form-control" @bind="selectedCompanyThesis.CompanyThesisStartingDate" />
+                                                                    <input type="date" id="editThesisStartDate" class="form-control" @bind="SelectedCompanyThesis.CompanyThesisStartingDate" />
                                                                 </div>
 
                                                                 <div class="form-group">
                                                                     <label for="editThesisEmail"><strong>Email Επικοινωνίας</strong></label>
-                                                                    <input type="email" id="editThesisEmail" class="form-control" @bind="selectedCompanyThesis.CompanyThesisContactPersonEmail" />
+                                                                    <input type="email" id="editThesisEmail" class="form-control" @bind="SelectedCompanyThesis.CompanyThesisContactPersonEmail" />
                                                                 </div>
 
                                                                 <div class="form-group">
                                                                     <label for="editThesisPhone"><strong>Τηλέφωνο Επικοινωνίας</strong></label>
-                                                                    <input type="tel" id="editThesisPhone" class="form-control" @bind="selectedCompanyThesis.CompanyThesisContactPersonTelephone" />
+                                                                    <input type="tel" id="editThesisPhone" class="form-control" @bind="SelectedCompanyThesis.CompanyThesisContactPersonTelephone" />
                                                                 </div>
                                                             </div>
                                                             <div class="modal-footer">
@@ -6599,7 +6599,7 @@
                                                                         <tbody>
                                                                             @foreach (var interest in filteredProfessorInterestForCompanyEvents)
                                                                             {
-                                                                                var professor = professorDataCache.TryGetValue(interest.ProfessorEmailShowInterestForCompanyEvent, out var p) ? p : null;
+                                                                                var professor = (ProfessorDataCache != null && ProfessorDataCache.TryGetValue(interest.ProfessorEmailShowInterestForCompanyEvent, out var p)) ? p : null;
                                                                                 <tr>
                                                                                     <td>
                                                                                         <a href="#" @onclick="() => ShowProfessorDetailsAtCompanyEventInterest(interest)">

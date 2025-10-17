@@ -946,7 +946,17 @@
                             }
                             else if (UserRole == "Company")
                             {
-                                <CompanyLayoutSection @@key="UserRole" />
+                                <CompanyLayoutSection @@key="UserRole"
+                                                     EditCompanyThesisDetailsRequested="EditCompanyThesisDetails"
+                                                     UpdateThesisStatusAsCompanyAsync="UpdateThesisStatusAsCompany"
+                                                     ToggleCompanyThesesExpandedAsync="ToggleCompanyThesesExpanded"
+                                                     ToggleCompanyThesesExpandedForProfessorInterestAsync="ToggleCompanyThesesExpandedForProfessorInterest"
+                                                     ConfirmAndAcceptStudentThesisApplicationAsCompanyAsync="ConfirmAndAcceptStudentThesisApplicationAsCompany"
+                                                     CompanyThesisApplicantsMap="companyThesisApplicantsMap"
+                                                     ProfessorDataCache="professorDataCache"
+                                                     IsModalVisibleToEditCompanyThesisDetails="isModalVisibleToEditCompanyThesisDetails"
+                                                     SelectedCompanyThesis="selectedCompanyThesis"
+                                                     ShowExpandedAreasInCompanyThesisEditModalAsCompany="showExpandedAreasInCompanyThesisEditModalAsCompany" />
                             }
                             else if (UserRole == "Professor")
                             {

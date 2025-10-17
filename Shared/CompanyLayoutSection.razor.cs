@@ -33,6 +33,17 @@ namespace QuizManager.Shared
         [Inject] private NavigationManager NavigationManager { get; set; }
         [Inject] private IJSRuntime JS { get; set; }
 
+        [Parameter] public EventCallback<CompanyThesis> EditCompanyThesisDetailsRequested { get; set; }
+        [Parameter] public Func<int, string, Task>? UpdateThesisStatusAsCompanyAsync { get; set; }
+        [Parameter] public Func<long, Task>? ToggleCompanyThesesExpandedAsync { get; set; }
+        [Parameter] public Func<long, Task>? ToggleCompanyThesesExpandedForProfessorInterestAsync { get; set; }
+        [Parameter] public Func<long, string, Task>? ConfirmAndAcceptStudentThesisApplicationAsCompanyAsync { get; set; }
+        [Parameter] public Dictionary<long, IEnumerable<CompanyThesisApplied>> CompanyThesisApplicantsMap { get; set; } = new();
+        [Parameter] public Dictionary<string, Professor>? ProfessorDataCache { get; set; }
+        [Parameter] public bool IsModalVisibleToEditCompanyThesisDetails { get; set; }
+        [Parameter] public CompanyThesis? SelectedCompanyThesis { get; set; }
+        [Parameter] public bool ShowExpandedAreasInCompanyThesisEditModalAsCompany { get; set; }
+
         // Company-specific properties
         private Company companyData;
         private List<CompanyJob> jobs = new();
@@ -201,6 +212,23 @@ namespace QuizManager.Shared
                     ? departments
                     : new List<string>();
 
+        protected Task InvokeEditCompanyThesisDetailsAsync(CompanyThesis thesis) =>
+            EditCompanyThesisDetailsRequested.HasDelegate
+                ? EditCompanyThesisDetailsRequested.InvokeAsync(thesis)
+                : Task.CompletedTask;
+
+        protected Task InvokeUpdateThesisStatusAsCompanyAsync(int companyThesisId, string status) =>
+            UpdateThesisStatusAsCompanyAsync?.Invoke(companyThesisId, status) ?? Task.CompletedTask;
+
+        protected Task InvokeToggleCompanyThesesExpandedAsync(long companyThesisRng) =>
+            ToggleCompanyThesesExpandedAsync?.Invoke(companyThesisRng) ?? Task.CompletedTask;
+
+        protected Task InvokeToggleCompanyThesesExpandedForProfessorInterestAsync(long companyThesisRng) =>
+            ToggleCompanyThesesExpandedForProfessorInterestAsync?.Invoke(companyThesisRng) ?? Task.CompletedTask;
+
+        protected Task InvokeConfirmAndAcceptStudentThesisApplicationAsCompanyAsync(long companyThesisId, string studentUniqueId) =>
+            ConfirmAndAcceptStudentThesisApplicationAsCompanyAsync?.Invoke(companyThesisId, studentUniqueId) ?? Task.CompletedTask;
+
         private List<string> GetAllProfessorDepartments() =>
             universityDepartments.Values.SelectMany(depts => depts).Distinct().ToList();
 
@@ -338,7 +366,6 @@ namespace QuizManager.Shared
         private Dictionary<long, bool> expandedProfessorThesesForCompanyInterest = new();
         private Dictionary<long, IEnumerable<CompanyJobApplied>> jobApplicants = new();
         private Dictionary<long, IEnumerable<InternshipApplied>> internshipApplicants = new();
-        private Dictionary<long, IEnumerable<CompanyThesisApplied>> companyThesisApplicants = new();
         private Dictionary<long, IEnumerable<CompanyThesis>> companyThesesProfessors = new();
         private List<string> professorNameSurnameSuggestions = new();
         private List<string> areasOfInterestSuggestions = new();
