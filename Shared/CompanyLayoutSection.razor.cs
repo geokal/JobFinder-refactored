@@ -812,11 +812,14 @@ namespace QuizManager.Shared
 
         private IEnumerable<Student> GetPaginatedStudents_SearchForStudentsAsCompany()
         {
-            return searchResultsAsCompanyToFindStudent?
-                       .Skip((currentPageForStudents_SearchForStudentsAsCompany - 1) *
-                            StudentsPerPage_SearchForStudentsAsCompany)
-                       .Take(StudentsPerPage_SearchForStudentsAsCompany)
-                   ?? Enumerable.Empty<Student>();
+            if (searchResultsAsCompanyToFindStudent == null || searchResultsAsCompanyToFindStudent.Count == 0)
+            {
+                return Enumerable.Empty<Student>();
+            }
+
+            return searchResultsAsCompanyToFindStudent
+                .Skip((currentPageForStudents_SearchForStudentsAsCompany - 1) * StudentsPerPage_SearchForStudentsAsCompany)
+                .Take(StudentsPerPage_SearchForStudentsAsCompany);
         }
 
         private void GoToFirstPageForStudents_SearchForStudentsAsCompany()
@@ -867,7 +870,10 @@ namespace QuizManager.Shared
             int current = Math.Min(currentPageForStudents_SearchForStudentsAsCompany, total);
 
             pages.Add(1);
-            if (current > 3) pages.Add(-1);
+            if (current > 3)
+            {
+                pages.Add(-1);
+            }
 
             int start = Math.Max(2, current - 1);
             int end = Math.Min(total - 1, current + 1);
@@ -877,8 +883,15 @@ namespace QuizManager.Shared
                 pages.Add(i);
             }
 
-            if (current < total - 2) pages.Add(-1);
-            if (total > 1) pages.Add(total);
+            if (current < total - 2)
+            {
+                pages.Add(-1);
+            }
+
+            if (total > 1)
+            {
+                pages.Add(total);
+            }
 
             return pages;
         }
