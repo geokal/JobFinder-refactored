@@ -34,10 +34,10 @@ namespace QuizManager.Shared
         [Inject] private IJSRuntime JS { get; set; }
 
         [Parameter] public EventCallback<CompanyThesis> EditCompanyThesisDetailsRequested { get; set; }
-        [Parameter] public Func<int, string, Task>? UpdateThesisStatusAsCompanyAsync { get; set; }
-        [Parameter] public Func<long, Task>? ToggleCompanyThesesExpandedAsync { get; set; }
-        [Parameter] public Func<long, Task>? ToggleCompanyThesesExpandedForProfessorInterestAsync { get; set; }
-        [Parameter] public Func<long, string, Task>? ConfirmAndAcceptStudentThesisApplicationAsCompanyAsync { get; set; }
+        [Parameter] public EventCallback<ThesisStatusChangeRequest> UpdateThesisStatusAsCompanyRequested { get; set; }
+        [Parameter] public EventCallback<long> ToggleCompanyThesesExpandedRequested { get; set; }
+        [Parameter] public EventCallback<long> ToggleCompanyThesesExpandedForProfessorInterestRequested { get; set; }
+        [Parameter] public EventCallback<CompanyThesisApplicationDecision> ConfirmAndAcceptStudentThesisApplicationAsCompanyRequested { get; set; }
         [Parameter] public Dictionary<long, IEnumerable<CompanyThesisApplied>> CompanyThesisApplicantsMap { get; set; } = new();
         [Parameter] public Dictionary<string, Professor>? ProfessorDataCache { get; set; }
         [Parameter] public bool IsModalVisibleToEditCompanyThesisDetails { get; set; }
@@ -218,16 +218,24 @@ namespace QuizManager.Shared
                 : Task.CompletedTask;
 
         protected Task InvokeUpdateThesisStatusAsCompanyAsync(int companyThesisId, string status) =>
-            UpdateThesisStatusAsCompanyAsync?.Invoke(companyThesisId, status) ?? Task.CompletedTask;
+            UpdateThesisStatusAsCompanyRequested.HasDelegate
+                ? UpdateThesisStatusAsCompanyRequested.InvokeAsync(new ThesisStatusChangeRequest(companyThesisId, status))
+                : Task.CompletedTask;
 
         protected Task InvokeToggleCompanyThesesExpandedAsync(long companyThesisRng) =>
-            ToggleCompanyThesesExpandedAsync?.Invoke(companyThesisRng) ?? Task.CompletedTask;
+            ToggleCompanyThesesExpandedRequested.HasDelegate
+                ? ToggleCompanyThesesExpandedRequested.InvokeAsync(companyThesisRng)
+                : Task.CompletedTask;
 
         protected Task InvokeToggleCompanyThesesExpandedForProfessorInterestAsync(long companyThesisRng) =>
-            ToggleCompanyThesesExpandedForProfessorInterestAsync?.Invoke(companyThesisRng) ?? Task.CompletedTask;
+            ToggleCompanyThesesExpandedForProfessorInterestRequested.HasDelegate
+                ? ToggleCompanyThesesExpandedForProfessorInterestRequested.InvokeAsync(companyThesisRng)
+                : Task.CompletedTask;
 
         protected Task InvokeConfirmAndAcceptStudentThesisApplicationAsCompanyAsync(long companyThesisId, string studentUniqueId) =>
-            ConfirmAndAcceptStudentThesisApplicationAsCompanyAsync?.Invoke(companyThesisId, studentUniqueId) ?? Task.CompletedTask;
+            ConfirmAndAcceptStudentThesisApplicationAsCompanyRequested.HasDelegate
+                ? ConfirmAndAcceptStudentThesisApplicationAsCompanyRequested.InvokeAsync(new CompanyThesisApplicationDecision(companyThesisId, studentUniqueId))
+                : Task.CompletedTask;
 
         private List<string> GetAllProfessorDepartments() =>
             universityDepartments.Values.SelectMany(depts => depts).Distinct().ToList();
@@ -2174,4 +2182,8 @@ namespace QuizManager.Shared
             "Κρήτη"
         };
     }
+
+    public readonly record struct ThesisStatusChangeRequest(int CompanyThesisId, string Status);
+
+    public readonly record struct CompanyThesisApplicationDecision(long CompanyThesisId, string StudentUniqueId);
 }

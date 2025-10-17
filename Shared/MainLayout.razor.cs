@@ -6047,6 +6047,12 @@ namespace QuizManager.Shared
             StateHasChanged();
         }
 
+        protected Task OnCompanyThesisStatusChangeRequested(ThesisStatusChangeRequest request) =>
+            UpdateThesisStatusAsCompany(request.CompanyThesisId, request.Status);
+
+        protected Task OnConfirmAndAcceptStudentThesisApplicationAsCompanyRequested(CompanyThesisApplicationDecision decision) =>
+            ConfirmAndAcceptStudentThesisApplicationAsCompany(decision.CompanyThesisId, decision.StudentUniqueId);
+
         protected async Task ToggleCompanyThesesExpanded(long companyThesisRNG)
         {
             if (expandedCompanyTheses.ContainsKey(companyThesisRNG))
