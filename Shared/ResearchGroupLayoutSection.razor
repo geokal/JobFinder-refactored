@@ -1498,7 +1498,7 @@
                                                 @if (!string.IsNullOrWhiteSpace(selectedCompany.CompanyWebsite))
                                                 {
                                                     <div class="form-control d-flex align-items-center" style="height: auto; cursor: pointer; color: #007bff;"
-                                                         @onclick="() => OpenUrl(selectedCompany.CompanyWebsite)">
+                                                         @onclick="async () => await OpenUrl(selectedCompany.CompanyWebsite)">
                                                         <i class="fa-solid fa-globe" style="margin-right: 8px;"></i>
                                                         <span class="flex-grow-1">@selectedCompany.CompanyWebsite</span>
                                                     </div>
@@ -1549,7 +1549,7 @@
                                                 <label><strong>Διεύθυνση</strong></label>
                                                 <div class="form-control d-flex align-items-center mt-1" style="height: auto;">
                                                     <i class="fas fa-map-marker-alt" style="color: #dc3545; margin-right: 8px;"></i>
-                                                    <span @onclick="() => OpenMap(selectedCompany.CompanyLocation)"
+                                                    <span @onclick="async () => await OpenMap(selectedCompany.CompanyLocation)"
                                                           style="color: #007bff; text-decoration: underline; cursor: pointer; word-break: break-word;">
                                                         @selectedCompany.CompanyLocation
                                                     </span>
@@ -1577,7 +1577,7 @@
                                                 @if (!string.IsNullOrWhiteSpace(selectedCompany.CompanyWebsiteAnnouncements))
                                                 {
                                                     <div class="form-control d-flex align-items-center" style="height: auto; cursor: pointer; color: #007bff;"
-                                                         @onclick="() => OpenUrl(selectedCompany.CompanyWebsiteAnnouncements)">
+                                                         @onclick="async () => await OpenUrl(selectedCompany.CompanyWebsiteAnnouncements)">
                                                         <i class="fa-solid fa-globe" style="margin-right: 8px;"></i>
                                                         <span class="flex-grow-1">@selectedCompany.CompanyWebsiteAnnouncements</span>
                                                     </div>
@@ -1593,7 +1593,7 @@
                                                 @if (!string.IsNullOrWhiteSpace(selectedCompany.CompanyWebsiteJobs))
                                                 {
                                                     <div class="form-control d-flex align-items-center" style="height: auto; cursor: pointer; color: #007bff;"
-                                                         @onclick="() => OpenUrl(selectedCompany.CompanyWebsiteJobs)">
+                                                         @onclick="async () => await OpenUrl(selectedCompany.CompanyWebsiteJobs)">
                                                         <i class="fa-solid fa-globe" style="margin-right: 8px;"></i>
                                                         <span class="flex-grow-1">@selectedCompany.CompanyWebsiteJobs</span>
                                                     </div>

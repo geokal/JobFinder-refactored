@@ -1101,6 +1101,11 @@ namespace QuizManager.Shared
         {
             if (!string.IsNullOrWhiteSpace(url))
             {
+                if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                    !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    url = $"http://{url}";
+                }
                 await JS.InvokeVoidAsync("open", url, "_blank");
             }
         }
@@ -1683,7 +1688,6 @@ namespace QuizManager.Shared
             return string.Empty;
         }
 
-        // News Article class
         public class NewsArticle
         {
             public string Title { get; set; }
