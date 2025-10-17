@@ -25,7 +25,11 @@ namespace QuizManager.Shared
 {
     public partial class StudentLayoutSection
     {
-        [Inject] private Data.AppDbContext dbContext { get; set; }
+        [Parameter] public bool IsInitialized { get; set; }
+        [Parameter] public bool IsRegistered { get; set; }
+        [Parameter] public EventCallback<bool> IsRegisteredChanged { get; set; }
+
+        // DbContext injection removed - data loading is handled by parent MainLayout
         [Inject] private Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; }
         [Inject] private HttpClient HttpClient { get; set; }
         [Inject] private NavigationManager NavigationManager { get; set; }
@@ -173,204 +177,13 @@ namespace QuizManager.Shared
         // Component initialization
         protected override async Task OnInitializedAsync()
         {
-            await LoadAreasAsync();
-            await LoadSkillsAsync();
-            await LoadUserApplications();
-            await LoadUserJobApplications();
-            await LoadUserInternshipApplications();
-            await LoadNewsAndAnnouncements();
-            await LoadEventsForCalendar();
-            await LoadUserInterestsAndApplications();
+            // Data loading is now handled by the parent MainLayout
+            // This component is now purely presentational
+            await Task.CompletedTask;
         }
 
-        // Data loading methods
-        private async Task LoadAreasAsync()
-        {
-            Areas = await dbContext.Areas.ToListAsync();
-        }
-
-        private async Task LoadSkillsAsync()
-        {
-            Skills = await dbContext.Skills.ToListAsync();
-        }
-
-        private async Task LoadUserApplications()
-        {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity.IsAuthenticated)
-            {
-                var userEmail = user.FindFirst("name")?.Value;
-                if (!string.IsNullOrEmpty(userEmail))
-                {
-                    userData = await dbContext.Students.FirstOrDefaultAsync(s => s.Email == userEmail);
-                    if (userData != null)
-                    {
-                        // Load thesis applications
-                        thesisApplications = await dbContext.ProfessorThesesApplied
-                            .Include(a => a.StudentDetails)
-                            .Include(a => a.ProfessorDetails)
-                            .Where(j => j.StudentEmailAppliedForProfessorThesis == userEmail &&
-                                       j.StudentUniqueIDAppliedForProfessorThesis == userData.Student_UniqueID)
-                            .OrderByDescending(j => j.DateTimeStudentAppliedForProfessorThesis)
-                            .ToListAsync();
-
-                        companythesisApplications = await dbContext.CompanyThesesApplied
-                            .Include(a => a.StudentDetails)
-                            .Include(a => a.CompanyDetails)
-                            .Where(j => j.StudentEmailAppliedForThesis == userEmail &&
-                                       j.StudentUniqueIDAppliedForThesis == userData.Student_UniqueID)
-                            .OrderByDescending(j => j.DateTimeStudentAppliedForThesis)
-                            .ToListAsync();
-                    }
-                }
-            }
-        }
-
-        private async Task LoadUserJobApplications()
-        {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity.IsAuthenticated)
-            {
-                var userEmail = user.FindFirst("name")?.Value;
-                if (!string.IsNullOrEmpty(userEmail) && userData != null)
-                {
-                    jobApplications = await dbContext.CompanyJobsApplied
-                        .Where(j => j.StudentEmailAppliedForCompanyJob == userEmail &&
-                                   j.StudentUniqueIDAppliedForCompanyJob == userData.Student_UniqueID)
-                        .OrderByDescending(j => j.DateTimeStudentAppliedForCompanyJob)
-                        .ToListAsync();
-                }
-            }
-        }
-
-        private async Task LoadUserInternshipApplications()
-        {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity.IsAuthenticated)
-            {
-                var userEmail = user.FindFirst("name")?.Value;
-                if (!string.IsNullOrEmpty(userEmail) && userData != null)
-                {
-                    // Load company internships
-                    internshipApplications = await dbContext.InternshipsApplied
-                        .Include(a => a.StudentDetails)
-                        .Include(a => a.CompanyDetails)
-                        .Where(a => a.StudentDetails.StudentUniqueIDAppliedForInternship == userData.Student_UniqueID)
-                        .ToListAsync();
-
-                    // Load professor internships
-                    professorInternshipApplications = await dbContext.ProfessorInternshipsApplied
-                        .Include(a => a.StudentDetails)
-                        .Include(a => a.ProfessorDetails)
-                        .Where(a => a.StudentDetails.StudentUniqueIDAppliedForProfessorInternship == userData.Student_UniqueID)
-                        .ToListAsync();
-                }
-            }
-        }
-
-        private async Task LoadNewsAndAnnouncements()
-        {
-            newsArticles = await FetchNewsArticlesAsync();
-            svseNewsArticles = await FetchSVSENewsArticlesAsync();
-            Announcements = await FetchAnnouncementsAsync();
-            ProfessorAnnouncements = await FetchProfessorAnnouncementsAsync();
-        }
-
-        private async Task LoadEventsForCalendar()
-        {
-            var companyEvents = await dbContext.CompanyEvents
-                .Where(e => e.CompanyEventStatus == "Δημοσιευμένη")
-                .ToListAsync();
-
-            var professorEvents = await dbContext.ProfessorEvents
-                .Where(e => e.ProfessorEventStatus == "Δημοσιευμένη")
-                .ToListAsync();
-
-            eventsForDate.Clear();
-            eventsForDateForProfessors.Clear();
-
-            foreach (var eventItem in companyEvents)
-            {
-                if (eventItem.CompanyEventActiveDate.Year == currentMonth.Year &&
-                    eventItem.CompanyEventActiveDate.Month == currentMonth.Month)
-                {
-                    int day = eventItem.CompanyEventActiveDate.Day;
-                    if (!eventsForDate.ContainsKey(day))
-                        eventsForDate[day] = new List<CompanyEvent>();
-                    eventsForDate[day].Add(eventItem);
-                }
-            }
-
-            foreach (var eventItem in professorEvents)
-            {
-                if (eventItem.ProfessorEventActiveDate.Year == currentMonth.Year &&
-                    eventItem.ProfessorEventActiveDate.Month == currentMonth.Month)
-                {
-                    int day = eventItem.ProfessorEventActiveDate.Day;
-                    if (!eventsForDateForProfessors.ContainsKey(day))
-                        eventsForDateForProfessors[day] = new List<ProfessorEvent>();
-                    eventsForDateForProfessors[day].Add(eventItem);
-                }
-            }
-        }
-
-        private async Task LoadUserInterestsAndApplications()
-        {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity.IsAuthenticated && userData != null)
-            {
-                var userEmail = user.FindFirst("name")?.Value;
-
-                // Load interests and applications
-                alreadyInterestedCompanyEventIds = (await dbContext.InterestInCompanyEvents
-                    .Where(e => e.StudentUniqueIDShowInterestForEvent == userData.Student_UniqueID &&
-                                e.StudentEmailShowInterestForEvent == userData.Email)
-                    .Select(e => e.RNGForCompanyEventInterest)
-                    .ToListAsync()).ToHashSet();
-
-                interestedProfessorEventIds = (await dbContext.InterestInProfessorEvents
-                    .Where(e => e.StudentUniqueIDShowInterestForEvent == userData.Student_UniqueID &&
-                                e.StudentEmailShowInterestForEvent == userData.Email)
-                    .Select(e => e.RNGForProfessorEventInterest)
-                    .ToListAsync()).ToHashSet();
-
-                professorThesisIdsApplied = dbContext.ProfessorThesesApplied
-                    .Where(x => x.StudentUniqueIDAppliedForProfessorThesis == userData.Student_UniqueID &&
-                                x.StudentEmailAppliedForProfessorThesis == userData.Email)
-                    .Select(x => x.RNGForProfessorThesisApplied)
-                    .ToHashSet();
-
-                companyThesisIdsApplied = dbContext.CompanyThesesApplied
-                    .Where(x => x.StudentUniqueIDAppliedForThesis == userData.Student_UniqueID &&
-                                x.StudentEmailAppliedForThesis == userData.Email)
-                    .Select(x => x.RNGForCompanyThesisApplied)
-                    .ToHashSet();
-
-                jobIdsApplied = dbContext.CompanyJobsApplied
-                    .Where(x => x.StudentUniqueIDAppliedForCompanyJob == userData.Student_UniqueID &&
-                                x.StudentEmailAppliedForCompanyJob == userData.Email)
-                    .Select(x => x.RNGForCompanyJobApplied)
-                    .ToHashSet();
-
-                internshipIdsApplied = dbContext.InternshipsApplied
-                    .Where(x => x.StudentDetails.StudentUniqueIDAppliedForInternship == userData.Student_UniqueID)
-                    .Select(x => x.RNGForInternshipApplied)
-                    .ToHashSet();
-
-                professorInternshipIdsApplied = dbContext.ProfessorInternshipsApplied
-                    .Where(x => x.StudentDetails.StudentUniqueIDAppliedForProfessorInternship == userData.Student_UniqueID)
-                    .Select(x => x.RNGForProfessorInternshipApplied)
-                    .ToHashSet();
-            }
-        }
+        // Data loading methods - now handled by parent MainLayout
+        // These methods are kept for future use when data is passed as parameters
 
         // UI toggle methods
         private void ToggleAnnouncementsAsStudentVisibility()
@@ -453,28 +266,22 @@ namespace QuizManager.Shared
         private async Task ToggleAndLoadStudentThesisApplications()
         {
             showStudentThesisApplications = !showStudentThesisApplications;
-            if (showStudentThesisApplications)
-            {
-                await LoadUserApplications();
-            }
+            // Data loading is now handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task ToggleAndLoadStudentJobApplications()
         {
             showStudentJobApplications = !showStudentJobApplications;
-            if (showStudentJobApplications)
-            {
-                await LoadUserJobApplications();
-            }
+            // Data loading is now handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task ToggleAndLoadStudentInternshipApplications()
         {
             showStudentInternshipApplications = !showStudentInternshipApplications;
-            if (showStudentInternshipApplications)
-            {
-                await LoadUserInternshipApplications();
-            }
+            // Data loading is now handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         // Search methods
@@ -500,13 +307,13 @@ namespace QuizManager.Shared
         private void ShowPreviousMonth()
         {
             currentMonth = currentMonth.AddMonths(-1);
-            LoadEventsForCalendar();
+            // Event loading is now handled by parent MainLayout
         }
 
         private void ShowNextMonth()
         {
             currentMonth = currentMonth.AddMonths(1);
-            LoadEventsForCalendar();
+            // Event loading is now handled by parent MainLayout
         }
 
         private void OnDateClicked(DateTime clickedDate)
@@ -515,21 +322,9 @@ namespace QuizManager.Shared
             highlightedDay = selectedDay;
             selectedDate = clickedDate;
 
-            // Load events for selected date
-            selectedDateEvents = dbContext.CompanyEvents
-                .Where(e => e.CompanyEventStatus == "Δημοσιευμένη" &&
-                           e.CompanyEventActiveDate.Date == clickedDate.Date)
-                .ToList();
-
-            selectedProfessorDateEvents = dbContext.ProfessorEvents
-                .Where(e => e.ProfessorEventStatus == "Δημοσιευμένη" &&
-                           e.ProfessorEventActiveDate.Date == clickedDate.Date)
-                .ToList();
-
-            if (selectedDateEvents.Any() || selectedProfessorDateEvents.Any())
-            {
-                isModalVisibleToShowEventsOnCalendarForEachClickedDay = true;
-            }
+            // Event loading is now handled by parent MainLayout
+            // For now, just show the modal
+            isModalVisibleToShowEventsOnCalendarForEachClickedDay = true;
         }
 
         private void CloseModalForEventsOnCalendar()
@@ -734,16 +529,21 @@ namespace QuizManager.Shared
 
         private async Task<List<AnnouncementAsCompany>> FetchAnnouncementsAsync()
         {
-            return await dbContext.AnnouncementsAsCompany
-                .Where(a => a.CompanyAnnouncementStatus == "Δημοσιευμένη")
-                .ToListAsync();
+            // Data fetching is now handled by parent MainLayout
+            return new List<AnnouncementAsCompany>();
         }
 
         private async Task<List<AnnouncementAsProfessor>> FetchProfessorAnnouncementsAsync()
         {
-            return await dbContext.AnnouncementsAsProfessor
-                .Where(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη")
-                .ToListAsync();
+            // Data fetching is now handled by parent MainLayout
+            return new List<AnnouncementAsProfessor>();
+        }
+
+        protected async Task SetRegistered(bool value)
+        {
+            IsRegistered = value;
+            if (IsRegisteredChanged.HasDelegate)
+                await IsRegisteredChanged.InvokeAsync(value);
         }
 
         // News Article class

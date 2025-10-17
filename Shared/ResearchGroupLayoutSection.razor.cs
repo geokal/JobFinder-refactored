@@ -10,7 +10,15 @@ namespace QuizManager.Shared
 {
     public partial class ResearchGroupLayoutSection
     {
-        // Component parameters and logic will be added here
-        // This will include role-specific methods and properties from MainLayout.razor.cs
+        [Parameter] public bool IsInitialized { get; set; }
+        [Parameter] public bool IsRegistered { get; set; }
+        [Parameter] public EventCallback<bool> IsRegisteredChanged { get; set; }
+
+        protected async Task SetRegistered(bool value)
+        {
+            IsRegistered = value;
+            if (IsRegisteredChanged.HasDelegate)
+                await IsRegisteredChanged.InvokeAsync(value);
+        }
     }
 }

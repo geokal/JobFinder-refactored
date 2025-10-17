@@ -26,6 +26,7 @@ namespace QuizManager.Shared
 {
     public partial class MainLayout
     {
+    [Inject] private IServiceProvider ServiceProvider { get; set; }
     [Inject] private FileUploadService FileUploadService { get; set; }
     [Inject] private Data.AppDbContext dbContext { get; set; }
     [Inject] private Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; }
@@ -36,6 +37,11 @@ namespace QuizManager.Shared
     [Inject] private IAuth0Service Auth0Service { get; set; }
     [Inject] private GoogleScholarService GoogleScholarService { get; set; }
 
+    // Layout parameter - Body is inherited from LayoutComponentBase
+
+    // Fields for the refactored components
+    private bool isStudentInitialized, isCompanyInitialized, isProfessorInitialized, isResearchGroupInitialized;
+    private bool isStudentRegistered, isCompanyRegistered, isProfessorRegistered, isResearchGroupRegistered;
 
     // Properties for Research Group search
     private string searchResearchGroupNameAsCompanyToFindResearchGroup = "";
@@ -177,16 +183,12 @@ namespace QuizManager.Shared
 
     private List<StudentWithAuth0Details> StudentsWithAuth0Details { get; set; } = new();
     private string UserRole = "";
-    bool isStudentRegistered;
     bool isInitializedAsStudentUser = false;
-    bool isCompanyRegistered;
     bool isInitializedAsCompanyUser = false;
-    bool isProfessorRegistered;
     bool isInitializedAsProfessorUser = false;
     string CurrentUserEmail = "";
     private List<Student> Students = new List<Student>();
     bool isInitializedAsResearchGroupUser = false;
-    bool isResearchGroupRegistered;
 
     private bool ShouldShowAdminTable()
     {
@@ -1352,36 +1354,68 @@ namespace QuizManager.Shared
             CurrentUserEmail = userEmail; // Assign userEmail to CurrentUserEmail
 
             // Check if student is registered based on email
-            using (var dbContext = new AppDbContext(Configuration)) // Ensure Configuration is injected or accessed correctly
+            try
             {
-                isStudentRegistered = await dbContext.Students.AnyAsync(s => s.Email == CurrentUserEmail);
-            }
-            isInitializedAsStudentUser = true;
-            // Check if company is registered based on email
-            using (var dbContext = new AppDbContext(Configuration)) // Ensure Configuration is injected or accessed correctly
-            {
-                isCompanyRegistered = await dbContext.Companies.AnyAsync(s => s.CompanyEmail == CurrentUserEmail);
-
-                // Fetch company data
-                companyData = await dbContext.Companies
-                    .FirstOrDefaultAsync(c => c.CompanyEmail == CurrentUserEmail);
-
-                if (companyData == null)
+                using (var scope = ServiceProvider.CreateScope())
                 {
-                    Console.WriteLine($"Company with email {CurrentUserEmail} not found.");
+                    var scopedDbContext = scope.ServiceProvider.GetRequiredService<Data.AppDbContext>();
+                    isStudentRegistered = await scopedDbContext.Students.AnyAsync(s => s.Email == CurrentUserEmail);
                 }
+                isStudentInitialized = true;
             }
-            isInitializedAsCompanyUser = true;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking student registration: {ex.Message}");
+                isStudentInitialized = true;
+            }
+
+            // Check if company is registered based on email
+            try
+            {
+                using (var scope = ServiceProvider.CreateScope())
+                {
+                    var scopedDbContext = scope.ServiceProvider.GetRequiredService<Data.AppDbContext>();
+                    isCompanyRegistered = await scopedDbContext.Companies.AnyAsync(s => s.CompanyEmail == CurrentUserEmail);
+
+                    // Fetch company data
+                    companyData = await scopedDbContext.Companies
+                        .FirstOrDefaultAsync(c => c.CompanyEmail == CurrentUserEmail);
+
+                    if (companyData == null)
+                    {
+                        Console.WriteLine($"Company with email {CurrentUserEmail} not found.");
+                    }
+                }
+                isCompanyInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking company registration: {ex.Message}");
+                isCompanyInitialized = true;
+            }
+
             // Check if professor is registered based on email
-            using (var dbContext = new AppDbContext(Configuration)) // Ensure Configuration is injected or accessed correctly
+            try
             {
-                isProfessorRegistered = await dbContext.Professors.AnyAsync(s => s.ProfEmail == CurrentUserEmail);
+                using (var scope = ServiceProvider.CreateScope())
+                {
+                    var scopedDbContext = scope.ServiceProvider.GetRequiredService<Data.AppDbContext>();
+                    isProfessorRegistered = await scopedDbContext.Professors.AnyAsync(s => s.ProfEmail == CurrentUserEmail);
+                }
+                isProfessorInitialized = true;
             }
-            isInitializedAsProfessorUser = true;
-            // Load user data
-            using (var dbContext = new AppDbContext(Configuration))
+            catch (Exception ex)
             {
-                userData = await dbContext.Students.FirstOrDefaultAsync(s => s.Email == userEmail);
+                Console.WriteLine($"Error checking professor registration: {ex.Message}");
+                isProfessorInitialized = true;
+            }
+            // Load user data
+            try
+            {
+                using (var scope = ServiceProvider.CreateScope())
+                {
+                    var scopedDbContext = scope.ServiceProvider.GetRequiredService<Data.AppDbContext>();
+                    userData = await scopedDbContext.Students.FirstOrDefaultAsync(s => s.Email == userEmail);
 
                 if (userData == null)
                 {
@@ -1390,7 +1424,7 @@ namespace QuizManager.Shared
                 else
                 {
                     //interest in professor events as student
-                    interestedProfessorEventIds = (await dbContext.InterestInProfessorEvents
+                    interestedProfessorEventIds = (await scopedDbContext.InterestInProfessorEvents
                         .Where(e => e.StudentUniqueIDShowInterestForEvent == userData.Student_UniqueID && 
                                     e.StudentEmailShowInterestForEvent == userData.Email)
                         .Select(e => e.RNGForProfessorEventInterest)
@@ -1398,7 +1432,7 @@ namespace QuizManager.Shared
                         .ToHashSet();
 
                     //interest in company events as student
-                    alreadyInterestedCompanyEventIds = (await dbContext.InterestInCompanyEvents
+                    alreadyInterestedCompanyEventIds = (await scopedDbContext.InterestInCompanyEvents
                         .Where(e => e.StudentUniqueIDShowInterestForEvent == userData.Student_UniqueID && 
                                     e.StudentEmailShowInterestForEvent == userData.Email)
                         .Select(e => e.RNGForCompanyEventInterest)
@@ -1406,35 +1440,35 @@ namespace QuizManager.Shared
                         .ToHashSet();
 
                     // Get applied professor theses
-                    professorThesisIdsApplied = dbContext.ProfessorThesesApplied
+                    professorThesisIdsApplied = scopedDbContext.ProfessorThesesApplied
                         .Where(x => x.StudentUniqueIDAppliedForProfessorThesis == userData.Student_UniqueID && 
                                     x.StudentEmailAppliedForProfessorThesis == userData.Email)
                         .Select(x => x.RNGForProfessorThesisApplied)
                         .ToHashSet();
 
                     // Get applied company theses
-                    companyThesisIdsApplied =  dbContext.CompanyThesesApplied
+                    companyThesisIdsApplied =  scopedDbContext.CompanyThesesApplied
                         .Where(x => x.StudentUniqueIDAppliedForThesis == userData.Student_UniqueID && 
                                     x.StudentEmailAppliedForThesis == userData.Email)
                         .Select(x => x.RNGForCompanyThesisApplied)
                         .ToHashSet();
 
                     // Get applied company applied jobs
-                    jobIdsApplied = dbContext.CompanyJobsApplied
+                    jobIdsApplied = scopedDbContext.CompanyJobsApplied
                         .Where(x => x.StudentUniqueIDAppliedForCompanyJob == userData.Student_UniqueID && 
                                     x.StudentEmailAppliedForCompanyJob == userData.Email)
                         .Select(x => x.RNGForCompanyJobApplied)
                         .ToHashSet();
 
                     // Get applied company internships
-                    var companyApplied = dbContext.InternshipsApplied
+                    var companyApplied = scopedDbContext.InternshipsApplied
                         .Include(x => x.StudentDetails)
                         .Where(x => x.StudentDetails.StudentUniqueIDAppliedForInternship == userData.Student_UniqueID)
                         .Select(x => x.RNGForInternshipApplied)
                         .ToHashSet();
 
                     // Get applied professor internships 
-                    var professorApplied = dbContext.ProfessorInternshipsApplied
+                    var professorApplied = scopedDbContext.ProfessorInternshipsApplied
                         .Include(x => x.StudentDetails)
                         .Where(x => x.StudentDetails.StudentUniqueIDAppliedForProfessorInternship == userData.Student_UniqueID)
                         .Select(x => x.RNGForProfessorInternshipApplied)
@@ -1444,22 +1478,36 @@ namespace QuizManager.Shared
                     internshipIdsApplied = companyApplied;
                     professorInternshipIdsApplied = professorApplied;
                 }
-            }
-            // Check if ResearchGroup is registered based on email
-            using (var dbContext = new AppDbContext(Configuration)) // Ensure Configuration is injected or accessed correctly
-            {
-                isResearchGroupRegistered = await dbContext.ResearchGroups.AnyAsync(s => s.ResearchGroupEmail == CurrentUserEmail);
-
-                // Fetch company data
-                researchGroupData = await dbContext.ResearchGroups
-                    .FirstOrDefaultAsync(c => c.ResearchGroupEmail == CurrentUserEmail);
-
-                if (researchGroupData == null)
-                {
-                    Console.WriteLine($"ResearchGroup with email {CurrentUserEmail} not found.");
                 }
             }
-            isInitializedAsResearchGroupUser = true;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading user data: {ex.Message}");
+            }
+            // Check if ResearchGroup is registered based on email
+            try
+            {
+                using (var scope = ServiceProvider.CreateScope())
+                {
+                    var scopedDbContext = scope.ServiceProvider.GetRequiredService<Data.AppDbContext>();
+                    isResearchGroupRegistered = await scopedDbContext.ResearchGroups.AnyAsync(s => s.ResearchGroupEmail == CurrentUserEmail);
+
+                    // Fetch research group data
+                    researchGroupData = await scopedDbContext.ResearchGroups
+                        .FirstOrDefaultAsync(c => c.ResearchGroupEmail == CurrentUserEmail);
+
+                    if (researchGroupData == null)
+                    {
+                        Console.WriteLine($"ResearchGroup with email {CurrentUserEmail} not found.");
+                    }
+                }
+                isResearchGroupInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking research group registration: {ex.Message}");
+                isResearchGroupInitialized = true;
+            }
 
         }
 
@@ -1635,6 +1683,12 @@ namespace QuizManager.Shared
         {
             professorInternshipApplicants = Enumerable.Empty<ProfessorInternshipApplied>(); // Or handle differently
         }
+
+        // Initialize component states for testing
+        isStudentInitialized = true;
+        isCompanyInitialized = true;
+        isProfessorInitialized = true;
+        isResearchGroupInitialized = true;
 
     }
 
@@ -19678,5 +19732,31 @@ private async Task SaveAnnouncementAsPublishedAsProfessor()
         UpdateAreasChart();
         UpdateSkillsChart();
     }
+
+    // EventCallback handlers for two-way binding
+    private async Task OnStudentRegisteredChanged(bool value)
+    {
+        isStudentRegistered = value;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnCompanyRegisteredChanged(bool value)
+    {
+        isCompanyRegistered = value;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnProfessorRegisteredChanged(bool value)
+    {
+        isProfessorRegistered = value;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnResearchGroupRegisteredChanged(bool value)
+    {
+        isResearchGroupRegistered = value;
+        await InvokeAsync(StateHasChanged);
+    }
+
     }
 }

@@ -25,6 +25,10 @@ namespace QuizManager.Shared
 {
     public partial class ProfessorLayoutSection
     {
+        [Parameter] public bool IsInitialized { get; set; }
+        [Parameter] public bool IsRegistered { get; set; }
+        [Parameter] public EventCallback<bool> IsRegisteredChanged { get; set; }
+
         [Inject] private Data.AppDbContext dbContext { get; set; }
         [Inject] private Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; }
         [Inject] private HttpClient HttpClient { get; set; }
@@ -929,5 +933,12 @@ namespace QuizManager.Shared
             "Νότιο Αιγαίο",
             "Κρήτη"
         };
+
+        protected async Task SetRegistered(bool value)
+        {
+            IsRegistered = value;
+            if (IsRegisteredChanged.HasDelegate)
+                await IsRegisteredChanged.InvokeAsync(value);
+        }
     }
 }
