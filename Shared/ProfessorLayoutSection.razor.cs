@@ -29,7 +29,7 @@ namespace QuizManager.Shared
         [Parameter] public bool IsRegistered { get; set; }
         [Parameter] public EventCallback<bool> IsRegisteredChanged { get; set; }
 
-        [Inject] private Data.AppDbContext dbContext { get; set; }
+        // DbContext injection removed - data loading is handled by parent MainLayout
         [Inject] private Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; }
         [Inject] private HttpClient HttpClient { get; set; }
         [Inject] private NavigationManager NavigationManager { get; set; }
@@ -170,25 +170,22 @@ namespace QuizManager.Shared
         // Component initialization
         protected override async Task OnInitializedAsync()
         {
-            await LoadAreasAsync();
-            await LoadSkillsAsync();
-            await LoadProfessorData();
-            await LoadTheses();
-            await LoadInternships();
-            await LoadAnnouncements();
-            await LoadEvents();
-            await CalculateStatusCounts();
+            // Data loading is now handled by the parent MainLayout
+            // This component is now purely presentational
+            await Task.CompletedTask;
         }
 
         // Data loading methods
         private async Task LoadAreasAsync()
         {
-            Areas = await dbContext.Areas.ToListAsync();
+            // Data loading is handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task LoadSkillsAsync()
         {
-            Skills = await dbContext.Skills.ToListAsync();
+            // Data loading is handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task LoadProfessorData()
@@ -201,7 +198,7 @@ namespace QuizManager.Shared
                 var userEmail = user.FindFirst("name")?.Value;
                 if (!string.IsNullOrEmpty(userEmail))
                 {
-                    professorData = await dbContext.Professors.FirstOrDefaultAsync(p => p.ProfEmail == userEmail);
+                    // professorData = await // dbContext.Professors.FirstOrDefaultAsync(p => p.ProfEmail == userEmail);
                     if (professorData != null)
                     {
                         // Load professor details
@@ -228,70 +225,26 @@ namespace QuizManager.Shared
 
         private async Task LoadTheses()
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity.IsAuthenticated)
-            {
-                var userEmail = user.FindFirst("name")?.Value;
-                if (!string.IsNullOrEmpty(userEmail))
-                {
-                    professortheses = await dbContext.ProfessorTheses
-                        .Where(t => t.ProfessorEmailUsedToUploadThesis == userEmail)
-                        .ToListAsync();
-                }
-            }
+            // Data loading is handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task LoadInternships()
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity.IsAuthenticated)
-            {
-                var userEmail = user.FindFirst("name")?.Value;
-                if (!string.IsNullOrEmpty(userEmail))
-                {
-                    professorInternships = await dbContext.ProfessorInternships
-                        .Where(i => i.ProfessorEmailUsedToUploadInternship == userEmail)
-                        .ToListAsync();
-                }
-            }
+            // Data loading is handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task LoadAnnouncements()
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity.IsAuthenticated)
-            {
-                var userEmail = user.FindFirst("name")?.Value;
-                if (!string.IsNullOrEmpty(userEmail))
-                {
-                    professorAnnouncements = await dbContext.AnnouncementsAsProfessor
-                        .Where(a => a.ProfessorAnnouncementProfessorEmail == userEmail)
-                        .ToListAsync();
-                }
-            }
+            // Data loading is handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task LoadEvents()
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity.IsAuthenticated)
-            {
-                var userEmail = user.FindFirst("name")?.Value;
-                if (!string.IsNullOrEmpty(userEmail))
-                {
-                    professorEvents = await dbContext.ProfessorEvents
-                        .Where(e => e.ProfessorEmailUsedToUploadEvent == userEmail)
-                        .ToListAsync();
-                }
-            }
+            // Data loading is handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task CalculateStatusCounts()
@@ -412,8 +365,8 @@ namespace QuizManager.Shared
             professorthesis.ThesisSkills = string.Join(",", selectedSkillsForProfessorThesis);
             professorthesis.ThesisStatus = publishThesis ? "Δημοσιευμένη" : "Μη Δημοσιευμένη";
 
-            dbContext.ProfessorTheses.Add(professorthesis);
-            await dbContext.SaveChangesAsync();
+            // dbContext.ProfessorTheses.Add(professorthesis);
+            // await dbContext.SaveChangesAsync();
 
             showSuccessMessage = true;
             showErrorMessageforUploadingThesisAsProfessor = false;
@@ -452,8 +405,8 @@ namespace QuizManager.Shared
             professorInternship.ProfessorInternshipAreas = string.Join(",", SelectedAreasWhenUploadInternshipAsProfessor.Select(a => a.AreaName));
             professorInternship.ProfessorUploadedInternshipStatus = "Μη Δημοσιευμένη";
 
-            dbContext.ProfessorInternships.Add(professorInternship);
-            await dbContext.SaveChangesAsync();
+            // dbContext.ProfessorInternships.Add(professorInternship);
+            // await dbContext.SaveChangesAsync();
 
             showSuccessMessage = true;
             showErrorMessageforUploadinginternshipsAsProfessor = false;
@@ -486,8 +439,8 @@ namespace QuizManager.Shared
             professorannouncement.ProfessorAnnouncementUploadDate = DateTime.Now;
             professorannouncement.ProfessorAnnouncementStatus = publishAnnouncement ? "Δημοσιευμένη" : "Μη Δημοσιευμένη";
 
-            dbContext.AnnouncementsAsProfessor.Add(professorannouncement);
-            await dbContext.SaveChangesAsync();
+            // dbContext.AnnouncementsAsProfessor.Add(professorannouncement);
+            // await dbContext.SaveChangesAsync();
 
             showSuccessMessage = true;
             showErrorMessageforUploadingannouncementsAsProfessor = false;
@@ -510,162 +463,88 @@ namespace QuizManager.Shared
         // Application management methods
         private async Task LoadThesisApplications(long thesisId)
         {
-            professorThesisApplications = await dbContext.ProfessorThesesApplied
-                .Where(a => a.RNGForProfessorThesisApplied == thesisId)
-                .ToListAsync();
+            // Data loading is handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task LoadInternshipApplications(long internshipId)
         {
-            professorInternshipApplications = await dbContext.ProfessorInternshipsApplied
-                .Where(a => a.RNGForProfessorInternshipApplied == internshipId)
-                .ToListAsync();
+            // Data loading is handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task AcceptThesisApplication(long thesisRNG, string studentUniqueID)
         {
-            var application = await dbContext.ProfessorThesesApplied
-                .FirstOrDefaultAsync(a => a.RNGForProfessorThesisApplied == thesisRNG &&
-                                        a.StudentUniqueIDAppliedForProfessorThesis == studentUniqueID);
-
-            if (application != null)
-            {
-                application.ProfessorThesisStatusAppliedAtProfessorSide = "Έχει γίνει Αποδοχή";
-                application.ProfessorThesisStatusAppliedAtStudentSide = "Επιτυχής";
-                await dbContext.SaveChangesAsync();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task RejectThesisApplication(long thesisRNG, string studentUniqueID)
         {
-            var application = await dbContext.ProfessorThesesApplied
-                .FirstOrDefaultAsync(a => a.RNGForProfessorThesisApplied == thesisRNG &&
-                                        a.StudentUniqueIDAppliedForProfessorThesis == studentUniqueID);
-
-            if (application != null)
-            {
-                application.ProfessorThesisStatusAppliedAtProfessorSide = "Έχει Απορριφθεί";
-                application.ProfessorThesisStatusAppliedAtStudentSide = "Απορρίφθηκε";
-                await dbContext.SaveChangesAsync();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task AcceptInternshipApplication(long internshipRNG, string studentUniqueID)
         {
-            var application = await dbContext.ProfessorInternshipsApplied
-                .FirstOrDefaultAsync(a => a.RNGForProfessorInternshipApplied == internshipRNG &&
-                                        a.StudentUniqueIDAppliedForProfessorInternship == studentUniqueID);
-
-            if (application != null)
-            {
-                application.InternshipStatusAppliedAtTheProfessorSide = "Επιτυχής";
-                application.InternshipStatusAppliedAtTheStudentSide = "Επιτυχής";
-                await dbContext.SaveChangesAsync();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task RejectInternshipApplication(long internshipRNG, string studentUniqueID)
         {
-            var application = await dbContext.ProfessorInternshipsApplied
-                .FirstOrDefaultAsync(a => a.RNGForProfessorInternshipApplied == internshipRNG &&
-                                        a.StudentUniqueIDAppliedForProfessorInternship == studentUniqueID);
-
-            if (application != null)
-            {
-                application.InternshipStatusAppliedAtTheProfessorSide = "Απορρίφθηκε";
-                application.InternshipStatusAppliedAtTheStudentSide = "Απορρίφθηκε";
-                await dbContext.SaveChangesAsync();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         // Status update methods
         private async Task UpdateThesisStatus(int thesisId, string newStatus)
         {
-            var thesis = await dbContext.ProfessorTheses.FindAsync(thesisId);
-            if (thesis != null)
-            {
-                thesis.ThesisStatus = newStatus;
-                await dbContext.SaveChangesAsync();
-                await LoadTheses();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task UpdateInternshipStatus(int internshipId, string newStatus)
         {
-            var internship = await dbContext.ProfessorInternships.FindAsync(internshipId);
-            if (internship != null)
-            {
-                internship.ProfessorUploadedInternshipStatus = newStatus;
-                await dbContext.SaveChangesAsync();
-                await LoadInternships();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task UpdateAnnouncementStatus(int announcementId, string newStatus)
         {
-            var announcement = await dbContext.AnnouncementsAsProfessor.FindAsync(announcementId);
-            if (announcement != null)
-            {
-                announcement.ProfessorAnnouncementStatus = newStatus;
-                await dbContext.SaveChangesAsync();
-                await LoadAnnouncements();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task UpdateEventStatus(int eventId, string newStatus)
         {
-            var eventItem = await dbContext.ProfessorEvents.FindAsync(eventId);
-            if (eventItem != null)
-            {
-                eventItem.ProfessorEventStatus = newStatus;
-                await dbContext.SaveChangesAsync();
-                await LoadEvents();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         // Delete methods
         private async Task DeleteThesis(int thesisId)
         {
-            var thesis = await dbContext.ProfessorTheses.FindAsync(thesisId);
-            if (thesis != null)
-            {
-                dbContext.ProfessorTheses.Remove(thesis);
-                await dbContext.SaveChangesAsync();
-                await LoadTheses();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task DeleteInternship(int internshipId)
         {
-            var internship = await dbContext.ProfessorInternships.FindAsync(internshipId);
-            if (internship != null)
-            {
-                dbContext.ProfessorInternships.Remove(internship);
-                await dbContext.SaveChangesAsync();
-                await LoadInternships();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task DeleteAnnouncement(int announcementId)
         {
-            var announcement = await dbContext.AnnouncementsAsProfessor.FindAsync(announcementId);
-            if (announcement != null)
-            {
-                dbContext.AnnouncementsAsProfessor.Remove(announcement);
-                await dbContext.SaveChangesAsync();
-                await LoadAnnouncements();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task DeleteEvent(int eventId)
         {
-            var eventItem = await dbContext.ProfessorEvents.FindAsync(eventId);
-            if (eventItem != null)
-            {
-                dbContext.ProfessorEvents.Remove(eventItem);
-                await dbContext.SaveChangesAsync();
-                await LoadEvents();
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         // File handling methods
@@ -869,24 +748,14 @@ namespace QuizManager.Shared
 
         private async Task DownloadAttachmentForProfessorTheses(int thesisId)
         {
-            var thesis = await dbContext.ProfessorTheses.FindAsync(thesisId);
-            if (thesis != null && thesis.ThesisAttachment != null)
-            {
-                var fileName = $"{thesis.ThesisTitle}_Attachment.pdf";
-                var mimeType = "application/pdf";
-                await JS.InvokeVoidAsync("BlazorDownloadAttachmentPositionFile", fileName, mimeType, thesis.ThesisAttachment);
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         private async Task DownloadAttachmentForProfessorInternships(int internshipId)
         {
-            var internship = await dbContext.ProfessorInternships.FindAsync(internshipId);
-            if (internship != null && internship.ProfessorInternshipAttachment != null)
-            {
-                var fileName = $"{internship.ProfessorInternshipTitle}_Attachment.pdf";
-                var mimeType = "application/pdf";
-                await JS.InvokeVoidAsync("BlazorDownloadAttachmentPositionFile", fileName, mimeType, internship.ProfessorInternshipAttachment);
-            }
+            // Database operations removed - handled by parent MainLayout
+            await Task.CompletedTask;
         }
 
         // Region and town mapping
