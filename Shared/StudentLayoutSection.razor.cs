@@ -59,7 +59,6 @@ namespace QuizManager.Shared
         private bool isInternshipAreasVisible = false;
         private bool showInternships = false;
         private bool showJobApplications = false;
-        private bool showThesisApplications = false;
 
         // Search and filter properties
         private string thesisSearchForThesesAsStudent = "";
@@ -118,6 +117,14 @@ namespace QuizManager.Shared
         private List<AnnouncementAsCompany> Announcements = new();
         private List<AnnouncementAsProfessor> ProfessorAnnouncements = new();
 
+        // Thesis functionality
+        private List<AllTheses> availableTheses = new();
+        private List<ProfessorThesisApplied> professorThesisApplications = new();
+        private List<CompanyThesisApplied> companyThesisApplications = new();
+        private bool showAvailableTheses = true;
+        private bool showThesisApplications = true;
+        private string thesisSearchFilter = "all";
+
         // UI visibility flags
         private bool isUniversityNewsVisible = false;
         private bool isSvseNewsVisible = false;
@@ -128,6 +135,20 @@ namespace QuizManager.Shared
         private bool isProfessorAnnouncementsVisible = false;
         private bool isCompanyEventsVisible = false;
         private bool isProfessorEventsVisible = false;
+
+        // Additional properties for missing sections
+        private int? expandedProfessorAnnouncementId = null;
+        private int currentPageForProfessorAnnouncements = 1;
+        private int? expandedCompanyEventId = null;
+        private int currentCompanyEventPage = 1;
+        private int currentCompanyEventpageSize = 5;
+        private int? expandedProfessorEventId = null;
+        private int currentProfessorEventPage = 1;
+        private int currentProfessorEventpageSize = 5;
+
+        // Data collections for events
+        private List<CompanyEvent> CompanyEventsToShowAtFrontPage = new();
+        private List<ProfessorEvent> ProfessorEventsToShowAtFrontPage = new();
 
         // Event handling
         private Dictionary<long, bool> needsTransportForCompanyEvent = new();
@@ -187,6 +208,10 @@ namespace QuizManager.Shared
             svseNewsArticles = await FetchSVSENewsArticlesAsync();
             Announcements = await FetchAnnouncementsAsync();
             ProfessorAnnouncements = await FetchProfessorAnnouncementsAsync();
+            
+            // Load thesis data
+            await LoadThesisApplications();
+            await LoadAvailableTheses();
         }
 
         // Data loading methods - now handled by parent MainLayout
@@ -272,6 +297,23 @@ namespace QuizManager.Shared
         private void ToggleProfessorEventsVisibility()
         {
             isProfessorEventsVisible = !isProfessorEventsVisible;
+        }
+
+        // Additional toggle methods for missing sections
+
+        public void ToggleDescriptionForProfessorAnnouncements(int announcementId)
+        {
+            expandedProfessorAnnouncementId = expandedProfessorAnnouncementId == announcementId ? null : announcementId;
+        }
+
+        public void ToggleDescriptionForCompanyEvent(int eventId)
+        {
+            expandedCompanyEventId = expandedCompanyEventId == eventId ? null : eventId;
+        }
+
+        public void ToggleDescriptionForProfessorEvent(int eventId)
+        {
+            expandedProfessorEventId = expandedProfessorEventId == eventId ? null : eventId;
         }
 
         // Application visibility toggles
@@ -629,6 +671,231 @@ namespace QuizManager.Shared
             return pages;
         }
 
+        // Pagination methods for Professor Announcements
+        public void GoToFirstPageForProfessorAnnouncements()
+        {
+            currentPageForProfessorAnnouncements = 1;
+        }
+
+        public void PreviousPageForProfessorAnnouncements()
+        {
+            if (currentPageForProfessorAnnouncements > 1)
+                currentPageForProfessorAnnouncements--;
+        }
+
+        public void NextPageForProfessorAnnouncements()
+        {
+            if (currentPageForProfessorAnnouncements < GetTotalPagesForProfessorAnnouncements())
+                currentPageForProfessorAnnouncements++;
+        }
+
+        public void GoToLastPageForProfessorAnnouncements()
+        {
+            currentPageForProfessorAnnouncements = GetTotalPagesForProfessorAnnouncements();
+        }
+
+        public void GoToPageForProfessorAnnouncements(int pageNumber)
+        {
+            currentPageForProfessorAnnouncements = pageNumber;
+        }
+
+        public int GetTotalPagesForProfessorAnnouncements()
+        {
+            var totalAnnouncements = ProfessorAnnouncements?.Count(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη") ?? 0;
+            return (int)Math.Ceiling((double)totalAnnouncements / pageSize);
+        }
+
+        public List<int> GetVisiblePagesForProfessorAnnouncements()
+        {
+            var totalPages = GetTotalPagesForProfessorAnnouncements();
+            var currentPage = currentPageForProfessorAnnouncements;
+            var pages = new List<int>();
+
+            if (totalPages <= 7)
+            {
+                for (int i = 1; i <= totalPages; i++)
+                    pages.Add(i);
+            }
+            else
+            {
+                if (currentPage <= 4)
+                {
+                    for (int i = 1; i <= 5; i++)
+                        pages.Add(i);
+                    pages.Add(-1); // Ellipsis
+                    pages.Add(totalPages);
+                }
+                else if (currentPage >= totalPages - 3)
+                {
+                    pages.Add(1);
+                    pages.Add(-1); // Ellipsis
+                    for (int i = totalPages - 4; i <= totalPages; i++)
+                        pages.Add(i);
+                }
+                else
+                {
+                    pages.Add(1);
+                    pages.Add(-1); // Ellipsis
+                    for (int i = currentPage - 1; i <= currentPage + 1; i++)
+                        pages.Add(i);
+                    pages.Add(-1); // Ellipsis
+                    pages.Add(totalPages);
+                }
+            }
+
+            return pages;
+        }
+
+        // Pagination methods for Company Events
+        public void GoToFirstPageForCompanyEvents()
+        {
+            currentCompanyEventPage = 1;
+        }
+
+        public void PreviousPageForCompanyEvents()
+        {
+            if (currentCompanyEventPage > 1)
+                currentCompanyEventPage--;
+        }
+
+        public void NextPageForCompanyEvents()
+        {
+            if (currentCompanyEventPage < GetTotalPagesForCompanyEvents())
+                currentCompanyEventPage++;
+        }
+
+        public void GoToLastPageForCompanyEvents()
+        {
+            currentCompanyEventPage = GetTotalPagesForCompanyEvents();
+        }
+
+        public void GoToPageForCompanyEvents(int pageNumber)
+        {
+            currentCompanyEventPage = pageNumber;
+        }
+
+        public int GetTotalPagesForCompanyEvents()
+        {
+            var totalEvents = CompanyEventsToShowAtFrontPage?.Count(e => e.CompanyEventStatus == "Δημοσιευμένη") ?? 0;
+            return (int)Math.Ceiling((double)totalEvents / currentCompanyEventpageSize);
+        }
+
+        public List<int> GetVisiblePagesForCompanyEvents()
+        {
+            var totalPages = GetTotalPagesForCompanyEvents();
+            var currentPage = currentCompanyEventPage;
+            var pages = new List<int>();
+
+            if (totalPages <= 7)
+            {
+                for (int i = 1; i <= totalPages; i++)
+                    pages.Add(i);
+            }
+            else
+            {
+                if (currentPage <= 4)
+                {
+                    for (int i = 1; i <= 5; i++)
+                        pages.Add(i);
+                    pages.Add(-1); // Ellipsis
+                    pages.Add(totalPages);
+                }
+                else if (currentPage >= totalPages - 3)
+                {
+                    pages.Add(1);
+                    pages.Add(-1); // Ellipsis
+                    for (int i = totalPages - 4; i <= totalPages; i++)
+                        pages.Add(i);
+                }
+                else
+                {
+                    pages.Add(1);
+                    pages.Add(-1); // Ellipsis
+                    for (int i = currentPage - 1; i <= currentPage + 1; i++)
+                        pages.Add(i);
+                    pages.Add(-1); // Ellipsis
+                    pages.Add(totalPages);
+                }
+            }
+
+            return pages;
+        }
+
+        // Pagination methods for Professor Events
+        public void GoToFirstPageForProfessorEvents()
+        {
+            currentProfessorEventPage = 1;
+        }
+
+        public void PreviousPageForProfessorEvents()
+        {
+            if (currentProfessorEventPage > 1)
+                currentProfessorEventPage--;
+        }
+
+        public void NextPageForProfessorEvents()
+        {
+            if (currentProfessorEventPage < GetTotalPagesForProfessorEvents())
+                currentProfessorEventPage++;
+        }
+
+        public void GoToLastPageForProfessorEvents()
+        {
+            currentProfessorEventPage = GetTotalPagesForProfessorEvents();
+        }
+
+        public void GoToPageForProfessorEvents(int pageNumber)
+        {
+            currentProfessorEventPage = pageNumber;
+        }
+
+        public int GetTotalPagesForProfessorEvents()
+        {
+            var totalEvents = ProfessorEventsToShowAtFrontPage?.Count(e => e.ProfessorEventStatus == "Δημοσιευμένη") ?? 0;
+            return (int)Math.Ceiling((double)totalEvents / currentProfessorEventpageSize);
+        }
+
+        public List<int> GetVisiblePagesForProfessorEvents()
+        {
+            var totalPages = GetTotalPagesForProfessorEvents();
+            var currentPage = currentProfessorEventPage;
+            var pages = new List<int>();
+
+            if (totalPages <= 7)
+            {
+                for (int i = 1; i <= totalPages; i++)
+                    pages.Add(i);
+            }
+            else
+            {
+                if (currentPage <= 4)
+                {
+                    for (int i = 1; i <= 5; i++)
+                        pages.Add(i);
+                    pages.Add(-1); // Ellipsis
+                    pages.Add(totalPages);
+                }
+                else if (currentPage >= totalPages - 3)
+                {
+                    pages.Add(1);
+                    pages.Add(-1); // Ellipsis
+                    for (int i = totalPages - 4; i <= totalPages; i++)
+                        pages.Add(i);
+                }
+                else
+                {
+                    pages.Add(1);
+                    pages.Add(-1); // Ellipsis
+                    for (int i = currentPage - 1; i <= currentPage + 1; i++)
+                        pages.Add(i);
+                    pages.Add(-1); // Ellipsis
+                    pages.Add(totalPages);
+                }
+            }
+
+            return pages;
+        }
+
         // Download attachment method
         public async Task DownloadAnnouncementAttachmentFrontPage(byte[] attachmentFile, string fileName)
         {
@@ -646,6 +913,55 @@ namespace QuizManager.Shared
             }
         }
 
+        // Additional download methods for missing sections
+        public async Task DownloadProfessorAnnouncementAttachmentFrontPage(byte[] attachmentFile, string fileName)
+        {
+            try
+            {
+                var base64 = Convert.ToBase64String(attachmentFile);
+                var mimeType = "application/octet-stream";
+                var fileNameWithExtension = $"{fileName}.pdf";
+                
+                await JS.InvokeVoidAsync("downloadFile", base64, fileNameWithExtension, mimeType);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error downloading professor announcement attachment: {ex.Message}");
+            }
+        }
+
+        public async Task DownloadCompanyEventAttachmentFrontPage(byte[] attachmentFile, string fileName)
+        {
+            try
+            {
+                var base64 = Convert.ToBase64String(attachmentFile);
+                var mimeType = "application/octet-stream";
+                var fileNameWithExtension = $"{fileName}.pdf";
+                
+                await JS.InvokeVoidAsync("downloadFile", base64, fileNameWithExtension, mimeType);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error downloading company event attachment: {ex.Message}");
+            }
+        }
+
+        public async Task DownloadProfessorEventAttachmentFrontPage(byte[] attachmentFile, string fileName)
+        {
+            try
+            {
+                var base64 = Convert.ToBase64String(attachmentFile);
+                var mimeType = "application/octet-stream";
+                var fileNameWithExtension = $"{fileName}.pdf";
+                
+                await JS.InvokeVoidAsync("downloadFile", base64, fileNameWithExtension, mimeType);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error downloading professor event attachment: {ex.Message}");
+            }
+        }
+
         // News Article class
         public class NewsArticle
         {
@@ -653,6 +969,207 @@ namespace QuizManager.Shared
             public string Url { get; set; }
             public string Date { get; set; }
             public string Category { get; set; }
+        }
+
+        // Thesis functionality methods
+        public async Task LoadThesisApplications()
+        {
+            try
+            {
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+
+                if (user.Identity.IsAuthenticated)
+                {
+                    var userEmail = user.FindFirst("name")?.Value;
+                    if (!string.IsNullOrEmpty(userEmail))
+                    {
+                        // Load professor thesis applications
+                        professorThesisApplications = await dbContext.ProfessorThesesApplied
+                            .Include(a => a.StudentDetails)
+                            .Include(a => a.ProfessorDetails)
+                            .Where(j => j.StudentEmailAppliedForProfessorThesis == userEmail)
+                            .OrderByDescending(j => j.DateTimeStudentAppliedForProfessorThesis)
+                            .ToListAsync();
+
+                        // Load company thesis applications
+                        companyThesisApplications = await dbContext.CompanyThesesApplied
+                            .Include(a => a.StudentDetails)
+                            .Include(a => a.CompanyDetails)
+                            .Where(j => j.StudentEmailAppliedForThesis == userEmail)
+                            .OrderByDescending(j => j.DateTimeStudentAppliedForThesis)
+                            .ToListAsync();
+
+                        showThesisApplications = true;
+                        StateHasChanged();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading thesis applications: {ex.Message}");
+            }
+        }
+
+        public async Task LoadAvailableTheses()
+        {
+            try
+            {
+                // Load available theses from both professors and companies
+                var professorTheses = await dbContext.ProfessorTheses
+                    .Where(t => t.ThesisStatus == "Δημοσιευμένη")
+                    .Include(t => t.Professor)
+                    .ToListAsync();
+
+                var companyTheses = await dbContext.CompanyTheses
+                    .Where(t => t.CompanyThesisStatus == "Δημοσιευμένη")
+                    .Include(t => t.Company)
+                    .ToListAsync();
+
+                availableTheses = new List<AllTheses>();
+                
+                // Convert professor theses to AllTheses format
+                foreach (var thesis in professorTheses)
+                {
+                    availableTheses.Add(new AllTheses
+                    {
+                        RNGForProfessorThesisUploaded = thesis.RNGForThesisUploaded,
+                        ThesisTitle = thesis.ThesisTitle,
+                        ProfessorThesisAreasUpload = thesis.ThesisAreas,
+                        ThesisType = Models.ThesisType.Professor,
+                        ProfessorName = thesis.Professor?.ProfName,
+                        ProfessorSurname = thesis.Professor?.ProfSurname,
+                        ThesisUploadDateTime = thesis.ThesisUploadDateTime,
+                        ProfessorThesisStatus = thesis.ThesisStatus
+                    });
+                }
+
+                // Convert company theses to AllTheses format
+                foreach (var thesis in companyTheses)
+                {
+                    availableTheses.Add(new AllTheses
+                    {
+                        RNGForCompanyThesisUploaded = thesis.RNGForThesisUploadedAsCompany,
+                        ThesisTitle = thesis.CompanyThesisTitle,
+                        CompanyThesisAreasUpload = thesis.CompanyThesisAreasUpload,
+                        ThesisType = Models.ThesisType.Company,
+                        CompanyNameUploadedThesis = thesis.Company?.CompanyName,
+                        ThesisUploadDateTime = thesis.CompanyThesisUploadDateTime,
+                        CompanyThesisStatus = thesis.CompanyThesisStatus
+                    });
+                }
+
+                showAvailableTheses = true;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading available theses: {ex.Message}");
+            }
+        }
+
+        public async Task ToggleThesisApplications()
+        {
+            showThesisApplications = !showThesisApplications;
+            if (showThesisApplications)
+            {
+                await LoadThesisApplications();
+            }
+            StateHasChanged();
+        }
+
+        public async Task ToggleAvailableTheses()
+        {
+            showAvailableTheses = !showAvailableTheses;
+            if (showAvailableTheses)
+            {
+                await LoadAvailableTheses();
+            }
+            StateHasChanged();
+        }
+
+        public string GetThesisRowColor(object thesis)
+        {
+            if (thesis is CompanyThesisApplied companyThesis)
+            {
+                return companyThesis.CompanyThesisStatusAppliedAtStudentSide switch
+                {
+                    "Επιτυχής" => "lightgreen",
+                    "Απορρίφθηκε" => "lightcoral",
+                    "Απορρίφθηκε (Απόσυρση Θέσεως Από Εταιρία)" => "coral",
+                    "Αποσύρθηκε από τον φοιτητή" => "lightyellow",
+                    _ => "transparent"
+                };
+            }
+            else if (thesis is ProfessorThesisApplied professorThesis)
+            {
+                return professorThesis.ProfessorThesisStatusAppliedAtStudentSide switch
+                {
+                    "Επιτυχής" => "lightgreen",
+                    "Απορρίφθηκε" => "lightcoral",
+                    "Απορρίφθηκε (Απόσυρση Θέσεως Από τον Καθηγητή)" => "coral",
+                    "Αποσύρθηκε από τον φοιτητή" => "lightyellow",
+                    _ => "transparent"
+                };
+            }
+            return "transparent";
+        }
+
+        public async Task ApplyForThesis(AllTheses thesis)
+        {
+            try
+            {
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+
+                if (user.Identity.IsAuthenticated)
+                {
+                    var userEmail = user.FindFirst("name")?.Value;
+                    if (!string.IsNullOrEmpty(userEmail))
+                    {
+                        // Get student data
+                        var student = await dbContext.Students.FirstOrDefaultAsync(s => s.Email == userEmail);
+                        if (student != null)
+                        {
+                        if (thesis.ThesisType == Models.ThesisType.Professor)
+                        {
+                            var application = new ProfessorThesisApplied
+                            {
+                                RNGForProfessorThesisApplied = thesis.RNGForProfessorThesisUploaded,
+                                StudentEmailAppliedForProfessorThesis = userEmail,
+                                StudentUniqueIDAppliedForProfessorThesis = student.Student_UniqueID,
+                                DateTimeStudentAppliedForProfessorThesis = DateTime.Now,
+                                ProfessorThesisStatusAppliedAtStudentSide = "Εκκρεμής"
+                            };
+                            dbContext.ProfessorThesesApplied.Add(application);
+                        }
+                        else if (thesis.ThesisType == Models.ThesisType.Company)
+                        {
+                            var application = new CompanyThesisApplied
+                            {
+                                RNGForCompanyThesisApplied = thesis.RNGForCompanyThesisUploaded,
+                                StudentEmailAppliedForThesis = userEmail,
+                                StudentUniqueIDAppliedForThesis = student.Student_UniqueID,
+                                DateTimeStudentAppliedForThesis = DateTime.Now,
+                                CompanyThesisStatusAppliedAtStudentSide = "Εκκρεμής"
+                            };
+                            dbContext.CompanyThesesApplied.Add(application);
+                        }
+
+                            await dbContext.SaveChangesAsync();
+                            await JS.InvokeVoidAsync("alert", "Η αίτηση υποβλήθηκε επιτυχώς!");
+                            
+                            // Refresh the data
+                            await LoadAvailableTheses();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error applying for thesis: {ex.Message}");
+                await JS.InvokeVoidAsync("alert", "Σφάλμα κατά την υποβολή της αίτησης");
+            }
         }
 
         protected async Task SetRegistered(bool value)

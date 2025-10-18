@@ -284,6 +284,383 @@ else
                                 }
                             </div>
                         }
+
+                        <!-- Professor Announcements Section -->
+                        <div class="mb-3" style="background-color: #e6f2ff; border: 1px solid #b3c6e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div class="d-flex justify-content-between align-items-center p-3" style="border-bottom: 1px solid #b3c6e0;">
+                                <h1 class="news-heading form-label m-0">
+                                    <span class="black-text">
+                                        <span style="color: #b399d4; margin-left: 10px; margin-right: 5px;">
+                                            <i class="fas fa-list"></i>
+                                        </span>
+                                        Ανακοινώσεις Καθηγητών
+                                    </span>
+                                </h1>
+                                <button class="btn" 
+                                        style="width: 30px; height: 30px; border-radius: 50%; background-color: #0d47a1; color: white; border: none; padding: 0; display: flex; align-items: center; justify-content: center; margin-right: 10px;" 
+                                        @onclick="ToggleProfessorAnnouncementsVisibility">
+                                    @if (isProfessorAnnouncementsVisible)
+                                    {
+                                        <span>&#8722;</span> <!-- Minus sign -->
+                                    }
+                                    else
+                                    {
+                                        <span>&#43;</span> <!-- Plus sign -->
+                                    }
+                                </button>
+                            </div>
+
+                            @if (isProfessorAnnouncementsVisible)
+                            {
+                                <div class="p-3" style="border-top: 1px solid #e6f2ff;">
+                                    @if (ProfessorAnnouncements != null && ProfessorAnnouncements.Any(announcement => announcement.ProfessorAnnouncementStatus == "Δημοσιευμένη"))
+                                    {
+                                        <!-- Display paginated announcements sorted by upload date descending -->
+                                        @foreach (var announcement in ProfessorAnnouncements
+                                       .Where(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη")
+                                       .OrderByDescending(a => a.ProfessorAnnouncementUploadDate)
+                                       .Skip((currentPageForProfessorAnnouncements - 1) * pageSize)
+                                       .Take(pageSize))
+                                        {
+                                            <div class="news-article mb-3 pb-2" style="border-bottom: 1px dashed #ccc;">
+                                                <!-- Clicking on title toggles description -->
+                                                <a href="javascript:void(0);"
+                                                   @onclick="() => ToggleDescriptionForProfessorAnnouncements(announcement.Id)"
+                                                   style="display: block; max-width: 100%; overflow-wrap: break-word; color: #0d47a1; text-decoration: none; cursor: pointer;"
+                                                   title="Κάντε Κλικ εδώ για να δείτε την περιγραφή της ανακοίνωσης">
+                                                    <span class="black-text">• 
+                                                        <strong>@(announcement.Professor?.ProfName ?? "N/A")</strong> 
+                                                        <strong>@(announcement.Professor?.ProfSurname ?? "N/A")</strong>
+                                                    </span> - @announcement.ProfessorAnnouncementTitle
+                                                    <span class="text-muted">(@announcement.ProfessorAnnouncementUploadDate.ToString("dd/MM/yyyy"))</span>
+                                                </a>
+
+                                                <!-- Show description based on toggle state -->
+                                                <div class="announcement-description mt-2 @(expandedProfessorAnnouncementId == announcement.Id ? "expanded" : "collapsed")">
+                                                    @if (expandedProfessorAnnouncementId == announcement.Id)
+                                                    {
+                                                        <p style="color: #333;">@announcement.ProfessorAnnouncementDescription</p>
+
+                                                        @if (announcement.ProfessorAnnouncementAttachmentFile != null && announcement.ProfessorAnnouncementAttachmentFile.Length > 0)
+                                                        {
+                                                            <p class="announcement-attachment mt-2">
+                                                                <a href="#"
+                                                                   @onclick="() => DownloadProfessorAnnouncementAttachmentFrontPage(announcement.ProfessorAnnouncementAttachmentFile, announcement.ProfessorAnnouncementTitle)"
+                                                                   style="color: #c62828; text-decoration: none;"
+                                                                   title="Κάντε Κλικ εδώ για να κατεβάσετε το αρχείο">
+                                                                    <i class="fa fa-download me-1"></i> 
+                                                                    Συννημένο Αρχείο Ανακοίνωσης
+                                                                </a>
+                                                            </p>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Pagination Controls for Professor Announcements -->
+                                        <div class="d-flex justify-content-center align-items-center mt-3 gap-1">
+                                            <!-- First Page (<<) -->
+                                            <span class="pagination-item @(currentPageForProfessorAnnouncements == 1 ? "disabled" : "")"
+                                                  @onclick="GoToFirstPageForProfessorAnnouncements">
+                                                &lt;&lt;
+                                            </span>
+
+                                            <!-- Previous Page (<) -->
+                                            <span class="pagination-item @(currentPageForProfessorAnnouncements == 1 ? "disabled" : "")"
+                                                  @onclick="PreviousPageForProfessorAnnouncements">
+                                                &lt;
+                                            </span>
+
+                                            <!-- Page Numbers -->
+                                            @foreach (var pageNumber in GetVisiblePagesForProfessorAnnouncements())
+                                            {
+                                                if (pageNumber == -1)
+                                                {
+                                                    <span class="pagination-ellipsis">...</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="pagination-item @(pageNumber == currentPageForProfessorAnnouncements ? "active" : "")"
+                                                          @onclick="() => GoToPageForProfessorAnnouncements(pageNumber)">
+                                                        @pageNumber
+                                                    </span>
+                                                }
+                                            }
+
+                                            <!-- Next Page (>) -->
+                                            <span class="pagination-item @(currentPageForProfessorAnnouncements == GetTotalPagesForProfessorAnnouncements() ? "disabled" : "")"
+                                                  @onclick="NextPageForProfessorAnnouncements">
+                                                &gt;
+                                            </span>
+
+                                            <!-- Last Page (>>) -->
+                                            <span class="pagination-item @(currentPageForProfessorAnnouncements == GetTotalPagesForProfessorAnnouncements() ? "disabled" : "")"
+                                                  @onclick="GoToLastPageForProfessorAnnouncements">
+                                                &gt;&gt;
+                                            </span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="mb-0 text-muted">Καμία Ανακοίνωση από Καθηγητές ακόμη....</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Company Events Section -->
+                        <div class="mb-3" style="background-color: #e6f2ff; border: 1px solid #b3c6e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div class="d-flex justify-content-between align-items-center p-3" style="border-bottom: 1px solid #b3c6e0;">
+                                <h1 class="news-heading form-label m-0">
+                                    <span class="black-text">
+                                        <span style="color: #b399d4; margin-left: 10px; margin-right: 5px;">
+                                            <i class="fas fa-calendar-day"></i>
+                                        </span>
+                                        Εκδηλώσεις Εταιρειών
+                                    </span>
+                                </h1>
+                                <button class="btn" 
+                                        style="width: 30px; height: 30px; border-radius: 50%; background-color: #0d47a1; color: white; border: none; padding: 0; display: flex; align-items: center; justify-content: center; margin-right: 10px;" 
+                                        @onclick="ToggleCompanyEventsVisibility">
+                                    @if (isCompanyEventsVisible)
+                                    {
+                                        <span>&#8722;</span> <!-- Minus sign -->
+                                    }
+                                    else
+                                    {
+                                        <span>&#43;</span> <!-- Plus sign -->
+                                    }
+                                </button>
+                            </div>
+
+                            @if (isCompanyEventsVisible)
+                            {
+                                <div class="p-3" style="border-top: 1px solid #e6f2ff;">
+                                    @if (CompanyEventsToShowAtFrontPage != null && CompanyEventsToShowAtFrontPage.Any(eventItem => eventItem.CompanyEventStatus == "Δημοσιευμένη"))
+                                    {
+                                        <!-- Display paginated events sorted by date descending -->
+                                        @foreach (var eventItem in CompanyEventsToShowAtFrontPage
+                                       .Where(e => e.CompanyEventStatus == "Δημοσιευμένη")
+                                       .OrderByDescending(e => e.CompanyEventUploadedDate)
+                                       .Skip((currentCompanyEventPage - 1) * currentCompanyEventpageSize)
+                                       .Take(currentCompanyEventpageSize))
+                                        {
+                                            <div class="news-article mb-3 pb-2" style="border-bottom: 1px dashed #ccc;">
+                                                <!-- Clicking on title toggles description -->
+                                                <a href="javascript:void(0);"
+                                                   @onclick="() => ToggleDescriptionForCompanyEvent(eventItem.Id)"
+                                                   style="display: block; max-width: 100%; overflow-wrap: break-word; color: #0d47a1; text-decoration: none; cursor: pointer;"
+                                                   title="Κάντε Κλικ εδώ για να δείτε την περιγραφή της εκδήλωσης">
+                                            <span class="black-text">•
+                                                <strong>
+                                                    @(eventItem.Company?.CompanyName ?? "Άγνωστη Εταιρεία")
+                                                    @if (eventItem.CompanyEventOtherOrganizerToBeVisible)
+                                                    {
+                                                        @($" / {eventItem.CompanyEventOtherOrganizer}")
+                                                    }
+                                                </strong>
+                                            </span> - @eventItem.CompanyEventTitle
+                                                    <span class="text-muted">(@eventItem.CompanyEventUploadedDate.ToString("dd/MM/yyyy"))</span>
+                                                </a>
+
+                                                <!-- Show description based on toggle state -->
+                                                <div class="event-description mt-2 @(expandedCompanyEventId == eventItem.Id ? "expanded" : "collapsed")">
+                                                    @if (expandedCompanyEventId == eventItem.Id)
+                                                    {
+                                                        <p style="color: #333;">@eventItem.CompanyEventDescription</p>
+
+                                                        @if (eventItem.CompanyEventAttachmentFile != null && eventItem.CompanyEventAttachmentFile.Length > 0)
+                                                        {
+                                                            <p class="event-attachment mt-2">
+                                                                <a href="#"
+                                                                   @onclick="() => DownloadCompanyEventAttachmentFrontPage(eventItem.CompanyEventAttachmentFile, eventItem.CompanyEventTitle)"
+                                                                   style="color: #c62828; text-decoration: none;"
+                                                                   title="Κάντε Κλικ εδώ για να κατεβάσετε το αρχείο">
+                                                                    <i class="fa fa-download me-1"></i> 
+                                                                    Συννημένο Αρχείο Εκδήλωσης
+                                                                </a>
+                                                            </p>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Pagination Controls for Company Events -->
+                                        <div class="d-flex justify-content-center align-items-center mt-3 gap-1">
+                                            <!-- First Page (<<) -->
+                                            <span class="pagination-item @(currentCompanyEventPage == 1 ? "disabled" : "")"
+                                                  @onclick="GoToFirstPageForCompanyEvents">
+                                                &lt;&lt;
+                                            </span>
+
+                                            <!-- Previous Page (<) -->
+                                            <span class="pagination-item @(currentCompanyEventPage == 1 ? "disabled" : "")"
+                                                  @onclick="PreviousPageForCompanyEvents">
+                                                &lt;
+                                            </span>
+
+                                            <!-- Page Numbers -->
+                                            @foreach (var pageNumber in GetVisiblePagesForCompanyEvents())
+                                            {
+                                                if (pageNumber == -1)
+                                                {
+                                                    <span class="pagination-ellipsis">...</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="pagination-item @(pageNumber == currentCompanyEventPage ? "active" : "")"
+                                                          @onclick="() => GoToPageForCompanyEvents(pageNumber)">
+                                                        @pageNumber
+                                                    </span>
+                                                }
+                                            }
+
+                                            <!-- Next Page (>) -->
+                                            <span class="pagination-item @(currentCompanyEventPage == GetTotalPagesForCompanyEvents() ? "disabled" : "")"
+                                                  @onclick="NextPageForCompanyEvents">
+                                                &gt;
+                                            </span>
+
+                                            <!-- Last Page (>>) -->
+                                            <span class="pagination-item @(currentCompanyEventPage == GetTotalPagesForCompanyEvents() ? "disabled" : "")"
+                                                  @onclick="GoToLastPageForCompanyEvents">
+                                                &gt;&gt;
+                                            </span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="mb-0 text-muted">Καμία Εκδήλωση από Εταιρείες ακόμη....</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Professor Events Section -->
+                        <div class="mb-3" style="background-color: #e6f2ff; border: 1px solid #b3c6e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div class="d-flex justify-content-between align-items-center p-3" style="border-bottom: 1px solid #b3c6e0;">
+                                <h1 class="news-heading form-label m-0">
+                                    <span class="black-text">
+                                        <span style="color: #b399d4; margin-left: 10px; margin-right: 5px;">
+                                            <i class="fas fa-calendar-day"></i>
+                                        </span>
+                                        Εκδηλώσεις Καθηγητών
+                                    </span>
+                                </h1>
+                                <button class="btn" 
+                                        style="width: 30px; height: 30px; border-radius: 50%; background-color: #0d47a1; color: white; border: none; padding: 0; display: flex; align-items: center; justify-content: center; margin-right: 10px;" 
+                                        @onclick="ToggleProfessorEventsVisibility">
+                                    @if (isProfessorEventsVisible)
+                                    {
+                                        <span>&#8722;</span> <!-- Minus sign -->
+                                    }
+                                    else
+                                    {
+                                        <span>&#43;</span> <!-- Plus sign -->
+                                    }
+                                </button>
+                            </div>
+
+                            @if (isProfessorEventsVisible)
+                            {
+                                <div class="p-3" style="border-top: 1px solid #e6f2ff;">
+                                    @if (ProfessorEventsToShowAtFrontPage != null && ProfessorEventsToShowAtFrontPage.Any(eventItem => eventItem.ProfessorEventStatus == "Δημοσιευμένη"))
+                                    {
+                                        <!-- Display paginated events sorted by date descending -->
+                                        @foreach (var eventItem in ProfessorEventsToShowAtFrontPage
+                                       .Where(e => e.ProfessorEventStatus == "Δημοσιευμένη")
+                                       .OrderByDescending(e => e.ProfessorEventUploadedDate)
+                                       .Skip((currentProfessorEventPage - 1) * currentProfessorEventpageSize)
+                                       .Take(currentProfessorEventpageSize))
+                                        {
+                                            <div class="news-article mb-3 pb-2" style="border-bottom: 1px dashed #ccc;">
+                                                <!-- Clicking on title toggles description -->
+                                                <a href="javascript:void(0);"
+                                                   @onclick="() => ToggleDescriptionForProfessorEvent(eventItem.Id)"
+                                                   style="display: block; max-width: 100%; overflow-wrap: break-word; color: #0d47a1; text-decoration: none; cursor: pointer;"
+                                                   title="Κάντε Κλικ εδώ για να δείτε την περιγραφή της εκδήλωσης">
+                                                    <span class="black-text">• 
+                                                        <strong>@(eventItem.Professor?.ProfName ?? "N/A")</strong> 
+                                                        <strong>@(eventItem.Professor?.ProfSurname ?? "N/A")</strong>
+                                                    </span> - @eventItem.ProfessorEventTitle
+                                                    <span class="text-muted">(@eventItem.ProfessorEventUploadedDate.ToString("dd/MM/yyyy"))</span>
+                                                </a>
+
+                                                <!-- Show description based on toggle state -->
+                                                <div class="event-description mt-2 @(expandedProfessorEventId == eventItem.Id ? "expanded" : "collapsed")">
+                                                    @if (expandedProfessorEventId == eventItem.Id)
+                                                    {
+                                                        <p style="color: #333;">@eventItem.ProfessorEventDescription</p>
+
+                                                        @if (eventItem.ProfessorEventAttachmentFile != null && eventItem.ProfessorEventAttachmentFile.Length > 0)
+                                                        {
+                                                            <p class="event-attachment mt-2">
+                                                                <a href="#"
+                                                                   @onclick="() => DownloadProfessorEventAttachmentFrontPage(eventItem.ProfessorEventAttachmentFile, eventItem.ProfessorEventTitle)"
+                                                                   style="color: #c62828; text-decoration: none;"
+                                                                   title="Κάντε Κλικ εδώ για να κατεβάσετε το αρχείο">
+                                                                    <i class="fa fa-download me-1"></i> 
+                                                                    Συννημένο Αρχείο Εκδήλωσης
+                                                                </a>
+                                                            </p>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Pagination Controls for Professor Events -->
+                                        <div class="d-flex justify-content-center align-items-center mt-3 gap-1">
+                                            <!-- First Page (<<) -->
+                                            <span class="pagination-item @(currentProfessorEventPage == 1 ? "disabled" : "")"
+                                                  @onclick="GoToFirstPageForProfessorEvents">
+                                                &lt;&lt;
+                                            </span>
+
+                                            <!-- Previous Page (<) -->
+                                            <span class="pagination-item @(currentProfessorEventPage == 1 ? "disabled" : "")"
+                                                  @onclick="PreviousPageForProfessorEvents">
+                                                &lt;
+                                            </span>
+
+                                            <!-- Page Numbers -->
+                                            @foreach (var pageNumber in GetVisiblePagesForProfessorEvents())
+                                            {
+                                                if (pageNumber == -1)
+                                                {
+                                                    <span class="pagination-ellipsis">...</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="pagination-item @(pageNumber == currentProfessorEventPage ? "active" : "")"
+                                                          @onclick="() => GoToPageForProfessorEvents(pageNumber)">
+                                                        @pageNumber
+                                                    </span>
+                                                }
+                                            }
+
+                                            <!-- Next Page (>) -->
+                                            <span class="pagination-item @(currentProfessorEventPage == GetTotalPagesForProfessorEvents() ? "disabled" : "")"
+                                                  @onclick="NextPageForProfessorEvents">
+                                                &gt;
+                                            </span>
+
+                                            <!-- Last Page (>>) -->
+                                            <span class="pagination-item @(currentProfessorEventPage == GetTotalPagesForProfessorEvents() ? "disabled" : "")"
+                                                  @onclick="GoToLastPageForProfessorEvents">
+                                                &gt;&gt;
+                                            </span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="mb-0 text-muted">Καμία Εκδήλωση από Καθηγητές ακόμη....</p>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
             </div>
@@ -292,9 +669,142 @@ else
             <div class="tab-pane fade" id="thesis" role="tabpanel" aria-labelledby="thesis-tab">
                 <div class="p-3">
                     <h5>Πτυχιακές Εργασίες</h5>
-                    <p>Εδώ θα εμφανίζονται οι διαθέσιμες πτυχιακές εργασίες.</p>
-                    <div class="alert alert-info">
-                        <strong>Σημείωση:</strong> Αυτή είναι μια βελτιωμένη έκδοση του StudentLayoutSection με βασική λειτουργικότητα.
+                    
+                    <!-- Thesis Applications Section -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6>Οι Αιτήσεις Μου</h6>
+                            <button class="btn btn-primary btn-sm" @onclick="ToggleThesisApplications">
+                                @if (showThesisApplications)
+                                {
+                                    <span>Απόκρυψη Αιτήσεων</span>
+                                }
+                                else
+                                {
+                                    <span>Προβολή Αιτήσεων</span>
+                                }
+                            </button>
+                        </div>
+
+                        @if (showThesisApplications)
+                        {
+                            <div class="alert alert-info">
+                                <p>Debug: showThesisApplications = @showThesisApplications</p>
+                                <p>Professor Applications Count: @professorThesisApplications.Count</p>
+                                <p>Company Applications Count: @companyThesisApplications.Count</p>
+                            </div>
+                            
+                            @if (professorThesisApplications.Any() || companyThesisApplications.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Τίτλος</th>
+                                                <th>Τύπος</th>
+                                                <th>Καθηγητής/Εταιρεία</th>
+                                                <th>Ημερομηνία Αίτησης</th>
+                                                <th>Κατάσταση</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var application in professorThesisApplications)
+                                            {
+                                            <tr style="background-color: @GetThesisRowColor(application)">
+                                                <td>@application.RNGForProfessorThesisApplied</td>
+                                                <td>Καθηγητής</td>
+                                                <td>@application.ProfessorEmailWhereStudentAppliedForProfessorThesis</td>
+                                                <td>@application.DateTimeStudentAppliedForProfessorThesis.ToString("dd/MM/yyyy")</td>
+                                                <td>@application.ProfessorThesisStatusAppliedAtStudentSide</td>
+                                            </tr>
+                                            }
+                                            @foreach (var application in companyThesisApplications)
+                                            {
+                                                <tr style="background-color: @GetThesisRowColor(application)">
+                                                    <td>@application.RNGForCompanyThesisApplied</td>
+                                                    <td>Εταιρεία</td>
+                                                    <td>@application.CompanyEmailWhereStudentAppliedForThesis</td>
+                                                    <td>@application.DateTimeStudentAppliedForThesis.ToString("dd/MM/yyyy")</td>
+                                                    <td>@application.CompanyThesisStatusAppliedAtStudentSide</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    <p>Δεν υπάρχουν αιτήσεις πτυχιακών εργασιών.</p>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- Available Theses Section -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6>Διαθέσιμες Πτυχιακές Εργασίες</h6>
+                            <button class="btn btn-success btn-sm" @onclick="ToggleAvailableTheses">
+                                @if (showAvailableTheses)
+                                {
+                                    <span>Απόκρυψη Θεμάτων</span>
+                                }
+                                else
+                                {
+                                    <span>Προβολή Θεμάτων</span>
+                                }
+                            </button>
+                        </div>
+
+                    @if (showAvailableTheses)
+                    {
+                        <div class="alert alert-info">
+                            <p>Debug: showAvailableTheses = @showAvailableTheses</p>
+                            <p>Available Theses Count: @availableTheses.Count</p>
+                        </div>
+                        
+                        @if (availableTheses.Any())
+                        {
+                            <div class="row">
+                                @foreach (var thesis in availableTheses)
+                                {
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="card-title mb-0">@thesis.ThesisTitle</h6>
+                                            </div>
+                                            <div class="card-body">
+                                            <p class="card-text">
+                                                <strong>Τύπος:</strong> @thesis.ThesisType<br>
+                                                @if (thesis.ThesisType == Models.ThesisType.Professor)
+                                                {
+                                                    <strong>Καθηγητής:</strong> @thesis.ProfessorName @thesis.ProfessorSurname<br>
+                                                }
+                                                else
+                                                {
+                                                    <strong>Εταιρεία:</strong> @thesis.CompanyNameUploadedThesis<br>
+                                                }
+                                                <strong>Περιοχές:</strong> @(thesis.ThesisType == Models.ThesisType.Professor ? thesis.ProfessorThesisAreasUpload : thesis.CompanyThesisAreasUpload)<br>
+                                                <strong>Ημερομηνία:</strong> @thesis.ThesisUploadDateTime.ToString("dd/MM/yyyy")
+                                            </p>
+                                            <p class="card-text">@thesis.ThesisTitle</p>
+                                                <button class="btn btn-primary btn-sm" @onclick="() => ApplyForThesis(thesis)">
+                                                    Αίτηση Συμμετοχής
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <p>Δεν υπάρχουν διαθέσιμες πτυχιακές εργασίες.</p>
+                            </div>
+                        }
+                    }
                     </div>
                 </div>
             </div>
