@@ -34,6 +34,7 @@ namespace QuizManager.Shared
         [Inject] private HttpClient HttpClient { get; set; }
         [Inject] private NavigationManager NavigationManager { get; set; }
         [Inject] private IJSRuntime JS { get; set; }
+        [Inject] private Data.AppDbContext dbContext { get; set; }
 
         // Student-specific properties
         private List<ProfessorThesisApplied> thesisApplications = new();
@@ -48,6 +49,7 @@ namespace QuizManager.Shared
         private bool showStudentInternshipApplications = false;
         private bool isAnnouncementsAsStudentVisible = false;
         private bool isEventSearchAsStudentVisible = false;
+
         private bool isJobApplicationsAsStudentVisible = false;
         private bool isJobPositionAsStudentFiltersVisible = false;
         private bool isInternshipApplicationsAsStudentVisible = false;
@@ -120,6 +122,9 @@ namespace QuizManager.Shared
         private bool isUniversityNewsVisible = false;
         private bool isSvseNewsVisible = false;
         private bool isCompanyAnnouncementsVisible = false;
+        private int? expandedAnnouncementId = null;
+        private int currentPageForCompanyAnnouncements = 1;
+        private int pageSize = 5;
         private bool isProfessorAnnouncementsVisible = false;
         private bool isCompanyEventsVisible = false;
         private bool isProfessorEventsVisible = false;
@@ -177,9 +182,11 @@ namespace QuizManager.Shared
         // Component initialization
         protected override async Task OnInitializedAsync()
         {
-            // Data loading is now handled by the parent MainLayout
-            // This component is now purely presentational
-            await Task.CompletedTask;
+            // Load news and announcements data
+            newsArticles = await FetchNewsArticlesAsync();
+            svseNewsArticles = await FetchSVSENewsArticlesAsync();
+            Announcements = await FetchAnnouncementsAsync();
+            ProfessorAnnouncements = await FetchProfessorAnnouncementsAsync();
         }
 
         // Data loading methods - now handled by parent MainLayout
@@ -242,9 +249,14 @@ namespace QuizManager.Shared
             isSvseNewsVisible = !isSvseNewsVisible;
         }
 
-        private void ToggleCompanyAnnouncementsVisibility()
+        public void ToggleCompanyAnnouncementsVisibility()
         {
             isCompanyAnnouncementsVisible = !isCompanyAnnouncementsVisible;
+        }
+
+        public void ToggleDescription(int announcementId)
+        {
+            expandedAnnouncementId = expandedAnnouncementId == announcementId ? null : announcementId;
         }
 
         private void ToggleProfessorAnnouncementsVisibility()
@@ -535,15 +547,103 @@ namespace QuizManager.Shared
 
         private async Task<List<AnnouncementAsProfessor>> FetchProfessorAnnouncementsAsync()
         {
-            // Data fetching is now handled by parent MainLayout
-            return new List<AnnouncementAsProfessor>();
+            return await dbContext.AnnouncementsAsProfessor
+                .Where(a => a.ProfessorAnnouncementStatus == "Δημοσιευμένη")
+                .ToListAsync();
         }
 
-        protected async Task SetRegistered(bool value)
+
+
+        // Pagination methods for company announcements
+        public void GoToFirstPageForCompanyAnnouncements()
         {
-            IsRegistered = value;
-            if (IsRegisteredChanged.HasDelegate)
-                await IsRegisteredChanged.InvokeAsync(value);
+            currentPageForCompanyAnnouncements = 1;
+        }
+
+        public void PreviousPageForCompanyAnnouncements()
+        {
+            if (currentPageForCompanyAnnouncements > 1)
+                currentPageForCompanyAnnouncements--;
+        }
+
+        public void NextPageForCompanyAnnouncements()
+        {
+            if (currentPageForCompanyAnnouncements < GetTotalPagesForCompanyAnnouncements())
+                currentPageForCompanyAnnouncements++;
+        }
+
+        public void GoToLastPageForCompanyAnnouncements()
+        {
+            currentPageForCompanyAnnouncements = GetTotalPagesForCompanyAnnouncements();
+        }
+
+        public void GoToPageForCompanyAnnouncements(int pageNumber)
+        {
+            currentPageForCompanyAnnouncements = pageNumber;
+        }
+
+        public int GetTotalPagesForCompanyAnnouncements()
+        {
+            var totalAnnouncements = Announcements?.Count(a => a.CompanyAnnouncementStatus == "Δημοσιευμένη") ?? 0;
+            return (int)Math.Ceiling((double)totalAnnouncements / pageSize);
+        }
+
+        public List<int> GetVisiblePagesForCompanyAnnouncements()
+        {
+            var totalPages = GetTotalPagesForCompanyAnnouncements();
+            var currentPage = currentPageForCompanyAnnouncements;
+            var pages = new List<int>();
+
+            if (totalPages <= 7)
+            {
+                for (int i = 1; i <= totalPages; i++)
+                    pages.Add(i);
+            }
+            else
+            {
+                if (currentPage <= 4)
+                {
+                    for (int i = 1; i <= 5; i++)
+                        pages.Add(i);
+                    pages.Add(-1); // Ellipsis
+                    pages.Add(totalPages);
+                }
+                else if (currentPage >= totalPages - 3)
+                {
+                    pages.Add(1);
+                    pages.Add(-1); // Ellipsis
+                    for (int i = totalPages - 4; i <= totalPages; i++)
+                        pages.Add(i);
+                }
+                else
+                {
+                    pages.Add(1);
+                    pages.Add(-1); // Ellipsis
+                    for (int i = currentPage - 1; i <= currentPage + 1; i++)
+                        pages.Add(i);
+                    pages.Add(-1); // Ellipsis
+                    pages.Add(totalPages);
+                }
+            }
+
+            return pages;
+        }
+
+        // Download attachment method
+        public async Task DownloadAnnouncementAttachmentFrontPage(byte[] attachmentFile, string fileName)
+        {
+            try
+            {
+                var base64 = Convert.ToBase64String(attachmentFile);
+                var mimeType = "application/octet-stream";
+                var fileNameWithExtension = $"{fileName}.pdf";
+                
+                await JS.InvokeVoidAsync("downloadFile", base64, fileNameWithExtension, mimeType);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error downloading attachment: {ex.Message}");
+            }
         }
 
         // News Article class
@@ -554,5 +654,13 @@ namespace QuizManager.Shared
             public string Date { get; set; }
             public string Category { get; set; }
         }
+
+        protected async Task SetRegistered(bool value)
+        {
+            IsRegistered = value;
+            if (IsRegisteredChanged.HasDelegate)
+                await IsRegisteredChanged.InvokeAsync(value);
+        }
+
     }
 }

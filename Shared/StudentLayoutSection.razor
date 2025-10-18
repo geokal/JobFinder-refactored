@@ -54,13 +54,238 @@ else
         <div class="tab-content" id="studentTabContent">
             <!-- Announcements Tab -->
             <div class="tab-pane fade show active" id="announcements" role="tabpanel" aria-labelledby="announcements-tab">
-                <div class="p-3">
-                    <h5>Ανακοινώσεις</h5>
-                    <p>Εδώ θα εμφανίζονται οι ανακοινώσεις για φοιτητές.</p>
-                    <div class="alert alert-info">
-                        <strong>Σημείωση:</strong> Αυτή είναι μια βελτιωμένη έκδοση του StudentLayoutSection με βασική λειτουργικότητα.
+                <div class="mb-3 row-dark-gray mt-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="form-label" style="color: #FFF8DC;">• Πρόσφατες Ανακοινώσεις •</label>
+                        <button class="btn btn-link" @onclick="ToggleAnnouncementsAsStudentVisibility">
+                            @if (isAnnouncementsAsStudentVisible)
+                            {
+                                <span>&#8722;</span> <!-- Minus sign -->
+                            }
+                            else
+                            {
+                                <span>&#43;</span> <!-- Plus sign -->
+                            }
+                        </button>
                     </div>
                 </div>
+                @if(isAnnouncementsAsStudentVisible)
+                {
+                    <!-- University News Section -->
+                    <div class="mb-3" style="background-color: #e6f2ff; border: 1px solid #b3c6e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div class="d-flex justify-content-between align-items-center p-3" style="border-bottom: 1px solid #b3c6e0;">
+                            <h1 class="news-heading form-label m-0">
+                                <span class="black-text">
+                                    <span style="color: #b399d4; margin-left: 10px; margin-right: 5px;">
+                                        <i class="fas fa-rss"></i>
+                                    </span>
+                                    Πανεπιστήμιο Αθηνών
+                                </span>
+                            </h1>
+                            <button class="btn" 
+                                    style="width: 30px; height: 30px; border-radius: 50%; background-color: #0d47a1; color: white; border: none; padding: 0; display: flex; align-items: center; justify-content: center; margin-right: 10px;" 
+                                    @onclick="ToggleUniversityNewsVisibility">
+                                @if (isUniversityNewsVisible)
+                                {
+                                    <span>&#8722;</span> 
+                                }
+                                else
+                                {
+                                    <span>&#43;</span> 
+                                }
+                            </button>
+                        </div>
+
+                        @if (isUniversityNewsVisible)
+                        {
+                            <div id="university-news-content" class="p-3" style="border-top: 1px solid #e6f2ff;">
+                                @if (newsArticles != null && newsArticles.Any())
+                                {
+                                    @foreach (var article in newsArticles)
+                                    {
+                                        <div class="news-article mb-2 pb-2" style="border-bottom: 1px dashed #ccc;">
+                                            <a href="@article.Url" target="_blank" style="color: #0d47a1; text-decoration: none;">
+                                                <i class="fa fa-external-link me-2" style="font-size: 0.8em;"></i>@article.Title
+                                            </a>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="mb-0 text-muted">Καμία Ανακοίνωση από το Πανεπιστήμιο Αθηνών ακόμη....</p>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- SVSE News Section -->
+                    <div class="mb-3" style="background-color: #e6f2ff; border: 1px solid #b3c6e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div class="d-flex justify-content-between align-items-center p-3" style="border-bottom: 1px solid #b3c6e0;">
+                            <h1 class="news-heading form-label m-0">
+                                <span class="black-text">
+                                    <span style="color: #b399d4; margin-left: 10px; margin-right: 5px;">
+                                        <i class="fas fa-rss"></i>
+                                    </span>
+                                    Σύνδεσμος Βιομηχανιών Στερεάς Ελλάδας
+                                </span>
+                            </h1>
+                            <button class="btn" 
+                                    style="width: 30px; height: 30px; border-radius: 50%; background-color: #0d47a1; color: white; border: none; padding: 0; display: flex; align-items: center; justify-content: center; margin-right: 10px;" 
+                                    @onclick="ToggleSvseNewsVisibility">
+                                @if (isSvseNewsVisible)
+                                {
+                                    <span>&#8722;</span> <!-- Minus sign -->
+                                }
+                                else
+                                {
+                                    <span>&#43;</span> <!-- Plus sign -->
+                                }
+                            </button>
+                        </div>
+
+                        @if (isSvseNewsVisible)
+                        {
+                            <div id="svse-news-content" class="p-3" style="border-top: 1px solid #e6f2ff;">
+                                @if (svseNewsArticles != null && svseNewsArticles.Any())
+                                {
+                                    @foreach (var article in svseNewsArticles)
+                                    {
+                                        <div class="news-article mb-2 pb-2" style="border-bottom: 1px dashed #ccc;">
+                                            <a href="@article.Url" target="_blank" style="color: #0d47a1; text-decoration: none;">
+                                                <i class="fa fa-external-link me-2" style="font-size: 0.8em;"></i>@article.Title
+                                            </a>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="mb-0 text-muted">Καμία Ανακοίνωση από τον ΣΒΣΕ ακόμη....</p>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Platform company announcements -->
+                    <div class="mb-3" style="background-color: #e6f2ff; border: 1px solid #b3c6e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div class="d-flex justify-content-between align-items-center p-3" style="border-bottom: 1px solid #b3c6e0;">
+                            <h1 class="news-heading form-label m-0">
+                                <span class="black-text">
+                                    <span style="color: #b399d4; margin-left: 10px; margin-right: 5px;">
+                                        <i class="fas fa-list"></i>
+                                    </span>
+                                    Ανακοινώσεις Εταιρειών
+                                </span>
+                            </h1>
+                            <button class="btn" 
+                                    style="width: 30px; height: 30px; border-radius: 50%; background-color: #0d47a1; color: white; border: none; padding: 0; display: flex; align-items: center; justify-content: center; margin-right: 10px;" 
+                                    @onclick="ToggleCompanyAnnouncementsVisibility">
+                                @if (isCompanyAnnouncementsVisible)
+                                {
+                                    <span>&#8722;</span> <!-- Minus sign -->
+                                }
+                                else
+                                {
+                                    <span>&#43;</span> <!-- Plus sign -->
+                                }
+                            </button>
+                        </div>
+
+                        @if (isCompanyAnnouncementsVisible)
+                        {
+                            <div class="p-3" style="border-top: 1px solid #e6f2ff;">
+                                @if (Announcements != null && Announcements.Any(announcement => announcement.CompanyAnnouncementStatus == "Δημοσιευμένη"))
+                                {
+                                    <!-- Display paginated announcements sorted by upload date descending -->
+                                    @foreach (var announcement in Announcements
+                                   .Where(a => a.CompanyAnnouncementStatus == "Δημοσιευμένη")
+                                   .OrderByDescending(a => a.CompanyAnnouncementUploadDate)
+                                   .Skip((currentPageForCompanyAnnouncements - 1) * pageSize)
+                                   .Take(pageSize))
+                                    {
+                                        <div class="news-article mb-3 pb-2" style="border-bottom: 1px dashed #ccc;">
+                                            <!-- Clicking on title toggles description -->
+                                            <a href="javascript:void(0);"
+                                               @onclick="() => ToggleDescription(announcement.Id)"
+                                               style="display: block; max-width: 100%; overflow-wrap: break-word; color: #0d47a1; text-decoration: none; cursor: pointer;"
+                                               title="Κάντε Κλικ εδώ για να δείτε την περιγραφή της ανακοίνωσης">
+                                                <span class="black-text">• <strong>@(announcement.Company?.CompanyName ?? "Άγνωστη Εταιρεία")</strong></span> - @announcement.CompanyAnnouncementTitle
+                                                <span class="text-muted">(@announcement.CompanyAnnouncementUploadDate.ToString("dd/MM/yyyy"))</span>
+                                            </a>
+
+                                            <!-- Show description based on toggle state -->
+                                            <div class="announcement-description mt-2 @(expandedAnnouncementId == announcement.Id ? "expanded" : "collapsed")">
+                                                @if (expandedAnnouncementId == announcement.Id)
+                                                {
+                                                    <p style="color: #333;">@announcement.CompanyAnnouncementDescription</p>
+
+                                                    @if (announcement.CompanyAnnouncementAttachmentFile != null && announcement.CompanyAnnouncementAttachmentFile.Length > 0)
+                                                    {
+                                                        <p class="announcement-attachment mt-2">
+                                                            <a href="#"
+                                                               @onclick="() => DownloadAnnouncementAttachmentFrontPage(announcement.CompanyAnnouncementAttachmentFile, announcement.CompanyAnnouncementTitle)"
+                                                               style="color: #c62828; text-decoration: none;"
+                                                               title="Κάντε Κλικ εδώ για να κατεβάσετε το αρχείο">
+                                                                <i class="fa fa-download me-1"></i> 
+                                                                Συννημένο Αρχείο Ανακοίνωσης
+                                                            </a>
+                                                        </p>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Pagination Controls for Company Announcements -->
+                                    <div class="d-flex justify-content-center align-items-center mt-3 gap-1">
+                                        <!-- First Page (<<) -->
+                                        <span class="pagination-item @(currentPageForCompanyAnnouncements == 1 ? "disabled" : "")"
+                                              @onclick="GoToFirstPageForCompanyAnnouncements">
+                                            &lt;&lt;
+                                        </span>
+
+                                        <!-- Previous Page (<) -->
+                                        <span class="pagination-item @(currentPageForCompanyAnnouncements == 1 ? "disabled" : "")"
+                                              @onclick="PreviousPageForCompanyAnnouncements">
+                                            &lt;
+                                        </span>
+
+                                        <!-- Page Numbers -->
+                                        @foreach (var pageNumber in GetVisiblePagesForCompanyAnnouncements())
+                                        {
+                                            if (pageNumber == -1)
+                                            {
+                                                <span class="pagination-ellipsis">...</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="pagination-item @(pageNumber == currentPageForCompanyAnnouncements ? "active" : "")"
+                                                      @onclick="() => GoToPageForCompanyAnnouncements(pageNumber)">
+                                                    @pageNumber
+                                                </span>
+                                            }
+                                        }
+
+                                        <!-- Next Page (>) -->
+                                        <span class="pagination-item @(currentPageForCompanyAnnouncements == GetTotalPagesForCompanyAnnouncements() ? "disabled" : "")"
+                                              @onclick="NextPageForCompanyAnnouncements">
+                                            &gt;
+                                        </span>
+
+                                        <!-- Last Page (>>) -->
+                                        <span class="pagination-item @(currentPageForCompanyAnnouncements == GetTotalPagesForCompanyAnnouncements() ? "disabled" : "")"
+                                              @onclick="GoToLastPageForCompanyAnnouncements">
+                                            &gt;&gt;
+                                        </span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="mb-0 text-muted">Καμία Ανακοίνωση από Εταιρείες ακόμη....</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
             </div>
 
             <!-- Thesis Tab -->
