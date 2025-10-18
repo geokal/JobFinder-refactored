@@ -22,6 +22,7 @@
 @inject IJSRuntime JS
 @using System.Globalization;
 @using System.Text;
+@using HtmlAgilityPack;
 
 
 <style>
@@ -626,7 +627,7 @@
     {
         try
         {
-            var response = await HttpClient.GetAsync("https://www.uoa.gr/el/anakoinoseis_kai_ekdiloseis/anakoinoseis/");
+            var response = await HttpClient.GetAsync("https://www.uoa.gr/anakoinoseis_kai_ekdiloseis/anakoinoseis");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
 
@@ -635,7 +636,8 @@
 
             var articles = new List<NewsArticle>();
 
-            var articleNodes = htmlDocument.DocumentNode.SelectNodes("//div[contains(@class, 'topnews')]");
+            // Get all article nodes (both featured and regular articles)
+            var articleNodes = htmlDocument.DocumentNode.SelectNodes("//article");
             if (articleNodes != null)
             {
                 // Limit the number of articles to 3
@@ -643,15 +645,31 @@
                 {
                     var articleNode = articleNodes[i];
 
-                    var titleNode = articleNode.SelectSingleNode(".//h3[@class='article__title']/a");
+                    // Check if this is a featured article (selected_article) or regular article
+                    var isFeatured = articleNode.HasClass("selected_article");
+                    
+                    HtmlNode titleNode;
+                    if (isFeatured)
+                    {
+                        // Featured article title selector
+                        titleNode = articleNode.SelectSingleNode(".//h3[@class='selected_article__title']/a");
+                    }
+                    else
+                    {
+                        // Regular article title selector
+                        titleNode = articleNode.SelectSingleNode(".//h3[@class='article__title']/a");
+                    }
+                    
                     var title = titleNode?.InnerText.Trim();
                     var relativeUrl = titleNode?.Attributes["href"]?.Value;
                     var url = new Uri(new Uri("https://www.uoa.gr"), relativeUrl).ToString(); // Convert relative URL to absolute URL
 
-                    var dateNode = articleNode.SelectSingleNode(".//span[@class='article__date']/time");
+                    // Date extraction (works for both article types)
+                    var dateNode = articleNode.SelectSingleNode(".//time[@datetime]");
                     var date = dateNode?.Attributes["datetime"]?.Value;
 
-                    var categoryNode = articleNode.SelectSingleNode(".//span[@class='article__category']/a");
+                    // Category extraction (works for both article types)
+                    var categoryNode = articleNode.SelectSingleNode(".//span[contains(@class, 'category')]/a");
                     var category = categoryNode?.InnerText.Trim();
 
                     articles.Add(new NewsArticle
